@@ -1,15 +1,4 @@
-import "fake-indexeddb/auto";
-import { deleteDB } from "idb";
-import { describe, expect, test } from "vitest";
-import {
-  addSaveToDB,
-  getSaveValue,
-  deleteSave,
-  getAllSaveValues,
-  getAllSaveKeys,
-  updateSaveValue,
-} from "../SaveUtilities";
-import { Save, SaveID } from '../SaveTypes'
+import { describe, expect, test, expectTypeOf } from "vitest";
 import {
   ComponentKeysObject,
   StatisticsObject,
@@ -24,14 +13,13 @@ import {
   Foot,
   ContractType,
 } from "../../Players/PlayerTypes";
-import { playerSkills } from "../../Players/PlayerSkills";
-import { Competition, AllCompetitions } from "../../Competitions/CompetitionTypes";
 import { Club } from "../../Clubs/ClubTypes";
+import { playerSkills } from "../../Players/PlayerSkills";
+import { Competition, BaseCompetitions, AllCompetitions } from "../../Competitions/CompetitionTypes";
+import { createSave } from "../SaveCreator";
+import { Save } from "../SaveTypes";
 
-
-
-describe("SaveUtilities tests", async () => {
-
+describe("Competition Utilities tests", () => {
   const fullCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
@@ -71,12 +59,12 @@ describe("SaveUtilities tests", async () => {
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
 
-  const testCompetitionStatistics: StatisticsType = {
+  const expectedCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
   };
 
-  const testCompetitionComponentKeys: ComponentKeysObject = {
+  const expectedCompetitionComponentKeys: ComponentKeysObject = {
     simpleCompetitionTableRowHeaders,
     fullCompetitionTableRowHeaders,
   };
@@ -133,12 +121,12 @@ describe("SaveUtilities tests", async () => {
     RedCards: 0,
   };
 
-  const testClubStatistics: StatisticsType = {
+  const expectedClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
     GameLog: {},
   };
 
-  const testClubComponentKeys: ComponentKeysObject = {
+  const expectedClubComponentKeys: ComponentKeysObject = {
     clubStandardStatsHeaders,
     clubSummaryStatsHeaders,
   };
@@ -228,6 +216,7 @@ describe("SaveUtilities tests", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
+    ComponentKeys: expectedPlayerComponentKeys,
   };
 
   const testPlayerTwo: Player = {
@@ -246,6 +235,7 @@ describe("SaveUtilities tests", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
+    ComponentKeys: expectedPlayerComponentKeys,
   };
 
   const testPlayerThree: Player = {
@@ -264,6 +254,7 @@ describe("SaveUtilities tests", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
+    ComponentKeys: expectedPlayerComponentKeys,
   };
 
   const testPlayerFour: Player = {
@@ -282,195 +273,77 @@ describe("SaveUtilities tests", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
+    ComponentKeys: expectedPlayerComponentKeys,
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwo: Array<Player> = [testPlayerThree, testPlayerFour];
 
-
-  const testClubOne: Club = {
-    ID: 0,
-    Name: "Arsenal",
-    Statistics: testClubStatistics,
-    Players: testPlayersOne,
- 
-  };
-
-  const testClubTwo: Club = {
-    ID: 1,
-    Name: "Chelsea",
-    Statistics: testClubStatistics,
-    Players: testPlayersTwo,
-
-  };
-
-  const testClubThree: Club = {
-    ID: 2,
-    Name: "Everton",
-    Statistics: testClubStatistics,
-    Players: testPlayersOne,
-  };
-
-  const testClubFour: Club = {
-    ID: 3,
-    Name: "Ashton Villa",
-    Statistics: testClubStatistics,
-    Players: testPlayersOne,
-  };
-
-
-  const testClubsOne: Array<Club> = [testClubOne, testClubTwo];
-  const testClubsTwo: Array<Club> = [testClubThree, testClubFour];
-  
-  const testCompetitionOne: Competition = {
-    Name: "English Premier League",
-    Clubs: testClubsOne,
-    Statistics: testCompetitionStatistics,
-  };    
-
-  const testCompetitionTwo: Competition = {
-    Name: "The Championship",
-    Clubs: testClubsTwo,
-    Statistics: testCompetitionStatistics,
-  };
-
-  const testAllCompetitionsOne: AllCompetitions = {
-    England: {
-      "English Premier League": testCompetitionOne,
-    },
-  };
-
-  const testAllCompetitionsTwo: AllCompetitions = {
-    England: {
-      "English Premier League": testCompetitionOne,
-      "The Championship": testCompetitionTwo
-    },
-  };
-
-
   const testCountry: string = "England";
-  const testCompetitionNameOne: string = "English Premier League";
-  const testCompetitionNameTwo: string = "The Championship";  
-  const testNameOne = "Mikel Arteta";
-  const testNameTwo = "Unai Emery";
-  const testClubNameOne: string = "Arsenal";
-  const testClubNameTwo: string = "Ashton Villa";
+  const testCompetitionName: string = "English Premier League";
   const testSeason: string = "2024";
+  const testClub: string = "Arsenal";
+  const testPlayerName: string = "Mikel Arteta";
+  const testCompetitions: BaseCompetitions = {
+      England: { "English Premier League": [testClub] },
+    }
 
 
-  const testSaveOne: Save = {
-      Name: testNameOne,
+  test("Test createSave", () => {
+    const expectedClub: Club = {
+      ID: 0,
+      Name: testClub,
+      Statistics: expectedClubStatistics,
+      Players: expect.anything(),
+      ComponentKeys: expectedClubComponentKeys,
+    };
+
+    const expectedCompetition: Competition = {
+      Name: "English Premier League",
+      Clubs: expect.anything(),
+      Statistics: expectedCompetitionStatistics,
+      ComponentKeys: expectedCompetitionComponentKeys,
+    };    
+        
+
+    const expectedSave: Save = {
+      Name: testPlayerName,
       Country: testCountry,
-      MainCompetition: testCompetitionNameOne,
-      Club: testClubNameOne,
+      MainCompetition: testCompetitionName,
+      Club: testClub,
       Seasons: 1,
       CurrentSeason: "2024",
-      allCompetitions: testAllCompetitionsOne
-  };
+      allCompetitions: expect.anything()
+    }; 
 
-  const testSaveTwo: Save = {
-      Name: testNameTwo,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameTwo,
-      Club: testClubNameTwo,
-      Seasons: 1,
-    CurrentSeason: "2024",
-    allCompetitions: testAllCompetitionsTwo
-  };
+    const actualSave: Save = createSave(
+      testPlayerName,
+      testCountry,
+      testCompetitionName,
+      testSeason,
+      testClub,
+      testCompetitions
+    );
+    const actualCompetitions: Array<Competition> = Object.values(
+      actualSave.allCompetitions,
+    ).flatMap((actualComp) => Object.values(actualComp));
 
+    expect(actualSave).toStrictEqual(expectedSave);
 
-  const expectedSaveOne: Save = {
-      Name: testNameOne,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameOne,
-      Club: testClubNameOne,
-      Seasons: 1,
-      CurrentSeason: "2024",
-    allCompetitions: testAllCompetitionsOne,
-    saveID: 1
-  };
-
-  const expectedSaveTwo: Save = {
-      Name: testNameTwo,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameTwo,
-      Club: testClubNameTwo,
-      Seasons: 1,
-      CurrentSeason: "2024",
-    allCompetitions: testAllCompetitionsTwo,
-    saveID: 2
-  };
-
-
-    
-  const testSaves = [testSaveOne, testSaveTwo];
-  const expectedSaves = [expectedSaveOne, expectedSaveTwo];
-  const testDBName = "the-manager";
-  const saveStore = "save-games";
-
-  test("Test addSaveToDB", async () => {
-    
-    const saveID: SaveID = await addSaveToDB(testSaveOne);
-
-    const actualValue: Save = await getSaveValue(saveID);
-    expect(expectedSaveOne).toStrictEqual(actualValue);
-    await deleteDB(testDBName);
+    actualCompetitions.forEach((actualCompetition, index) => {
+      expect(actualCompetition).toStrictEqual(expectedCompetition);
+      expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition)
+      actualCompetition.Clubs.forEach((actualClub: Club) => {
+	expect(actualClub).toStrictEqual(expectedClub)
+	expectTypeOf(actualClub).toEqualTypeOf(expectedClub)
+	const actualPlayers: Array<Player> = actualClub.Players;
+	expect(actualPlayers.length).toBe(25);
+	expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
+	actualPlayers.forEach((testPlayer) => {
+          expectTypeOf(testPlayer).toEqualTypeOf(testPlayerOne);
+      });
+      });
+    });      
+    });
   });
 
-  test("Test getSaveValue", async () => {
-    const saveID: SaveID = await addSaveToDB(testSaveOne);
-    const actualValue: Save = await getSaveValue(saveID);
-    expect(expectedSaveOne).toStrictEqual(actualValue);
-    await deleteDB(testDBName);
-  });
-
-  test("Test updateSaveValue", async () => {
-    const saveID: SaveID = await addSaveToDB(testSaveOne);
-    let testSaveValue: Save = await getSaveValue(saveID);
-    await updateSaveValue(saveID, testSaveValue);
-    let actualValue: Save = await getSaveValue(saveID);    
-    expect(expectedSaveOne).toStrictEqual(actualValue);
-
-    // change name
-    testSaveValue = await getSaveValue(saveID);
-    testSaveValue.Name = "Bald Fraud"
-    await updateSaveValue(saveID, testSaveValue);
-    actualValue = await getSaveValue(saveID);    
-    expect(testSaveValue).toStrictEqual(actualValue);    
-    await deleteDB(testDBName);
-    
-  });
-
-  test("Test getAllSaveValues", async () => {
-    await addSaveToDB(testSaveOne);
-    await addSaveToDB(testSaveTwo);
-    const actualSaves: Array<Save> = await getAllSaveValues();
-    expect(expectedSaves).toStrictEqual(actualSaves);
-    await deleteDB(testDBName);
-  });
-
-  test("Test getAllSaveKeys", async () => {
-    const keyOne: SaveID = await addSaveToDB(testSaveOne);
-    const keyTwo: SaveID = await addSaveToDB(testSaveTwo);  
-    const testSaveIDs: Array<SaveID> = [keyOne, keyTwo];
-    const actualSavesIDs: Array<SaveID>  = await getAllSaveKeys();
-
-    expect(actualSavesIDs).toStrictEqual(testSaveIDs);
-    await deleteDB(testDBName);
-  });
-
-  test("Test deleteSave", async () => {
-    const keyOne: SaveID = await addSaveToDB(testSaveOne);
-    const keyTwo: SaveID = await addSaveToDB(testSaveTwo);
-    await deleteSave(keyTwo);
-
-    await expect(getSaveValue(keyTwo)).resolves.toBeUndefined();
-    
-    const actualSaves: Array<Save> = await getAllSaveValues();
-    expect(actualSaves).toStrictEqual([expectedSaveOne]);
-
-    await deleteDB(testDBName);
-  });
-  
-  
-});

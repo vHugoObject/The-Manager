@@ -1,38 +1,41 @@
-import "fake-indexeddb/auto";
-import { deleteDB } from "idb";
-import { describe, expect, test } from "vitest";
-import {
-  addSaveToDB,
-  getSaveValue,
-  deleteSave,
-  getAllSaveValues,
-  getAllSaveKeys,
-  updateSaveValue,
-} from "../SaveUtilities";
-import { Save, SaveID } from '../SaveTypes'
+// @vitest-environment jsdom
+import React from "react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { describe, expect, test, afterEach } from "vitest";
 import {
   ComponentKeysObject,
   StatisticsObject,
   StatisticsType,
-} from "../../Common/CommonTypes";
+} from "../../../Common/CommonTypes";
+import { Save, SaveID } from "../../../StorageUtilities/SaveTypes";
+import { Competition, AllCompetitions } from "../../../Competitions/CompetitionTypes";
+import { Club } from "../../../Clubs/ClubTypes";
 import {
   Player,
+  SkillSet,
   PositionGroup,
   Midfielder,
+  Attacker,
+  Goalkeeper,
   Defender,
-  SkillSet,
+  BiographicalDetails,
   Foot,
   ContractType,
-} from "../../Players/PlayerTypes";
-import { playerSkills } from "../../Players/PlayerSkills";
-import { Competition, AllCompetitions } from "../../Competitions/CompetitionTypes";
-import { Club } from "../../Clubs/ClubTypes";
+} from "../../../Players/PlayerTypes";
+import { playerSkills } from "../../../Players/PlayerSkills";
+import { SimpleCompetitionTable } from "../SimpleCompetitionTable";
 
+describe("SimpleCompetitionTable component", async () => {
 
+  const simpleCompetitionTableRowHeaders: Array<string> = [
+    "Club",
+    "Wins",
+    "Draws",
+    "Losses",
+    "Points",
+  ];
 
-describe("SaveUtilities tests", async () => {
-
-  const fullCompetitionTableRowHeaders: Array<string> = [
+    const fullCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
     "Draws",
@@ -43,13 +46,62 @@ describe("SaveUtilities tests", async () => {
     "Points",
   ];
 
-  const simpleCompetitionTableRowHeaders: Array<string> = [
-    "Club",
-    "Wins",
-    "Draws",
-    "Losses",
-    "Points",
+  const expectedClubSummaryStatsHeaders = [
+    "Record",
+    "Home Record",
+    "Away Record",
+    "Domestic Competition",
+    "Domestic Cups",
+    "Continental Cup",
   ];
+
+  const expectedSimpleClubStandardStatsHeaders = [
+    "Name",
+    "National Team",
+    "Position",
+    "Matches Played",
+    "Starts",
+    "Minutes",
+    "Goals",
+    "Assists",
+    "Yellow Cards",
+    "Red Cards",
+  ];
+  
+
+  const expectedPlayerStandardStatsHeaders: Array<string> = [
+    "Season",
+    "Matches Played",
+    "Starts",
+    "Minutes",
+    "Full 90s",
+    "Goals",
+    "Assists",
+    "Goals Plus Assists",
+    "Non Penalty Goals",
+    "Penalty Kicks Made",
+    "Penalty Kicks Attempted",
+    "Yellow Cards",
+    "Red Cards",
+  ];
+
+  const expectedBioParagraphs: Array<string> = [
+    "Position",
+    "Footed",
+    "Height",
+    "Weight",
+    "Age",
+    "National Team",
+    "Club",
+    "Wages",
+  ];
+
+  const testComponentKeys = {
+    standardStatsHeaders: expectedPlayerStandardStatsHeaders,
+    bioParagraphs: expectedBioParagraphs,
+  };
+
+  
 
   const competitionStatisticsArray: Array<string> = [
     "Wins",
@@ -70,13 +122,13 @@ describe("SaveUtilities tests", async () => {
 
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
-
-  const testCompetitionStatistics: StatisticsType = {
+  
+  const expectedCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
   };
 
-  const testCompetitionComponentKeys: ComponentKeysObject = {
+  const expectedCompetitionComponentKeys: ComponentKeysObject = {
     simpleCompetitionTableRowHeaders,
     fullCompetitionTableRowHeaders,
   };
@@ -133,12 +185,12 @@ describe("SaveUtilities tests", async () => {
     RedCards: 0,
   };
 
-  const testClubStatistics: StatisticsType = {
+  const expectedClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
     GameLog: {},
   };
 
-  const testClubComponentKeys: ComponentKeysObject = {
+  const expectedClubComponentKeys: ComponentKeysObject = {
     clubStandardStatsHeaders,
     clubSummaryStatsHeaders,
   };
@@ -228,6 +280,7 @@ describe("SaveUtilities tests", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
+
   };
 
   const testPlayerTwo: Player = {
@@ -246,6 +299,7 @@ describe("SaveUtilities tests", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
+
   };
 
   const testPlayerThree: Player = {
@@ -264,6 +318,7 @@ describe("SaveUtilities tests", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
+
   };
 
   const testPlayerFour: Player = {
@@ -282,18 +337,28 @@ describe("SaveUtilities tests", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
+
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwo: Array<Player> = [testPlayerThree, testPlayerFour];
+  
 
+  const testClubStatistics: StatisticsType = {
+    BySeason: { "2024": testClubStatisticsOne },
+    GameLog: {},
+  };
 
+  const testClubComponentKeys: ComponentKeysObject = {
+    clubStandardStatsHeaders,
+    clubSummaryStatsHeaders,
+  };
   const testClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
     Players: testPlayersOne,
- 
+
   };
 
   const testClubTwo: Club = {
@@ -301,7 +366,6 @@ describe("SaveUtilities tests", async () => {
     Name: "Chelsea",
     Statistics: testClubStatistics,
     Players: testPlayersTwo,
-
   };
 
   const testClubThree: Club = {
@@ -309,6 +373,7 @@ describe("SaveUtilities tests", async () => {
     Name: "Everton",
     Statistics: testClubStatistics,
     Players: testPlayersOne,
+  
   };
 
   const testClubFour: Club = {
@@ -316,161 +381,120 @@ describe("SaveUtilities tests", async () => {
     Name: "Ashton Villa",
     Statistics: testClubStatistics,
     Players: testPlayersOne,
+
   };
 
 
-  const testClubsOne: Array<Club> = [testClubOne, testClubTwo];
-  const testClubsTwo: Array<Club> = [testClubThree, testClubFour];
+  const testClubs: Array<Club> = [testClubOne, testClubTwo];
+  
+  const testCompetitionStatistics: StatisticsType = {
+    BySeason: { "2024": competitionStatisticsObject },
+    GameLog: {},
+  };
+
+  const testCompetitionComponentKeys: ComponentKeysObject = {
+    simpleCompetitionTableRowHeaders,
+    fullCompetitionTableRowHeaders,
+  };
   
   const testCompetitionOne: Competition = {
     Name: "English Premier League",
-    Clubs: testClubsOne,
-    Statistics: testCompetitionStatistics,
+    Clubs: testClubs,
+    Statistics: testCompetitionStatistics,  
   };    
-
-  const testCompetitionTwo: Competition = {
-    Name: "The Championship",
-    Clubs: testClubsTwo,
-    Statistics: testCompetitionStatistics,
-  };
+  
 
   const testAllCompetitionsOne: AllCompetitions = {
     England: {
       "English Premier League": testCompetitionOne,
     },
   };
-
-  const testAllCompetitionsTwo: AllCompetitions = {
-    England: {
-      "English Premier League": testCompetitionOne,
-      "The Championship": testCompetitionTwo
-    },
-  };
-
-
+  
+  
   const testCountry: string = "England";
-  const testCompetitionNameOne: string = "English Premier League";
-  const testCompetitionNameTwo: string = "The Championship";  
-  const testNameOne = "Mikel Arteta";
-  const testNameTwo = "Unai Emery";
+  const testCompetitionName: string = "English Premier League";
+  const testNameOne: string = "Mikel Arteta";
   const testClubNameOne: string = "Arsenal";
-  const testClubNameTwo: string = "Ashton Villa";
   const testSeason: string = "2024";
 
 
-  const testSaveOne: Save = {
+
+  const testSave: Save = {
       Name: testNameOne,
       Country: testCountry,
-      MainCompetition: testCompetitionNameOne,
+      MainCompetition: testCompetitionName,
       Club: testClubNameOne,
       Seasons: 1,
       CurrentSeason: "2024",
       allCompetitions: testAllCompetitionsOne
   };
 
-  const testSaveTwo: Save = {
-      Name: testNameTwo,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameTwo,
-      Club: testClubNameTwo,
-      Seasons: 1,
-    CurrentSeason: "2024",
-    allCompetitions: testAllCompetitionsTwo
-  };
 
+  afterEach(async () => {
+    cleanup();
+  });
 
-  const expectedSaveOne: Save = {
-      Name: testNameOne,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameOne,
-      Club: testClubNameOne,
-      Seasons: 1,
-      CurrentSeason: "2024",
-    allCompetitions: testAllCompetitionsOne,
-    saveID: 1
-  };
+  test("test SimpleCompetitionTable component", async () => {
+    render(<SimpleCompetitionTable save={testSave}
+	     season={testSeason}
+    />);
+    await waitFor(() =>
+      expect(
+        screen.getByText(testCompetitionName, { selector: "h2" }),
+      ).toBeTruthy(),
+    );
 
-  const expectedSaveTwo: Save = {
-      Name: testNameTwo,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameTwo,
-      Club: testClubNameTwo,
-      Seasons: 1,
-      CurrentSeason: "2024",
-    allCompetitions: testAllCompetitionsTwo,
-    saveID: 2
-  };
+    const lastSimpleCompHeaderKey =
+      simpleCompetitionTableRowHeaders.length - 1;
+    const lastSimpleCompHeader =
+      simpleCompetitionTableRowHeaders[lastSimpleCompHeaderKey];
+    const lastSimpleCompHeaderJoined = lastSimpleCompHeader.replace(/\s/g, "");
 
+    await waitFor(() =>
+      expect(
+        screen.getByText(lastSimpleCompHeader, {
+          selector: `th[id='${lastSimpleCompHeaderKey}']`,
+        }),
+      ).toBeTruthy(),
+    );
+
+    simpleCompetitionTableRowHeaders.forEach((expectedColumnHeader) => {
+      expect(
+        screen.getByText(expectedColumnHeader, { selector: "th" }),
+      ).toBeTruthy();
+    });
 
     
-  const testSaves = [testSaveOne, testSaveTwo];
-  const expectedSaves = [expectedSaveOne, expectedSaveTwo];
-  const testDBName = "the-manager";
-  const saveStore = "save-games";
 
-  test("Test addSaveToDB", async () => {
-    
-    const saveID: SaveID = await addSaveToDB(testSaveOne);
+    await waitFor(() => {
+      const lastClub: Club = testClubs[testClubs.length - 1];
+      const lastStatFromLastClub: StatisticsObject = lastClub.Statistics.BySeason[testSeason];      
+      expect(
+        screen.getByText(
+	  lastStatFromLastClub[lastSimpleCompHeaderJoined]
+          ,
+          {
+            selector: `td[id='${lastSimpleCompHeaderJoined}_${testClubs.length - 1}']`,
+          },
+        ),
+      ).toBeTruthy();
+    });
 
-    const actualValue: Save = await getSaveValue(saveID);
-    expect(expectedSaveOne).toStrictEqual(actualValue);
-    await deleteDB(testDBName);
+    testClubs.forEach((club: Club, index) => {
+      const clubStats: StatisticsObject = club.Statistics.BySeason[testSeason];
+      clubStats["Club"] = club.Name;
+      simpleCompetitionTableRowHeaders.forEach((header: string) => {
+	expect(
+        screen.getByText(
+	  clubStats[header],          
+          {
+            selector: `td[id='${header}_${index}']`,
+          },
+        ),
+      ).toBeTruthy();
+      })
+    })
+   
+
   });
-
-  test("Test getSaveValue", async () => {
-    const saveID: SaveID = await addSaveToDB(testSaveOne);
-    const actualValue: Save = await getSaveValue(saveID);
-    expect(expectedSaveOne).toStrictEqual(actualValue);
-    await deleteDB(testDBName);
-  });
-
-  test("Test updateSaveValue", async () => {
-    const saveID: SaveID = await addSaveToDB(testSaveOne);
-    let testSaveValue: Save = await getSaveValue(saveID);
-    await updateSaveValue(saveID, testSaveValue);
-    let actualValue: Save = await getSaveValue(saveID);    
-    expect(expectedSaveOne).toStrictEqual(actualValue);
-
-    // change name
-    testSaveValue = await getSaveValue(saveID);
-    testSaveValue.Name = "Bald Fraud"
-    await updateSaveValue(saveID, testSaveValue);
-    actualValue = await getSaveValue(saveID);    
-    expect(testSaveValue).toStrictEqual(actualValue);    
-    await deleteDB(testDBName);
-    
-  });
-
-  test("Test getAllSaveValues", async () => {
-    await addSaveToDB(testSaveOne);
-    await addSaveToDB(testSaveTwo);
-    const actualSaves: Array<Save> = await getAllSaveValues();
-    expect(expectedSaves).toStrictEqual(actualSaves);
-    await deleteDB(testDBName);
-  });
-
-  test("Test getAllSaveKeys", async () => {
-    const keyOne: SaveID = await addSaveToDB(testSaveOne);
-    const keyTwo: SaveID = await addSaveToDB(testSaveTwo);  
-    const testSaveIDs: Array<SaveID> = [keyOne, keyTwo];
-    const actualSavesIDs: Array<SaveID>  = await getAllSaveKeys();
-
-    expect(actualSavesIDs).toStrictEqual(testSaveIDs);
-    await deleteDB(testDBName);
-  });
-
-  test("Test deleteSave", async () => {
-    const keyOne: SaveID = await addSaveToDB(testSaveOne);
-    const keyTwo: SaveID = await addSaveToDB(testSaveTwo);
-    await deleteSave(keyTwo);
-
-    await expect(getSaveValue(keyTwo)).resolves.toBeUndefined();
-    
-    const actualSaves: Array<Save> = await getAllSaveValues();
-    expect(actualSaves).toStrictEqual([expectedSaveOne]);
-
-    await deleteDB(testDBName);
-  });
-  
-  
 });

@@ -1,6 +1,10 @@
-export const ballSkills = ["Ball Control", "Dribbling"];
-export const passingSkills = ["Crossing", "Short Pass", "Long Pass"];
-export const shootingSkills = [
+export const ballSkills: Array<string> = ["Ball Control", "Dribbling"];
+export const passingSkills: Array<string> = [
+  "Crossing",
+  "Short Pass",
+  "Long Pass",
+];
+export const shootingSkills: Array<string> = [
   "Heading",
   "Shot Power",
   "Finishing",
@@ -10,8 +14,12 @@ export const shootingSkills = [
   "Penalties",
   "Volleys",
 ];
-export const defenseSkills = ["Marking", "Slide Tackle", "Stand Tackle"];
-export const mentalSkills = [
+export const defenseSkills: Array<string> = [
+  "Marking",
+  "Slide Tackle",
+  "Stand Tackle",
+];
+export const mentalSkills: Array<string> = [
   "Aggression",
   "Reactions",
   "Att. Position",
@@ -20,7 +28,7 @@ export const mentalSkills = [
   "Composure",
 ];
 
-export const physicalSkills = [
+export const physicalSkills: Array<string> = [
   "Acceleration",
   "Stamina",
   "Strength",
@@ -30,7 +38,7 @@ export const physicalSkills = [
   "Jumping",
 ];
 
-export const goalkeepingSkills = [
+export const goalkeepingSkills: Array<string> = [
   "GK Positioning",
   "GK Diving",
   "GK Handling",

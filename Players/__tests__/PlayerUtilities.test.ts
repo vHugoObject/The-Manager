@@ -15,12 +15,14 @@ import {
   PlayerStatistics,
   StatisticsObject,
   PositionGroup,
+  PositionType,
   Midfielder,
   Attacker,
   Goalkeeper,
   Defender,
   BiographicalDetails,
   Foot,
+  ContractType,
 } from "../PlayerTypes";
 
 describe("Player utilities tests", () => {
@@ -84,7 +86,7 @@ describe("Player utilities tests", () => {
   const testPlayerSkills: Record<string, SkillSet> = Object.fromEntries(
     Object.entries(playerSkills).map(([name, set]) => [
       name,
-      set.map((skill) => [skill, 0]),
+      set.map((skill: string) => [skill, 0]),
     ]),
   );
 
@@ -100,6 +102,7 @@ describe("Player utilities tests", () => {
     NationalTeam: "Spain",
     Club: "Arsenal",
     Contract: expectedContract,
+    Value: 1,
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedStatistics,
@@ -180,7 +183,7 @@ describe("Player utilities tests", () => {
   test("test calculateRating", () => {});
 
   test("test generatePlayerStatisticsObject", () => {
-    const testSeason = 2024;
+    const testSeason = "2024";
     const actualStatistics = generatePlayerStatisticsObject(testSeason);
     expect(actualStatistics).toMatchObject(expectedStatistics);
   });
@@ -190,7 +193,7 @@ describe("Player utilities tests", () => {
       const actualPlayer = createPlayer(0, testPosition, "2024", "Arsenal");
       const expectedPositionGroup = positions[testPosition];
       expect(
-        expectedPositionGroup.hasOwnProperty(actualPlayer.PreferredPosition),
+        expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
       ).toBeTruthy();
       expectTypeOf(actualPlayer).toEqualTypeOf(expectedPlayer);
     });

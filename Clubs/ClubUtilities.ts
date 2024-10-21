@@ -1,7 +1,14 @@
-import { PositionGroup } from "../Players/PlayerTypes";
+import { range } from "lodash";
+import {
+  ComponentKeysObject,
+  StatisticsObject,
+  StatisticsType,
+} from "../Common/CommonTypes";
+import { Player, PositionGroup } from "../Players/PlayerTypes";
 import { createPlayer } from "../Players/PlayerUtilities";
+import { Club } from "./ClubTypes";
 
-const clubStandardStatsHeaders = [
+const clubStandardStatsHeaders: Array<string> = [
   "Name",
   "National Team",
   "Position",
@@ -19,7 +26,7 @@ const clubStandardStatsHeaders = [
   "Red Cards",
 ];
 
-const clubSummaryStatsHeaders = [
+const clubSummaryStatsHeaders: Array<string> = [
   "Record",
   "Home Record",
   "Away Record",
@@ -30,13 +37,12 @@ const clubSummaryStatsHeaders = [
   "Continental Cup",
 ];
 
-const clubComponentKeys = {
+const clubComponentKeys: ComponentKeysObject = {
   clubSummaryStatsHeaders,
   clubStandardStatsHeaders,
 };
 
-const emptyClubStatistics = {
-  ID: 0,
+const clubStatistics: StatisticsObject = {
   Wins: 0,
   Draws: 0,
   Losses: 0,
@@ -50,32 +56,87 @@ const emptyClubStatistics = {
   DomesticCompetition: "",
   DomesticCups: "",
   ContinentalCup: "",
+  MatchesPlayed: 0,
+  Minutes: 0,
+  NonPenaltyGoals: 0,
+  PenaltyKicksMade: 0,
+  PenaltyKicksAttempted: 0,
+  YellowCards: 0,
+  RedCards: 0,
+};
+
+export const generateClubStatisticsObject = (
+  season: string,
+): StatisticsType => {
+  return {
+    BySeason: { [season]: clubStatistics },
+    GameLog: {},
+  };
+};
+
+export const generateSquad = (
+  teamName: string,
+  teamID: number,
+  season: string,
+  firstPlayerID: number,
+): Array<Player> => {
+  const firstGoalieID: number = firstPlayerID;
+  const goalies = range(4).map((num) => {
+    return createPlayer(
+      firstGoalieID + num,
+      PositionGroup.Goalkeeper,
+      season,
+      teamName,
+    );
+  });
+
+  const firstDefenderID: number = firstGoalieID + 5;
+  const defenders = range(7).map((num) => {
+    return createPlayer(
+      firstDefenderID + num,
+      PositionGroup.Defender,
+      season,
+      teamName,
+    );
+  });
+
+  const firstMidfielderID: number = firstDefenderID + 8;
+  const midfielders = range(7).map((num) => {
+    return createPlayer(
+      firstMidfielderID + num,
+      PositionGroup.Midfielder,
+      season,
+      teamName,
+    );
+  });
+
+  const firstAttackerID: number = firstMidfielderID + 8;
+  const attackers = range(7).map((num) => {
+    return createPlayer(
+      firstAttackerID + num,
+      PositionGroup.Attacker,
+      season,
+      teamName,
+    );
+  });
+
+  return [goalies, defenders, midfielders, attackers].flat();
 };
 
 export const createClub = (
   name: string,
   id: number,
-  startingSeason: string,
-  players?,
-) => {
+  season: string,
+  firstPlayerID: number,
+  players?: Array<Player>,
+): Club => {
   const teamPlayers = players
     ? players
-    : [0, 1].map((playerID) => {
-        return createPlayer(
-          playerID,
-          PositionGroup.Midfielder,
-          startingSeason,
-          name,
-        );
-      });
-
+    : generateSquad(name, id, season, firstPlayerID);
   return {
     ID: id,
     Name: name,
-    Statistics: {
-      BySeason: { [startingSeason]: emptyClubStatistics },
-      GameLog: {},
-    },
+    Statistics: generateClubStatisticsObject(season),
     Players: teamPlayers,
     ComponentKeys: clubComponentKeys,
   };

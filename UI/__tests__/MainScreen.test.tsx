@@ -1,34 +1,34 @@
 // @vitest-environment jsdom
 import React from "react";
+import { StrictMode } from "react";
 import { screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, expect, test, afterEach } from "vitest";
 import "fake-indexeddb/auto";
-import { deleteDB } from "idb";
-import { renderWithRouter } from "./UI/UITestingUtilities";
+import { openDB, deleteDB } from "idb";
+import { Route, Routes } from "react-router-dom";
+import { renderWithRouter } from "../UITestingUtilities";
 import {
   ComponentKeysObject,
   StatisticsObject,
   StatisticsType,
-} from "./Common/CommonTypes";
-import { Competition, AllCompetitions } from "./Competitions/CompetitionTypes";
+} from "../../Common/CommonTypes";
 import {
   Player,
   SkillSet,
   PositionGroup,
   Midfielder,
   Goalkeeper,
-  Defender,
   Foot,
   ContractType,
-} from "./Players/PlayerTypes";
-import { playerSkills } from "./Players/PlayerSkills";
-import { Club } from "./Clubs/ClubTypes";
-import { addSaveToDB } from "./StorageUtilities/SaveUtilities";
-import { Save, SaveID } from './StorageUtilities/SaveTypes'
-import { App } from "./root";
+  Defender
+} from "../../Players/PlayerTypes";
+import { playerSkills } from "../../Players/PlayerSkills";
+import { Competition, AllCompetitions } from "../../Competitions/CompetitionTypes";
+import { Club } from "../../Clubs/ClubTypes";
+import { Save, SaveID } from '../../StorageUtilities/SaveTypes'
+import { MainScreen } from "../MainScreen";
 
-describe("test the app from the root", async () => {
-
+describe("Competition Components", async () => {
 
   const simpleCompetitionTableRowHeaders: Array<string> = [
     "Club",
@@ -445,79 +445,87 @@ describe("test the app from the root", async () => {
     return statisticsOnly;
   });
 
-      const lastSimpleClubStandardStatsHeaderKey: number =
-      expectedSimpleClubStandardStatsHeaders.length - 1;
-    const lastSimpleClubStandardStatsHeader: string =
-      expectedSimpleClubStandardStatsHeaders[
-        lastSimpleClubStandardStatsHeaderKey
-      ];
-
-      const lastSimpleCompHeaderKey: number =
-      simpleCompetitionTableRowHeaders.length - 1;
-    const lastSimpleCompHeader: string =
-      simpleCompetitionTableRowHeaders[lastSimpleCompHeaderKey];
-    const lastSimpleCompHeaderJoined: string = lastSimpleCompHeader.replace(
-      /\s/g,
-      "",
-    );
-
   
-  const testDBName = "the-manager";
-  afterEach(async () => {
-    cleanup();
+  const testDBName: string = "the-manager";
+  const saves: string = "save-games";
+
+  const version: number = 1;
+  const db = await openDB(testDBName, version, {
+    upgrade(db) {
+      db.createObjectStore(saves, {
+        autoIncrement: true,
+      });
+    },
   });
 
-  test("start a brand new game ", async () => {
-    const TestApp = () => (
-      <div>
-        <App />
-      </div>
+  const saveID: IDBValidKey = await db.add(saves, testSave);
+
+  const simButtonNames: Array<string> = [
+    "one-day",
+    "one-week",
+    "one-month",
+    "until-deadline",
+    "until-season-end",
+  ];
+
+  afterEach(async () => {
+    cleanup();
+    db.close();
+    await deleteDB(testDBName);
+  });
+
+  test("test MainScreen", async () => {
+    const App = () => (
+      <StrictMode>
+        <Routes>
+          <Route path="/save/:saveID" element={<MainScreen />} />
+        </Routes>
+      </StrictMode>
     );
-    const { user } = renderWithRouter(<TestApp />);
+    const { user } = renderWithRouter(<App />, { route: `save/${saveID}` });
+    expect(
+      screen.getByText("The Manager", { selector: "h2[id='site-banner']" }),
+    ).toBeTruthy();
 
-    await user.click(screen.getByRole("button", { name: "new-game" }));
+    expect(
+      screen.getByRole("button", { name: "control-side-menu" }),
+    ).toBeTruthy();
 
-    expect(screen.getByLabelText("Choose a name:")).toBeTruthy();
-    expect(screen.getByRole("textbox", { name: "save-name" }));
-    const saveNameElement = screen.getByRole("textbox", { name: "save-name" });
-    const countryElement = screen.getByRole("combobox", {
-      name: "country-options",
+    expect(() => {
+      screen.getByText("Switch Save", { selector: "a[href='/']" });
+    }).toThrowError();
+
+    await user.click(screen.getByRole("button", { name: "control-side-menu" }));
+
+    expect(
+      screen.getByText("Switch Save", { selector: "a[href='/']" }),
+    ).toBeTruthy();
+
+    expect(screen.getByRole("button", { name: "sim-button" }));
+
+    simButtonNames.forEach((buttonName: string) => {
+      expect(() =>
+        screen.getByRole("button", { name: buttonName }),
+      ).toThrowError();
     });
-    const leaguesElement = screen.getByRole("combobox", {
-      name: "domestic-league-options",
+
+    await user.click(screen.getByRole("button", { name: "sim-button" }));
+
+    simButtonNames.forEach((buttonName: string) => {
+      expect(screen.getByRole("button", { name: buttonName })).toBeTruthy();
     });
-    const teamsElement = screen.getByRole("combobox", { name: "club-options" });
 
-    //enter a name
-    await user.type(saveNameElement, testNameOne);
-
-    await user.selectOptions(countryElement, testCountry);
-    expect(
-      screen.getByRole("option", { name: testCountry }).selected,
-    ).toBeTruthy();
-
-    await user.selectOptions(leaguesElement, testCompetitionName);
-    expect(
-      screen.getByRole("option", { name: testCompetitionName }).selected,
-    ).toBeTruthy();
-
-    await user.selectOptions(teamsElement, testClubNameOne);
-    expect(
-      screen.getByRole("option", { name: testClubNameOne }).selected,
-    ).toBeTruthy();
-
-    // press start game
-    await user.click(
-      screen.getByText("Start Game", { selector: "button[type='submit']" }),
-    );
-
-    // wait for main screen to load
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),
       ).toBeTruthy(),
     );
 
+        const lastSimpleCompHeaderKey =
+      simpleCompetitionTableRowHeaders.length - 1;
+    const lastSimpleCompHeader =
+      simpleCompetitionTableRowHeaders[lastSimpleCompHeaderKey];
+    const lastSimpleCompHeaderJoined = lastSimpleCompHeader.replace(/\s/g, "");
 
     await waitFor(() =>
       expect(
@@ -527,6 +535,14 @@ describe("test the app from the root", async () => {
       ).toBeTruthy(),
     );
 
+
+        simpleCompetitionTableRowHeaders.forEach((expectedColumnHeader) => {
+      expect(
+        screen.getByText(expectedColumnHeader, { selector: "th" }),
+      ).toBeTruthy();
+    });
+
+    
     await waitFor(() => {
       const lastClub: Club = testClubs[testClubs.length - 1];
       const lastStatFromLastClub: StatisticsObject = lastClub.Statistics.BySeason[testSeason];      
@@ -541,71 +557,50 @@ describe("test the app from the root", async () => {
       ).toBeTruthy();
     });
 
-
-    const lastSimpleClubStandardStatsHeaderJoined: string =
-      lastSimpleClubStandardStatsHeader.replace(/\s/g, "");
-    
-    await waitFor(() =>
-      expect(
-        screen.getByText(lastSimpleClubStandardStatsHeader, {
-          selector: `th[id='${lastSimpleClubStandardStatsHeaderKey}']`,
-        }),
-      ).toBeTruthy(),
-    );
-
-    await waitFor(() =>
-      expect(
+    testClubs.forEach((club: Club, index) => {
+      const clubStats: StatisticsObject = club.Statistics.BySeason[testSeason];
+      clubStats["Club"] = club.Name;
+      simpleCompetitionTableRowHeaders.forEach((header: string) => {
+	expect(
         screen.getByText(
-          expectedPlayerStats[expectedPlayerStats.length - 1][
-	  lastSimpleClubStandardStatsHeader.replace(/\s/g, "")
-          ],
+	  clubStats[header],          
           {
-            selector: `td[id='${lastSimpleClubStandardStatsHeaderJoined}_${expectedPlayerStats.length - 1}']`,
+            selector: `td[id='${header}_${index}']`,
           },
         ),
-      ),
-    );
-  });
+      ).toBeTruthy();
+      })
+    })
 
-  test("start an old save ", async () => {
-    await addSaveToDB(testSave);
-    const TestApp = () => (
-      <div>
-        <App />
-      </div>
-    );
-    const { user } = renderWithRouter(<TestApp />);
 
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Play_0" })).toBeTruthy(),
-    );
-    await user.click(screen.getByRole("button", { name: "Play_0" }));
+    expect(screen.getByText(testClubOne.Name, { selector: "h2" })).toBeTruthy();
 
-    // wait for main screen to load
-    await waitFor(() =>
+    expectedClubSummaryStatsHeaders.forEach((expectedClubHeader) => {
+      const testStat = testClubOne.Statistics.BySeason[testSeason][
+            expectedClubHeader.replace(/\s/g, "")
+      ]
+      const expectedParagraphValue = new RegExp(
+        String.prototype.concat(
+          "^",
+          expectedClubHeader,
+          ":",
+          " ",
+          testStat,
+        ),
+      );
       expect(
-        screen.getByText(testCompetitionName, { selector: "h2" }),
-      ).toBeTruthy(),
-    );
-
-
-    await waitFor(() =>
-      expect(
-        screen.getByText(lastSimpleCompHeader, {
-          selector: `th[id='${lastSimpleCompHeaderKey}']`,
-        }),
-      ).toBeTruthy(),
-    );
-
-
-    simpleCompetitionTableRowHeaders.forEach((expectedColumnHeader) => {
-      expect(
-        screen.getByText(expectedColumnHeader, { selector: "th" }),
+        screen.getByText(expectedParagraphValue, { selector: "strong" }),
       ).toBeTruthy();
     });
 
+    const lastSimpleClubStandardStatsHeaderKey =
+      expectedSimpleClubStandardStatsHeaders.length - 1;
+    const lastSimpleClubStandardStatsHeader =
+      expectedSimpleClubStandardStatsHeaders[
+        lastSimpleClubStandardStatsHeaderKey
+      ];
 
-    const lastSimpleClubStandardStatsHeaderJoined: string =
+    const lastSimpleClubStandardStatsHeaderJoined =
       lastSimpleClubStandardStatsHeader.replace(/\s/g, "");
     await waitFor(() =>
       expect(
@@ -615,11 +610,22 @@ describe("test the app from the root", async () => {
       ).toBeTruthy(),
     );
 
+    expectedSimpleClubStandardStatsHeaders.forEach(
+      (expectedColumnHeader, index) => {
+        expect(
+          screen.getByText(expectedColumnHeader, {
+            selector: `th[id='${index}']`,
+          }),
+        ).toBeTruthy();
+      },
+    );
+
     await waitFor(() =>
+      
       expect(
         screen.getByText(
           expectedPlayerStats[expectedPlayerStats.length - 1][
-            lastSimpleClubStandardStatsHeaderJoined
+            lastSimpleClubStandardStatsHeader.replace(/\s/g, "")
           ],
           {
             selector: `td[id='${lastSimpleClubStandardStatsHeaderJoined}_${expectedPlayerStats.length - 1}']`,
@@ -627,28 +633,18 @@ describe("test the app from the root", async () => {
         ),
       ),
     );
-    await deleteDB(testDBName);
-  });
 
-  test("test go back to start screen from main screen ", async () => {
-    await addSaveToDB(testSave);
-    const TestApp = () => (
-      <div>
-        <App />
-      </div>
-    );
-    const { user } = renderWithRouter(<TestApp />);
-
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Play_0" })).toBeTruthy(),
-    );
-    await user.click(screen.getByRole("button", { name: "Play_0" }));
-
-    
-    await waitFor(() =>
-      expect(
-        screen.getByText(testCompetitionName, { selector: "h2" }),
-      ).toBeTruthy(),
-    );
+    expectedPlayerStats.forEach((player, index) => {
+      expectedSimpleClubStandardStatsHeaders.forEach(
+	(expectedColumnHeader) => {
+	  const expectedColumnHeaderJoined = expectedColumnHeader.replace(/\s/g, "");	  
+        expect(
+          screen.getByText(player[expectedColumnHeaderJoined], {
+            selector: `td[id='${expectedColumnHeaderJoined}_${index}']`,
+          }),
+        ).toBeTruthy();
+      },
+    )      
+    });
   });
 });

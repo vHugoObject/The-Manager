@@ -1,19 +1,17 @@
 import { faker } from "@faker-js/faker";
 import { playerSkills } from "./PlayerSkills";
+import { StatisticsType, StatisticsObject } from "../Common/CommonTypes";
 import {
   Player,
   PositionGroup,
-  Position,
   Foot,
   Midfielder,
   Attacker,
   Defender,
   Goalkeeper,
-  PlayerStatistics,
   BiographicalDetails,
   ContractType,
   SkillSet,
-  StatisticsObject,
 } from "./PlayerTypes";
 
 const expectedPlayerStandardStatsHeaders: Array<string> = [
@@ -139,10 +137,10 @@ export const calculateRating = (positionGroup: PositionGroup): number => {
 };
 
 export const generatePlayerStatisticsObject = (
-  startingSeason: string,
-): PlayerStatistics => {
+  season: string,
+): StatisticsType => {
   return {
-    BySeason: { [startingSeason]: emptySeasonStatisticsObject },
+    BySeason: { [season]: emptySeasonStatisticsObject },
     GameLog: {},
   };
 };
@@ -158,7 +156,7 @@ export const createPlayer = (
     ID: id,
     Name: bio.Name,
     PositionGroup: positionGroup,
-    PreferredPosition: generatePosition(positionGroup),
+    Position: generatePosition(positionGroup),
     PreferredFoot: bio.PreferredFoot,
     Weight: bio.Weight,
     Height: bio.Height,

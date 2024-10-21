@@ -1,158 +1,83 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useReducer } from "react";
 import { useParams } from "react-router-dom";
-import { getSaveFromDB } from "../StorageUtilities/SaveUtilities";
+import { getSaveValue } from "../StorageUtilities/SaveUtilities";
+import {
+  SimpleCompetitionTable,
+  SimpleSquadTable,
+  ClubSummary,
+  SideMenu,
+  SimMenu,
+  SiteBanner,
+} from "./Components/index";
+import {
+  SimulationContext,
+  SimulationDispatchContext,
+  SimulationState,
+  simulationReducer,
+} from "./SimulationManagement";
+import {
+  dbReducer,
+  DBContext,
+  DBDispatchContext,
+  DBActionType,
+  SaveSummary,
+  CurrentDBState,
+} from "./DatabaseManagement";
+import { Save, SaveID } from '../StorageUtilities/SaveTypes'
 
 export const MainScreen = () => {
-  let { saveID } = useParams();
-  let key: number = parseInt(saveID);
+  let saveID: SaveID = parseInt(useParams().saveID);
   const [currentSave, setCurrentSave] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [currentSimulationStatus, dispatch] = useReducer(
+    simulationReducer,
+    SimulationState.initializing,
+  );
+
+  const handleInitialized = () => {
+    dispatch({
+      type: SimulationState.initialized,
+    });
+  };
 
   useEffect(() => {
-    getSaveFromDB(key)
-      .then((save) => !isLoading && setCurrentSave(save))
-      .catch((error) => console.error("Error fetching save:", error));
-  }, [key]);
+    if (currentSimulationStatus == SimulationState.initializing) {
+      getSaveValue(saveID)
+        .then((save) => setCurrentSave(save))
+        .catch((error) => console.error("Error fetching save:", error));
+    }
+    handleInitialized();
+  }, [saveID, currentSimulationStatus]);
 
-  const clubSummaryStats = [
-    "Record",
-    "Home Record",
-    "Away Record",
-    "Domestic Competition",
-    "Domestic Cups",
-    "Continental Cup",
-  ];
+  useEffect(() => {
+    if (currentSimulationStatus == SimulationState.simming) {
+      getSaveValue(saveID)
+        .then((save) => setCurrentSave(save))
+        .catch((error) => console.error("Error fetching save:", error));
+    }
+  }, [saveID, currentSimulationStatus]);
 
-  const getClubStatistics = (competition, season) => {
-    return competition.Clubs.map((club) => {
-      club["Club"] = club["Name"];
-      const stats = club.Statistics.BySeason[season];
-      return {
-        Club: club["Name"],
-        Wins: stats["Wins"],
-        Losses: stats["Losses"],
-        Draws: stats["Draws"],
-        Points: stats["Points"],
-      };
-    });
-  };
-
-  const simpleSquadTableHeaders = [
-    "Name",
-    "National Team",
-    "Position",
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Goals",
-    "Assists",
-    "Yellow Cards",
-    "Red Cards",
-  ];
-
-  const getPlayerStatistics = (club, season) => {
-    return club.Players.map((player) => {
-      const stats = player.Statistics.BySeason[season];
-      return {
-        Name: player["Name"],
-        NationalTeam: player["NationalTeam"],
-        Position: player["Position"],
-        MatchesPlayed: stats["MatchesPlayed"],
-        Starts: stats["Starts"],
-        Minutes: stats["Minutes"],
-        Goals: stats["Goals"],
-        Assists: stats["Assists"],
-        YellowCards: stats["YellowCards"],
-        RedCards: stats["RedCards"],
-      };
-    });
-  };
-
-  const simpleCompetitionTable = (
-    <div>
-      <h2>{currentSave && currentSave.playerMainCompetition.Name}</h2>
-      <table>
-        <thead>
-          <tr>
-            {currentSave &&
-              currentSave.playerMainCompetition.ComponentKeys.simpleCompetitionTableRowHeaders.map(
-                (header, index) => (
-                  <th key={index} id={index}>
-                    {header}
-                  </th>
-                ),
-              )}
-          </tr>
-        </thead>
-        <tbody>
-          {currentSave &&
-            getClubStatistics(
-              currentSave.playerMainCompetition,
-              currentSave.currentSeason,
-            ).map((club, index) => (
-              <tr key={index}>
-                {Object.entries(club).map(([subKey, subValue]) => (
-                  <td key={subKey} id={`${subKey}_${index}`}>
-                    {subValue}
-                  </td>
-                ))}
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </div>
-  );
-
-  const teamSummary = (
-    <div id="team-summary">
-      <h2>{currentSave && currentSave.playerClub.Name}</h2>
-      {currentSave &&
-        clubSummaryStats.map((stat, index) => (
-          <p key={index}>
-            <strong>{`${stat}: ${currentSave.playerClub.Statistics.BySeason[currentSave.currentSeason][stat.replace(/\s/g, "")]}`}</strong>
-          </p>
-        ))}
-    </div>
-  );
-
-  const simpleSquadTable = (
-    <div id="simple-squad-table">
-      <table id="simple-squad">
-        <thead>
-          <tr key="header">
-            {currentSave &&
-              simpleSquadTableHeaders.map((header, index) => (
-                <th key={index} id={index}>
-                  {header}
-                </th>
-              ))}
-          </tr>
-        </thead>
-        <tbody>
-          {currentSave &&
-            getPlayerStatistics(
-              currentSave.playerClub,
-              currentSave.currentSeason,
-            ).map((player, index) => (
-              <tr key={index}>
-                {Object.entries(player).map(([subKey, subValue]) => (
-                  <td key={subKey} id={`${subKey}_${index}`}>
-                    {subValue}
-                  </td>
-                ))}
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </div>
-  );
-
+  // do we need to use context with 
   return (
     <div id="main-screen">
-      {simpleCompetitionTable}
-      {teamSummary}
-      {simpleSquadTable}
+      <SiteBanner />
+      <div id="main-screen-options">
+        <SimulationContext.Provider value={currentSimulationStatus}>
+          <SimulationDispatchContext.Provider value={dispatch}>
+            <SideMenu />
+            <SimMenu />
+            {currentSave && <SimpleCompetitionTable save={currentSave}
+			      season={currentSave.CurrentSeason}
+	    />}
+            {currentSave && <ClubSummary save={currentSave}
+			      season={currentSave.CurrentSeason}
+	    />}
+            {currentSave && <SimpleSquadTable save={currentSave}
+			      season={currentSave.CurrentSeason}
+	    />}
+          </SimulationDispatchContext.Provider>
+        </SimulationContext.Provider>
+      </div>
     </div>
   );
 };

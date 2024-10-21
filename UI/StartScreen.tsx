@@ -1,173 +1,204 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect, useContext, useReducer } from "react";
 import { useNavigate } from "react-router-dom";
-import { addSaveToDB } from "../StorageUtilities/SaveUtilities";
-import { createClub } from "../Clubs/ClubUtilities";
-import { createCompetition } from "../Competitions/CompetitionUtilities";
+import {
+  dbReducer,
+  DBContext,
+  DBDispatchContext,
+  DBActionType,
+  SaveSummary,
+  CurrentDBState,
+} from "./DatabaseManagement";
+import {
+  deleteSave,
+  getAllSaveValues,
+} from "../StorageUtilities/SaveUtilities";
+import { Save } from "../StorageUtilities/SaveTypes";
+import { SiteBanner } from "./Components/index";
 
-export const StartScreen = ({ countriesLeaguesClubs }) => {
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const handleCountrySelection = (e) => setSelectedCountry(e.target.value);
-  const [selectedLeague, setSelectedLeague] = useState("");
-  const handleLeagueSelection = (e) => setSelectedLeague(e.target.value);
-  const [selectedClub, setSelectedClub] = useState("");
-  const handleClubSelection = (e) => setSelectedClub(e.target.value);
+export const PlayButton = ({ saveID, index }) => {
   const navigate = useNavigate();
+  const handlePlay = () => {
+    navigate(`/save/${saveID}`);
+  };
 
-  const createNewGame = (formJSON) => {
-    const playerName = formJSON["manager-name"];
-    const currentSeason = "2024"; // will get this from the form eventually
-    const domesticLeague = formJSON["domestic-league"];
-    const country = formJSON["country"];
-    const club = formJSON["club"];
-    const allClubs = countriesLeaguesClubs[country][domesticLeague];
-    const allClubsMinusPlayerClub = Array.from(
-      new Set(allClubs).difference(new Set([club])),
-    );
-    const playerClub = createClub(
-      club,
-      allClubsMinusPlayerClub.length,
-      currentSeason,
-    );
-    const playerMainCompetition = createCompetition(
-      domesticLeague,
-      currentSeason,
-      allClubsMinusPlayerClub,
-    );
-    playerMainCompetition.Clubs.push(playerClub);
+  return (
+    <button
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      id={`Play_${index}`}
+      aria-label={`Play_${index}`}
+      onClick={handlePlay}
+    >
+      Play
+    </button>
+  );
+};
+
+export const DeleteButton = ({ saveID, index }) => {
+  const dispatch = useContext(DBDispatchContext);
+  const sendDelete = () => {
+    dispatch({
+      type: DBActionType.delete,
+    });
+  };
+  const handleDelete = async () => {
+    await deleteSave(saveID);
+    sendDelete();
+  };
+
+  return (
+    <button
+      class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+      id={`Delete_${index}`}
+      aria-label={`Delete_${index}`}
+      color="red"
+      onClick={async (event) => {
+        await handleDelete();
+      }}
+    >
+      Delete
+    </button>
+  );
+};
+
+export const NewGameButton = () => {
+  const navigate = useNavigate();
+  const handleNewGame = () => {
+    navigate("/newGame");
+  };
+
+  return (
+    <button
+      aria-label="new-game"
+      onClick={handleNewGame}
+      class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+    >
+      Start a New Game
+    </button>
+  );
+};
+
+export const SaveGamesTableRow = ({ saveSummary, rowIndex }) => {
+  const rowSaveID = saveSummary.SaveID;
+  return (
+    <tr aria-label={`save_games_table_row_${rowIndex}`} key={rowIndex}>
+      <td id={`Play_${rowIndex}`} key={0}>
+        <PlayButton saveID={rowSaveID} index={rowIndex} />
+      </td>
+      <td id={`Name_${rowIndex}`} key={1}>
+        {saveSummary.Name}
+      </td>
+      <td id={`MainCompetition_${rowIndex}`} key={2}>
+        {saveSummary.MainCompetition}
+      </td>
+      <td id={`Club_${rowIndex}`} key={3}>
+        {saveSummary.Club}
+      </td>
+      <td id={`Seasons_${rowIndex}`} key={4}>
+        {saveSummary.Seasons}
+      </td>
+      <td id={`Delete_${rowIndex}`} key={5}>
+        <DeleteButton saveID={rowSaveID} index={rowIndex} />
+      </td>
+    </tr>
+  );
+};
+
+export const SaveGamesTable = ({ saves }) => {
+  const tableHeaders: Array<string> = [
+    "",
+    "Name",
+    "Main Competition",
+    "Club",
+    "Seasons",
+    "",
+  ];
+  const saveSummaryCreator = (save: Save): SaveSummary => {
     return {
-      playerName,
-      currentSeason,
-      playerClub,
-      playerMainCompetition,
+      SaveID: save.saveID,
+      Name: save.Name,
+      MainCompetition: save.MainCompetition,
+      Club: save.Club,
+      Seasons: 1,
     };
   };
 
-  const handleStartGame = (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-    const formJSON = Object.fromEntries(formData.entries());
-    const save = createNewGame(formJSON);
-    addSaveToDB(save)
-      .then((saveID) => {
-        navigate(`/save/${saveID}`);
-      })
-      .catch((error) => console.error("Failed to save game to db", error));
+  const SavesTableHead = ({ headers }) => {
+    return (
+      <thead>
+        <tr>
+          {headers.map((header: string, index: number) => (
+            <th key={index} id={`${header}_${index}`}>
+              {header}
+            </th>
+          ))}
+        </tr>
+      </thead>
+    );
   };
 
-  const chooseName = (
-    <div>
-      <label htmlFor="save-name">
-        {" "}
-        Choose a name:
-        <input
-          type="text"
-          id="save-name"
-          aria-label="save-name"
-          name="manager-name"
-          required
-        ></input>
-      </label>
-    </div>
-  );
-
-  const chooseCountry = (
-    <div>
-      <label htmlFor="country-options">
-        {" "}
-        Choose a country:
-        <select
-          aria-label="country-options"
-          id="country-options"
-          name="country"
-          value={selectedCountry}
-          onChange={handleCountrySelection}
-        >
-          <option value="">Select a country</option>
-          {Object.keys(countriesLeaguesClubs).map((country, index) => (
-            <option key={index} value={country}>
-              {country}
-            </option>
-          ))}
-        </select>
-      </label>
-    </div>
-  );
-
-  const chooseLeague = (
-    <div>
-      <label htmlFor="domestic-league-options">
-        {" "}
-        Choose a domestic league:
-        <select
-          aria-label="domestic-league-options"
-          id="domestic-league-options"
-          name="domestic-league"
-          value={selectedLeague}
-          onChange={handleLeagueSelection}
-        >
-          {selectedCountry && (
-            <>
-              <option value="">Select a league</option>
-              {Object.keys(countriesLeaguesClubs[selectedCountry]).map(
-                (league, index) => (
-                  <option key={index} value={league}>
-                    {league}
-                  </option>
-                ),
-              )}
-            </>
-          )}
-        </select>
-      </label>
-    </div>
-  );
-
-  const chooseClub = (
-    <div>
-      <label htmlFor="club-options">
-        {" "}
-        Choose a club:
-        <select
-          aria-label="club-options"
-          id="club-options"
-          name="club"
-          value={selectedClub}
-          onChange={handleClubSelection}
-        >
-          {selectedLeague && (
-            <>
-              <option value="">Select a team</option>
-              {countriesLeaguesClubs[selectedCountry][selectedLeague].map(
-                (team, index) => (
-                  <option key={index} value={team}>
-                    {team}
-                  </option>
-                ),
-              )}
-            </>
-          )}
-        </select>
-      </label>
-    </div>
-  );
-
-  const startGameButton = (
-    <div id="start-game">
-      <button name="start-game" type="submit">
-        Start Game
-      </button>
-    </div>
-  );
+  const SavesTableBody = ({ saves }) => {
+    return (
+      <tbody>
+      {saves.map((saveData: Save, index: number) => (
+          <SaveGamesTableRow
+            saveSummary={saveSummaryCreator(saveData)}
+            rowIndex={index}
+            key={index}
+          />
+        ))}
+      </tbody>
+    );
+  };
 
   return (
-    <form role="form" method="post" onSubmit={handleStartGame}>
-      {chooseName}
-      {chooseCountry}
-      {chooseLeague}
-      {chooseClub}
-      {selectedCountry && selectedLeague && selectedClub && startGameButton}
-    </form>
+    <div id="saveGames">
+      <table aria-label="save-games-table" role="table" class="table-auto">
+        <SavesTableHead headers={tableHeaders} />
+        <SavesTableBody saves={saves} />
+      </table>
+    </div>
+  );
+};
+
+// if saves, send synced, else send empty?
+export const StartScreen = () => {
+  const [availableSaves, setAvailableSaves] = useState(null);
+
+  const [dbState, dispatch] = useReducer(
+    dbReducer,
+    CurrentDBState.initializing,
+  );
+
+  const handleDBState = () => {
+    dispatch({
+      type: DBActionType.sync,
+    });
+  };
+
+  useEffect(() => {
+    if (
+      dbState == CurrentDBState.initializing ||
+      dbState == CurrentDBState.updated
+    ) {
+      getAllSaveValues()
+        .then((saves: Array<Save>) => setAvailableSaves(saves))
+        .catch((error) => console.error("Database error", error));
+    }
+    handleDBState();
+  }, [dbState]);
+
+  return (
+    <div id="start-screen">
+      <DBContext.Provider value={dbState}>
+        <DBDispatchContext.Provider value={dispatch}>
+          <SiteBanner />
+          <NewGameButton />
+          {availableSaves && availableSaves.length > 0 && (
+            <SaveGamesTable saves={availableSaves} />
+          )}
+        </DBDispatchContext.Provider>
+      </DBContext.Provider>
+    </div>
   );
 };
