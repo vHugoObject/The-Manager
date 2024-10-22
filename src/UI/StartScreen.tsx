@@ -85,19 +85,19 @@ export const SaveGamesTableRow = ({ saveSummary, rowIndex }) => {
       <td id={`Play_${rowIndex}`} key={0}>
         <PlayButton saveID={rowSaveID} index={rowIndex} />
       </td>
-      <td id={`Name_${rowIndex}`} key={1}>
+      <td id={`Name_${rowIndex}`} key={1} class="text-center p-4">
         {saveSummary.Name}
       </td>
-      <td id={`MainCompetition_${rowIndex}`} key={2}>
+      <td id={`MainCompetition_${rowIndex}`} key={2} class="text-center p-4">
         {saveSummary.MainCompetition}
       </td>
-      <td id={`Club_${rowIndex}`} key={3}>
+      <td id={`Club_${rowIndex}`} key={3} class="text-center p-4">
         {saveSummary.Club}
       </td>
-      <td id={`Seasons_${rowIndex}`} key={4}>
+      <td id={`Seasons_${rowIndex}`} key={4} class="text-center p-4">
         {saveSummary.Seasons}
       </td>
-      <td id={`Delete_${rowIndex}`} key={5}>
+      <td id={`Delete_${rowIndex}`} key={5} class="text-center p-4">
         <DeleteButton saveID={rowSaveID} index={rowIndex} />
       </td>
     </tr>
@@ -189,7 +189,7 @@ export const StartScreen = () => {
   }, [dbState]);
 
   return (
-    <div id="start-screen">
+    <div id="start-screen" class="flex flex-col gap-5">
       <DBContext.Provider value={dbState}>
         <DBDispatchContext.Provider value={dispatch}>
           <SiteBanner />

@@ -478,6 +478,7 @@ describe("NewGame Components", async () => {
     }; 
 
     const actualSave: Save = await getSaveValue(saveID);
+    console.log(actualSave)
     expect(actualSave).toStrictEqual(expectedSave);
     const actualCompetitions: Array<Competition> = Object.values(
       actualSave.allCompetitions,

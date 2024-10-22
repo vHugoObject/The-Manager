@@ -48,7 +48,7 @@ export const SimForwardOptions = () => {
   return (
     <div id="sim-forward-options">
       <div
-        class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+        class="rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         role="menu"
         aria-orientation="vertical"
         aria-labelledby="menu-button"
@@ -136,7 +136,7 @@ export const SimMenu = () => {
   const handleClick = () => setShowMenu((show) => !show);
 
   return (
-    <div class="absolute right-10 top-0 h-16 w-16">
+    <div id="sim-menu">
       <button aria-label="sim-button" onClick={handleClick}>
         Sim
       </button>

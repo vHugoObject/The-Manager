@@ -15,11 +15,10 @@ export const addSaveToDB = async (save: Save): Promise<IDBValidKey> => {
   });
 
   const saveID: SaveID = await db.add(saveStore, save);
-  console.log(saveID);
-  const fullSave = merge({ saveID }, save);
+  const fullSave = merge({ saveID: saveID }, save);
 
   await db.put(saveStore, fullSave, saveID);
-  db.close();
+  await db.close();
   return saveID;
 };
 
@@ -36,7 +35,7 @@ export const getSaveValue = async (key: SaveID): Promise<Save> => {
     },
   });
   const result = await db.get(saveStore, key);
-  db.close();
+  await db.close();
   return result;
 };
 
@@ -53,7 +52,7 @@ export const updateSaveValue = async (key: SaveID, save: Save): Promise<void> =>
     },
   });
   await db.put(saveStore, save, key);
-  db.close();
+  await db.close();
 };
 
 export const getAllSaveKeys = async (): Promise<Array<IDBValidKey>> => {
@@ -69,7 +68,7 @@ export const getAllSaveKeys = async (): Promise<Array<IDBValidKey>> => {
     },
   });
   const saveKeys = await db.getAllKeys(saveStore);
-  db.close();
+  await db.close();
   return saveKeys;
 };
 
@@ -87,7 +86,7 @@ export const getAllSaveValues = async (): Promise<Array<Save>> => {
   });
 
   const saveValues = await db.getAll(saveStore);
-  db.close();
+  await db.close();
   return saveValues;
 };
 
@@ -96,5 +95,5 @@ export const deleteSave = async (key: SaveID): Promise<void> => {
   const saveStore = "save-games";
   const db = await openDB(mainDatabase);
   await db.delete(saveStore, key);
-  db.close();
+  await db.close();
 };

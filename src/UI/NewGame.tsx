@@ -39,7 +39,9 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
 
   const chooseName = (
     <div>
-      <label htmlFor="save-name">
+    <label htmlFor="save-name"
+	   class="grid grid-cols-1 gap-2"
+    >
         {" "}
         Choose a name:
         <input
@@ -55,7 +57,9 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
 
   const chooseCountry = (
     <div>
-      <label htmlFor="country-options">
+    <label htmlFor="country-options"
+	   class="grid grid-cols-1 gap-2"
+    >
         {" "}
         Choose a country:
         <select
@@ -78,7 +82,9 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
 
   const chooseLeague = (
     <div>
-      <label htmlFor="domestic-league-options">
+    <label htmlFor="domestic-league-options"
+	   class="grid grid-cols-1 gap-3"
+    >
         {" "}
         Choose a domestic league:
         <select
@@ -107,7 +113,9 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
 
   const chooseClub = (
     <div>
-      <label htmlFor="club-options">
+    <label htmlFor="club-options"
+	   class="grid grid-cols-1 gap-2"
+    >
         {" "}
         Choose a club:
         <select
@@ -135,7 +143,9 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
   );
 
   const startGameButton = (
-    <div id="start-game">
+    <div id="start-game"
+      class="grid grid-cols-1 gap-2"
+    >
       <button name="start-game" type="submit">
         Start Game
       </button>
@@ -143,11 +153,14 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
   );
 
   return (
-    <div id="new-game">
+    <div id="new-game"
+      class="grid grid-cols-1 gap-5"
+    >
       <SiteBanner />
       <div id="new-game-form">
         <SideMenu />
-        <form role="form" method="post" onSubmit={handleStartGame}>
+        <form role="form" method="post" onSubmit={handleStartGame}
+		      class="grid grid-cols-4 gap-4">
           {chooseName}
           {chooseCountry}
           {chooseLeague}
