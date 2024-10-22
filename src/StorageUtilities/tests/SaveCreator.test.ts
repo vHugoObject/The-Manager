@@ -266,6 +266,8 @@ describe("Competition Utilities tests", () => {
       England: { "English Premier League": [testClub] },
     }
 
+  const testFirstDay: string = "08/18/24"
+  const expectedFirstDay: Date = new Date(testFirstDay);
 
   test("Test createSave", () => {
     const expectedClub: Club = {
@@ -290,6 +292,7 @@ describe("Competition Utilities tests", () => {
       Club: testClub,
       Seasons: 1,
       CurrentSeason: "2024",
+      CurrentDate: expectedFirstDay,
       allCompetitions: expect.anything(),
       saveID: expect.any(String)
     }; 
@@ -299,6 +302,7 @@ describe("Competition Utilities tests", () => {
       testCountry,
       testCompetitionName,
       testSeason,
+      testFirstDay,
       testClub,
       testCompetitions
     );

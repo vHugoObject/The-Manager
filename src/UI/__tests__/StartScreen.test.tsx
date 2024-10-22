@@ -387,6 +387,7 @@ describe("StartScreen test suite", async () => {
   const testClubNameOne: string = "Arsenal";
   const testClubNameTwo: string = "Ashton Villa";
   const testSeason: string = "2024";
+  const testFirstDay: Date = new Date("8/18/24");
 
 
   const testSaveOne: Save = {
@@ -395,7 +396,8 @@ describe("StartScreen test suite", async () => {
       MainCompetition: testCompetitionNameOne,
       Club: testClubNameOne,
       Seasons: 1,
-      CurrentSeason: "2024",
+    CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
     saveID: "0"
     
@@ -408,6 +410,7 @@ describe("StartScreen test suite", async () => {
       Club: testClubNameTwo,
       Seasons: 1,
     CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsTwo,
     saveID: "1"
   };
@@ -419,7 +422,8 @@ describe("StartScreen test suite", async () => {
       MainCompetition: testCompetitionNameOne,
       Club: testClubNameOne,
       Seasons: 1,
-      CurrentSeason: "2024",
+    CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
     saveID: "0"
   };
@@ -430,7 +434,8 @@ describe("StartScreen test suite", async () => {
       MainCompetition: testCompetitionNameTwo,
       Club: testClubNameTwo,
       Seasons: 1,
-      CurrentSeason: "2024",
+    CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsTwo,
     saveID: "1"
   };

@@ -16,12 +16,13 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
   const navigate = useNavigate();
 
   const createNewGame = (formJSON): Save => {
-    const playerName: string = formJSON["manager-name"];
-    const currentSeason: string = "2024"; // will get this from the form eventually
+    const playerName: string = formJSON["manager-name"];    
     const domesticLeague: string = formJSON["domestic-league"];
     const country: string = formJSON["country"];
     const club: string = formJSON["club"];
-    return createSave(playerName, country, domesticLeague, currentSeason, club, countriesLeaguesClubs)    
+    const currentSeason: string = "2024"; // will get this from the form eventually
+    const firstDay: string = "8/18/24"; 
+    return createSave(playerName, country, domesticLeague, currentSeason, firstDay, club, countriesLeaguesClubs)    
   };
 
   const handleStartGame = (e) => {

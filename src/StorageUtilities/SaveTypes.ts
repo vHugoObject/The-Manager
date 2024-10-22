@@ -9,6 +9,7 @@ export interface Save {
  Club: string;
  Seasons: number;
  CurrentSeason: string;
+ CurrentDate: Date;
  allCompetitions: AllCompetitions;
- saveID: SaveID
+ saveID: SaveID; 
 }

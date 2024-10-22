@@ -292,8 +292,8 @@ describe("NewGame Components", async () => {
   const testSeason: string = "2024";
   const testClub: string = "Arsenal";  
 
-  const testDBName = "the-manager";
-  const saves = "save-games";
+  const testDBName: string = "the-manager";
+  const saves: string = "save-games";
 
   const testAvailableCountriesLeaguesClubs = {
     England: {
@@ -464,6 +464,8 @@ describe("NewGame Components", async () => {
       Statistics: expectedCompetitionStatistics,
     };
 
+    const testFirstDay: Date = new Date("8/18/24");
+    
     const expectedSave: Save = {
       Name: testName,
       Country: testCountry,
@@ -471,6 +473,7 @@ describe("NewGame Components", async () => {
       Club: testClub,
       Seasons: 1,
       CurrentSeason: "2024",
+      CurrentDate: testFirstDay,
       allCompetitions: expect.anything(),
       saveID: expect.any(String)
     }; 

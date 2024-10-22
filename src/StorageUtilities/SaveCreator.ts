@@ -8,6 +8,7 @@ export const createSave = (
   Country: string,
   MainCompetition: string,
   startingSeason: string,
+  firstDay: string,
   Club: string,
   countriesLeaguesClubs: BaseCompetitions
 ): Save => {
@@ -24,6 +25,7 @@ export const createSave = (
       )]
     }))
 
+  const CurrentDate: Date = new Date(firstDay);
   return {
     Name,    
     Country,
@@ -31,6 +33,7 @@ export const createSave = (
     Club,
     Seasons: 1,
     CurrentSeason: startingSeason,
+    CurrentDate,
     allCompetitions,
     saveID: simpleFaker.string.numeric(4)
   }

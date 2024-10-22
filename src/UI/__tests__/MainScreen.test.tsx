@@ -414,7 +414,7 @@ describe("Competition Components", async () => {
   const testNameOne: string = "Mikel Arteta";
   const testClubNameOne: string = "Arsenal";
   const testSeason: string = "2024";
-
+  const testFirstDay: Date = new Date("8/18/24");
 
   const expectedPlayerStats = testPlayersOne.map((player: Player) => {
     return {
@@ -431,7 +431,8 @@ describe("Competition Components", async () => {
       MainCompetition: testCompetitionName,
       Club: testClubNameOne,
       Seasons: 1,
-      CurrentSeason: "2024",
+    CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
     saveID: "1"
     

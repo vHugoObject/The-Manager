@@ -357,7 +357,8 @@ describe("SaveUtilities tests", async () => {
   const testClubNameOne: string = "Arsenal";
   const testClubNameTwo: string = "Ashton Villa";
   const testSeason: string = "2024";
-
+  
+  const testFirstDay: Date = new Date("8/18/24");
 
   const testSaveOne: Save = {
       Name: testNameOne,
@@ -365,7 +366,8 @@ describe("SaveUtilities tests", async () => {
       MainCompetition: testCompetitionNameOne,
       Club: testClubNameOne,
       Seasons: 1,
-      CurrentSeason: "2024",
+    CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
     saveID: "0"
     
@@ -378,6 +380,7 @@ describe("SaveUtilities tests", async () => {
       Club: testClubNameTwo,
       Seasons: 1,
     CurrentSeason: "2024",
+        CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsTwo,
     saveID: "1"
   };
@@ -389,7 +392,8 @@ describe("SaveUtilities tests", async () => {
       MainCompetition: testCompetitionNameOne,
       Club: testClubNameOne,
       Seasons: 1,
-      CurrentSeason: "2024",
+    CurrentSeason: "2024",
+        CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
     saveID: "0"
   };
@@ -400,7 +404,8 @@ describe("SaveUtilities tests", async () => {
       MainCompetition: testCompetitionNameTwo,
       Club: testClubNameTwo,
       Seasons: 1,
-      CurrentSeason: "2024",
+    CurrentSeason: "2024",
+        CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsTwo,
     saveID: "1"
   };
