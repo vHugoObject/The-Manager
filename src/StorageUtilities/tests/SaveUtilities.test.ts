@@ -1,7 +1,8 @@
 import "fake-indexeddb/auto";
-import { deleteDB } from "idb";
+import { deleteDB, IDBPDatabase } from "idb";
 import { describe, expect, test } from "vitest";
 import {
+  openSaveDB,
   addSaveToDB,
   getSaveValue,
   deleteSave,
@@ -365,7 +366,9 @@ describe("SaveUtilities tests", async () => {
       Club: testClubNameOne,
       Seasons: 1,
       CurrentSeason: "2024",
-      allCompetitions: testAllCompetitionsOne
+    allCompetitions: testAllCompetitionsOne,
+    saveID: "0"
+    
   };
 
   const testSaveTwo: Save = {
@@ -375,7 +378,8 @@ describe("SaveUtilities tests", async () => {
       Club: testClubNameTwo,
       Seasons: 1,
     CurrentSeason: "2024",
-    allCompetitions: testAllCompetitionsTwo
+    allCompetitions: testAllCompetitionsTwo,
+    saveID: "1"
   };
 
 
@@ -387,7 +391,7 @@ describe("SaveUtilities tests", async () => {
       Seasons: 1,
       CurrentSeason: "2024",
     allCompetitions: testAllCompetitionsOne,
-    saveID: 1
+    saveID: "0"
   };
 
   const expectedSaveTwo: Save = {
@@ -398,17 +402,29 @@ describe("SaveUtilities tests", async () => {
       Seasons: 1,
       CurrentSeason: "2024",
     allCompetitions: testAllCompetitionsTwo,
-    saveID: 2
+    saveID: "1"
   };
 
 
     
-  const testSaves = [testSaveOne, testSaveTwo];
-  const expectedSaves = [expectedSaveOne, expectedSaveTwo];
-  const testDBName = "the-manager";
-  const saveStore = "save-games";
+  const testSaves: Array<Save> = [testSaveOne, testSaveTwo];
+  const expectedSaves: Array<Save> = [expectedSaveOne, expectedSaveTwo];
+  const testDBName: string = "the-manager";
+  const testDBVersion: number = 1;
+  const saveStore: string = "save-games";
 
-  test("Test addSaveToDB", async () => {
+  test("Test openSaveDB", async () => {
+
+    const actualDB: IDBPDatabase = await openSaveDB();
+    expect(actualDB.name).toBe(testDBName);
+    expect(actualDB.version).toBe(testDBVersion);
+    const actualStoreNames = new Set(actualDB.objectStoreNames);
+    expect(actualStoreNames.has(saveStore)).toBeTruthy();
+    actualDB.close()
+    await deleteDB(testDBName)
+  });
+
+    test("Test addSaveToDB", async () => {
     
     const saveID: SaveID = await addSaveToDB(testSaveOne);
 
@@ -427,14 +443,13 @@ describe("SaveUtilities tests", async () => {
   test("Test updateSaveValue", async () => {
     const saveID: SaveID = await addSaveToDB(testSaveOne);
     let testSaveValue: Save = await getSaveValue(saveID);
-    await updateSaveValue(saveID, testSaveValue);
+    await updateSaveValue(testSaveValue);
     let actualValue: Save = await getSaveValue(saveID);    
     expect(expectedSaveOne).toStrictEqual(actualValue);
 
-    // change name
-    testSaveValue = await getSaveValue(saveID);
+    // change name    
     testSaveValue.Name = "Bald Fraud"
-    await updateSaveValue(saveID, testSaveValue);
+    await updateSaveValue(testSaveValue);
     actualValue = await getSaveValue(saveID);    
     expect(testSaveValue).toStrictEqual(actualValue);    
     await deleteDB(testDBName);
@@ -462,6 +477,7 @@ describe("SaveUtilities tests", async () => {
   test("Test deleteSave", async () => {
     const keyOne: SaveID = await addSaveToDB(testSaveOne);
     const keyTwo: SaveID = await addSaveToDB(testSaveTwo);
+    
     await deleteSave(keyTwo);
 
     await expect(getSaveValue(keyTwo)).resolves.toBeUndefined();
@@ -471,6 +487,8 @@ describe("SaveUtilities tests", async () => {
 
     await deleteDB(testDBName);
   });
+  
+
   
   
 });

@@ -135,7 +135,6 @@ describe("Club Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
   };
 
   const testPlayerTwo: Player = {
@@ -154,7 +153,7 @@ describe("Club Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
+
   };
 
   const testPlayers: Array<Player> = [testPlayerOne, testPlayerTwo];
@@ -169,7 +168,7 @@ describe("Club Utilities tests", () => {
     Name: "Arsenal",
     Statistics: expectedStatistics,
     Players: testPlayers,
-    ComponentKeys: testClubComponentKeys,
+
   };
 
   const expectedClubTwo: Club = {
@@ -177,7 +176,6 @@ describe("Club Utilities tests", () => {
     Name: "Arsenal",
     Statistics: expectedStatistics,
     Players: expect.anything(),
-    ComponentKeys: testClubComponentKeys,
   };
 
   const testTeamName: string = "Arsenal";

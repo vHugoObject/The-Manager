@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addSaveToDB } from "../StorageUtilities/SaveUtilities";
 import { createSave } from "../StorageUtilities/SaveCreator";
-import { Save } from "../StorageUtilities/SaveTypes";
+import { Save, SaveID } from "../StorageUtilities/SaveTypes";
 import { SideMenu, SiteBanner } from "./Components/index";
 
 export const NewGame = ({ countriesLeaguesClubs }) => {
@@ -24,14 +24,14 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
     return createSave(playerName, country, domesticLeague, currentSeason, club, countriesLeaguesClubs)    
   };
 
-  const handleStartGame = async (e) => {
+  const handleStartGame = (e) => {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
     const formJSON = Object.fromEntries(formData.entries());
-    const save = createNewGame(formJSON);
+    const save: Save = createNewGame(formJSON);
     addSaveToDB(save)
-      .then((saveID) => {
+      .then((saveID: SaveID) => {	
         navigate(`/save/${saveID}`);
       })
       .catch((error) => console.error("Failed to save game to db", error));

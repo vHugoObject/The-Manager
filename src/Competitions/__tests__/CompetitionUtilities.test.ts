@@ -219,7 +219,7 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
+
   };
 
   const testPlayerTwo: Player = {
@@ -238,7 +238,6 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
   };
 
   const testPlayerThree: Player = {
@@ -257,7 +256,7 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
+
   };
 
   const testPlayerFour: Player = {
@@ -276,7 +275,6 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
@@ -304,7 +302,6 @@ describe("Competition Utilities tests", () => {
       Name: "Arsenal",
       Statistics: expectedClubStatistics,
       Players: expect.anything(),
-      ComponentKeys: expectedClubComponentKeys,
     };
 
     const expectedClubTwo: Club = {
@@ -312,7 +309,6 @@ describe("Competition Utilities tests", () => {
       Name: "Brentford",
       Statistics: expectedClubStatistics,
       Players: expect.anything(),
-      ComponentKeys: expectedClubComponentKeys,
     };
 
     const expectedClubs: Array<Club> = [expectedClubOne, expectedClubTwo];
@@ -332,7 +328,6 @@ describe("Competition Utilities tests", () => {
       Name: "Arsenal",
       Statistics: expectedClubStatistics,
       Players: testPlayersOne,
-      ComponentKeys: expectedClubComponentKeys,
     };
 
     const expectedClubTwo: Club = {
@@ -340,7 +335,7 @@ describe("Competition Utilities tests", () => {
       Name: "Brentford",
       Statistics: expectedClubStatistics,
       Players: testPlayersTwo,
-      ComponentKeys: expectedClubComponentKeys,
+
     };
 
     const expectedClubs: Array<Club> = [expectedClubOne, expectedClubTwo];
@@ -360,7 +355,6 @@ describe("Competition Utilities tests", () => {
       Name: "Arsenal",
       Statistics: expectedClubStatistics,
       Players: expect.anything(),
-      ComponentKeys: expectedClubComponentKeys,
     };
 
     const expectedClubTwo: Club = {
@@ -368,14 +362,12 @@ describe("Competition Utilities tests", () => {
       Name: "Brentford",
       Statistics: expectedClubStatistics,
       Players: expect.anything(),
-      ComponentKeys: expectedClubComponentKeys,
     };
 
     const expectedCompetitionNoPlayers = {
       Name: "English Premier League",
       Clubs: [expectedClubOne, expectedClubTwo],
       Statistics: expectedCompetitionStatistics,
-      ComponentKeys: expectedCompetitionComponentKeys,
     };
 
     const actualCompetition = createCompetition(
@@ -402,7 +394,6 @@ describe("Competition Utilities tests", () => {
       Name: "Arsenal",
       Statistics: expectedClubStatistics,
       Players: testPlayersOne,
-      ComponentKeys: expectedClubComponentKeys,
     };
 
     const expectedClubTwo: Club = {
@@ -410,14 +401,12 @@ describe("Competition Utilities tests", () => {
       Name: "Brentford",
       Statistics: expectedClubStatistics,
       Players: testPlayersTwo,
-      ComponentKeys: expectedClubComponentKeys,
     };
 
     const expectedCompetitionWithPlayers = {
       Name: "English Premier League",
       Clubs: [expectedClubOne, expectedClubTwo],
       Statistics: expectedCompetitionStatistics,
-      ComponentKeys: expectedCompetitionComponentKeys,
     };
 
     const actualCompetition = createCompetition(

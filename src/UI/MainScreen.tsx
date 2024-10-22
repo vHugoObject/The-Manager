@@ -19,6 +19,7 @@ import {
 import {
   dbReducer,
   DBContext,
+  SaveContext,
   DBDispatchContext,
   DBActionType,
   SaveSummary,
@@ -27,7 +28,7 @@ import {
 import { Save, SaveID } from '../StorageUtilities/SaveTypes'
 
 export const MainScreen = () => {
-  let saveID: SaveID = parseInt(useParams().saveID);
+  let saveID: SaveID = useParams().saveID
   const [currentSave, setCurrentSave] = useState(null);
   const [currentSimulationStatus, dispatch] = useReducer(
     simulationReducer,
@@ -43,7 +44,7 @@ export const MainScreen = () => {
   useEffect(() => {
     if (currentSimulationStatus == SimulationState.initializing) {
       getSaveValue(saveID)
-        .then((save) => setCurrentSave(save))
+        .then((save: Save) => setCurrentSave(save))
         .catch((error) => console.error("Error fetching save:", error));
     }
     handleInitialized();
@@ -52,7 +53,7 @@ export const MainScreen = () => {
   useEffect(() => {
     if (currentSimulationStatus == SimulationState.simming) {
       getSaveValue(saveID)
-        .then((save) => setCurrentSave(save))
+        .then((save: Save) => setCurrentSave(save))
         .catch((error) => console.error("Error fetching save:", error));
     }
   }, [saveID, currentSimulationStatus]);
@@ -62,6 +63,7 @@ export const MainScreen = () => {
     <div id="main-screen">
       <SiteBanner />
       <div id="main-screen-options">
+      <SaveContext.Provider value={currentSave}>
         <SimulationContext.Provider value={currentSimulationStatus}>
           <SimulationDispatchContext.Provider value={dispatch}>
             <SideMenu />
@@ -76,7 +78,8 @@ export const MainScreen = () => {
 			      season={currentSave.CurrentSeason}
 	    />}
           </SimulationDispatchContext.Provider>
-        </SimulationContext.Provider>
+          </SimulationContext.Provider>
+	  </SaveContext.Provider>
       </div>
     </div>
   );

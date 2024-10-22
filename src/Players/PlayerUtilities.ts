@@ -168,6 +168,5 @@ export const createPlayer = (
     Rating: 80,
     Skills: generatePlayerSkills(positionGroup),
     Statistics: generatePlayerStatisticsObject(season),
-    ComponentKeys: playerComponentKeys,
   };
 };

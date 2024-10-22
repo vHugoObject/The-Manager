@@ -396,7 +396,9 @@ describe("StartScreen test suite", async () => {
       Club: testClubNameOne,
       Seasons: 1,
       CurrentSeason: "2024",
-      allCompetitions: testAllCompetitionsOne
+    allCompetitions: testAllCompetitionsOne,
+    saveID: "0"
+    
   };
 
   const testSaveTwo: Save = {
@@ -406,7 +408,8 @@ describe("StartScreen test suite", async () => {
       Club: testClubNameTwo,
       Seasons: 1,
     CurrentSeason: "2024",
-    allCompetitions: testAllCompetitionsTwo
+    allCompetitions: testAllCompetitionsTwo,
+    saveID: "1"
   };
 
 
@@ -418,7 +421,7 @@ describe("StartScreen test suite", async () => {
       Seasons: 1,
       CurrentSeason: "2024",
     allCompetitions: testAllCompetitionsOne,
-    saveID: 1
+    saveID: "0"
   };
 
   const expectedSaveTwo: Save = {
@@ -429,7 +432,7 @@ describe("StartScreen test suite", async () => {
       Seasons: 1,
       CurrentSeason: "2024",
     allCompetitions: testAllCompetitionsTwo,
-    saveID: 2
+    saveID: "1"
   };
 
     

@@ -138,6 +138,5 @@ export const createClub = (
     Name: name,
     Statistics: generateClubStatisticsObject(season),
     Players: teamPlayers,
-    ComponentKeys: clubComponentKeys,
   };
 };

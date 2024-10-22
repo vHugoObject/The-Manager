@@ -3,7 +3,7 @@ import React from "react";
 import { screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, expect, test, afterEach } from "vitest";
 import "fake-indexeddb/auto";
-import { deleteDB } from "idb";
+import { deleteDB, openDB } from "idb";
 import { renderWithRouter } from "./UI/UITestingUtilities";
 import {
   ComponentKeysObject,
@@ -431,7 +431,8 @@ describe("test the app from the root", async () => {
       Club: testClubNameOne,
       Seasons: 1,
       CurrentSeason: "2024",
-      allCompetitions: testAllCompetitionsOne
+    allCompetitions: testAllCompetitionsOne,
+    saveID: "0"
   };
   
   const testSeasonStatistics: Array<StatisticsObject> = [
@@ -461,9 +462,10 @@ describe("test the app from the root", async () => {
       "",
     );
 
-  
+   
   const testDBName = "the-manager";
   afterEach(async () => {
+    deleteDB(testDBName)
     cleanup();
   });
 
@@ -475,10 +477,15 @@ describe("test the app from the root", async () => {
     );
     const { user } = renderWithRouter(<TestApp />);
 
+    expect(
+      screen.getByText("The Manager", { selector: "h2[id='site-banner']" }),
+    ).toBeTruthy();
+
     await user.click(screen.getByRole("button", { name: "new-game" }));
 
     expect(screen.getByLabelText("Choose a name:")).toBeTruthy();
     expect(screen.getByRole("textbox", { name: "save-name" }));
+
     const saveNameElement = screen.getByRole("textbox", { name: "save-name" });
     const countryElement = screen.getByRole("combobox", {
       name: "country-options",
@@ -510,14 +517,13 @@ describe("test the app from the root", async () => {
     await user.click(
       screen.getByText("Start Game", { selector: "button[type='submit']" }),
     );
-
+    
     // wait for main screen to load
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),
       ).toBeTruthy(),
     );
-
 
     await waitFor(() =>
       expect(
@@ -540,7 +546,6 @@ describe("test the app from the root", async () => {
         ),
       ).toBeTruthy();
     });
-
 
     const lastSimpleClubStandardStatsHeaderJoined: string =
       lastSimpleClubStandardStatsHeader.replace(/\s/g, "");
@@ -565,9 +570,10 @@ describe("test the app from the root", async () => {
         ),
       ),
     );
-  });
 
-  test("start an old save ", async () => {
+  })
+
+    test("start an old save ", async () => {
     await addSaveToDB(testSave);
     const TestApp = () => (
       <div>
@@ -576,11 +582,19 @@ describe("test the app from the root", async () => {
     );
     const { user } = renderWithRouter(<TestApp />);
 
+    expect(
+      screen.getByText("The Manager", { selector: "h2[id='site-banner']" }),
+    ).toBeTruthy();
+
+
+
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Play_0" })).toBeTruthy(),
     );
+
     await user.click(screen.getByRole("button", { name: "Play_0" }));
 
+    
     // wait for main screen to load
     await waitFor(() =>
       expect(
@@ -627,8 +641,9 @@ describe("test the app from the root", async () => {
         ),
       ),
     );
-    await deleteDB(testDBName);
-  });
+
+
+    });
 
   test("test go back to start screen from main screen ", async () => {
     await addSaveToDB(testSave);

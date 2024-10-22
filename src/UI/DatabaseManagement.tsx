@@ -20,6 +20,7 @@ export enum CurrentDBState {
 }
 
 export const DBContext = createContext(null);
+export const SaveContext = createContext(null);
 export const DBDispatchContext = createContext(null);
 
 export interface SaveSummary {

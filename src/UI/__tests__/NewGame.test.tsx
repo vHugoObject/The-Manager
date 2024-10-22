@@ -22,7 +22,7 @@ import { playerSkills } from "../../Players/PlayerSkills";
 import { Competition, BaseCompetitions } from "../../Competitions/CompetitionTypes";
 import { deleteDB } from "idb";
 import { Save } from "../../StorageUtilities/SaveTypes";
-import { getSaveValue } from "../../StorageUtilities/SaveUtilities";
+import { getAllSaveValues } from "../../StorageUtilities/SaveUtilities";
 import { renderWithRouter } from "../UITestingUtilities";
 import { NewGame } from "../NewGame";
 
@@ -450,9 +450,7 @@ describe("NewGame Components", async () => {
     await user.click(
       screen.getByText("Start Game", { selector: "button[type='submit']" }),
     );
-
-    const saveID: number = 1;
-
+    
     const expectedClub: Club = {
       ID: 0,
       Name: testClub,
@@ -474,11 +472,11 @@ describe("NewGame Components", async () => {
       Seasons: 1,
       CurrentSeason: "2024",
       allCompetitions: expect.anything(),
-      saveID
+      saveID: expect.any(String)
     }; 
 
-    const actualSave: Save = await getSaveValue(saveID);
-    console.log(actualSave)
+    const actualSaves: Array<Save> = await getAllSaveValues();
+    const actualSave: Save = actualSaves[0];
     expect(actualSave).toStrictEqual(expectedSave);
     const actualCompetitions: Array<Competition> = Object.values(
       actualSave.allCompetitions,

@@ -26,6 +26,7 @@ import { playerSkills } from "../../Players/PlayerSkills";
 import { Competition, AllCompetitions } from "../../Competitions/CompetitionTypes";
 import { Club } from "../../Clubs/ClubTypes";
 import { Save, SaveID } from '../../StorageUtilities/SaveTypes'
+import { addSaveToDB } from '../../StorageUtilities/SaveUtilities'
 import { MainScreen } from "../MainScreen";
 
 describe("Competition Components", async () => {
@@ -431,7 +432,9 @@ describe("Competition Components", async () => {
       Club: testClubNameOne,
       Seasons: 1,
       CurrentSeason: "2024",
-      allCompetitions: testAllCompetitionsOne
+    allCompetitions: testAllCompetitionsOne,
+    saveID: "1"
+    
   };
   
   const testSeasonStatistics: Array<StatisticsObject> = [
@@ -446,19 +449,10 @@ describe("Competition Components", async () => {
   });
 
   
+
   const testDBName: string = "the-manager";
-  const saves: string = "save-games";
-
-  const version: number = 1;
-  const db = await openDB(testDBName, version, {
-    upgrade(db) {
-      db.createObjectStore(saves, {
-        autoIncrement: true,
-      });
-    },
-  });
-
-  const saveID: IDBValidKey = await db.add(saves, testSave);
+    
+  const saveID: SaveID = await addSaveToDB(testSave)
 
   const simButtonNames: Array<string> = [
     "one-day",
@@ -470,7 +464,6 @@ describe("Competition Components", async () => {
 
   afterEach(async () => {
     cleanup();
-    db.close();
     await deleteDB(testDBName);
   });
 

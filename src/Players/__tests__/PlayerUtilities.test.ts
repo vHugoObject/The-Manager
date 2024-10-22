@@ -10,10 +10,13 @@ import {
 } from "../PlayerUtilities";
 import { playerSkills } from "../PlayerSkills";
 import {
+  ComponentKeysObject,
+  StatisticsObject,
+  StatisticsType,
+} from "../../Common/CommonTypes";
+import {
   Player,
   SkillSet,
-  PlayerStatistics,
-  StatisticsObject,
   PositionGroup,
   PositionType,
   Midfielder,
@@ -73,7 +76,7 @@ describe("Player utilities tests", () => {
     RedCards: 0,
   };
 
-  const expectedStatistics: PlayerStatistics = {
+  const expectedStatistics: StatisticsType = {
     BySeason: { "2024": emptyStatistics },
     GameLog: {},
   };
@@ -106,7 +109,6 @@ describe("Player utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedStatistics,
-    ComponentKeys: testComponentKeys,
   };
 
   const testPositionGroups = [

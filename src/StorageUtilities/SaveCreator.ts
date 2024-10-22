@@ -1,3 +1,4 @@
+import { simpleFaker } from '@faker-js/faker';
 import { createCompetition } from '../Competitions/CompetitionUtilities';
 import { Competition, BaseCompetitions } from '../Competitions/CompetitionTypes';
 import { Save } from "./SaveTypes";
@@ -30,6 +31,7 @@ export const createSave = (
     Club,
     Seasons: 1,
     CurrentSeason: startingSeason,
-    allCompetitions
+    allCompetitions,
+    saveID: simpleFaker.string.numeric(4)
   }
 };

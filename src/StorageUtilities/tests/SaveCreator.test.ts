@@ -15,29 +15,12 @@ import {
 } from "../../Players/PlayerTypes";
 import { Club } from "../../Clubs/ClubTypes";
 import { playerSkills } from "../../Players/PlayerSkills";
-import { Competition, BaseCompetitions, AllCompetitions } from "../../Competitions/CompetitionTypes";
+import { Competition, BaseCompetitions } from "../../Competitions/CompetitionTypes";
 import { createSave } from "../SaveCreator";
 import { Save } from "../SaveTypes";
 
 describe("Competition Utilities tests", () => {
-  const fullCompetitionTableRowHeaders: Array<string> = [
-    "Club",
-    "Wins",
-    "Draws",
-    "Losses",
-    "Goals For",
-    "Goals Against",
-    "Goal Difference",
-    "Points",
-  ];
 
-  const simpleCompetitionTableRowHeaders: Array<string> = [
-    "Club",
-    "Wins",
-    "Draws",
-    "Losses",
-    "Points",
-  ];
 
   const competitionStatisticsArray: Array<string> = [
     "Wins",
@@ -64,10 +47,7 @@ describe("Competition Utilities tests", () => {
     GameLog: {},
   };
 
-  const expectedCompetitionComponentKeys: ComponentKeysObject = {
-    simpleCompetitionTableRowHeaders,
-    fullCompetitionTableRowHeaders,
-  };
+
 
   const clubStandardStatsHeaders: Array<string> = [
     "Name",
@@ -216,7 +196,6 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
   };
 
   const testPlayerTwo: Player = {
@@ -235,7 +214,7 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
+
   };
 
   const testPlayerThree: Player = {
@@ -254,7 +233,6 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
   };
 
   const testPlayerFour: Player = {
@@ -273,7 +251,7 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-    ComponentKeys: expectedPlayerComponentKeys,
+ 
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
@@ -295,14 +273,13 @@ describe("Competition Utilities tests", () => {
       Name: testClub,
       Statistics: expectedClubStatistics,
       Players: expect.anything(),
-      ComponentKeys: expectedClubComponentKeys,
+    
     };
 
     const expectedCompetition: Competition = {
       Name: "English Premier League",
       Clubs: expect.anything(),
       Statistics: expectedCompetitionStatistics,
-      ComponentKeys: expectedCompetitionComponentKeys,
     };    
         
 
@@ -313,7 +290,8 @@ describe("Competition Utilities tests", () => {
       Club: testClub,
       Seasons: 1,
       CurrentSeason: "2024",
-      allCompetitions: expect.anything()
+      allCompetitions: expect.anything(),
+      saveID: expect.any(String)
     }; 
 
     const actualSave: Save = createSave(

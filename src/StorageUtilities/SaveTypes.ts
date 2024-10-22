@@ -1,6 +1,6 @@
 import { AllCompetitions } from "../Competitions/CompetitionTypes";
 
-export type SaveID = number | IDBValidKey;
+export type SaveID = string | IDBValidKey;
 
 export interface Save {
  Name: string;
@@ -10,5 +10,5 @@ export interface Save {
  Seasons: number;
  CurrentSeason: string;
  allCompetitions: AllCompetitions;
- saveID?: SaveID
+ saveID: SaveID
 }

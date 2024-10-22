@@ -91,11 +91,7 @@ export const createCompetition = (
 
   return {
     Name: competition,
-    Clubs,
-    ComponentKeys: {
-      simpleCompetitionTableRowHeaders,
-      fullCompetitionTableRowHeaders,
-    },
+    Clubs,  
     Statistics: generateCompetitionStatisticsObject(season),
   };
 };
