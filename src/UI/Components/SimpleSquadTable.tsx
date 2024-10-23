@@ -1,11 +1,16 @@
 import React from "react";
+import { useContext } from "react";
+import { SaveContext } from "../DatabaseManagement"
 import { Competition } from "../../Competitions/CompetitionTypes";
 import { Club } from "../../Clubs/ClubTypes";
 import { Player } from "../../Players/PlayerTypes";
 import {  StatisticsObject } from "../../Common/CommonTypes";
 
-export const SimpleSquadTable = ({save, season}) => {
+
+export const SimpleSquadTable = ({season}) => {
   
+
+  const currentSave = useContext(SaveContext);
   const simpleSquadTableHeaders: Array<string> = [
     "Name",
     "National Team",
@@ -19,10 +24,10 @@ export const SimpleSquadTable = ({save, season}) => {
     "Red Cards",
   ];
 
-    const playerCountry: string = save.Country;
-  const playerMainCompetitonName: string = save.MainCompetition;
-  const playerClubName = save.Club;
-  const playerMainCompetiton: Competition = save.allCompetitions[playerCountry][playerMainCompetitonName];
+    const playerCountry: string = currentSave.Country;
+  const playerMainCompetitonName: string = currentSave.MainCompetition;
+  const playerClubName = currentSave.Club;
+  const playerMainCompetiton: Competition = currentSave.allCompetitions[playerCountry][playerMainCompetitonName];
   const playerClub: Club = playerMainCompetiton.Clubs.find((club) => club.Name === playerClubName)
   
   

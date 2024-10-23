@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import React from "react";
+import { setup } from '../../UITestingUtilities'
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, expect, test, afterEach } from "vitest";
 import {
@@ -23,6 +24,7 @@ import {
   ContractType,
 } from "../../../Players/PlayerTypes";
 import { playerSkills } from "../../../Players/PlayerSkills";
+import { SaveContext } from "../../DatabaseManagement";
 import { SimpleCompetitionTable } from "../SimpleCompetitionTable";
 
 describe("SimpleCompetitionTable component", async () => {
@@ -46,28 +48,7 @@ describe("SimpleCompetitionTable component", async () => {
     "Points",
   ];
 
-  const expectedClubSummaryStatsHeaders = [
-    "Record",
-    "Home Record",
-    "Away Record",
-    "Domestic Competition",
-    "Domestic Cups",
-    "Continental Cup",
-  ];
-
-  const expectedSimpleClubStandardStatsHeaders = [
-    "Name",
-    "National Team",
-    "Position",
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Goals",
-    "Assists",
-    "Yellow Cards",
-    "Red Cards",
-  ];
-  
+   
 
   const expectedPlayerStandardStatsHeaders: Array<string> = [
     "Season",
@@ -96,13 +77,9 @@ describe("SimpleCompetitionTable component", async () => {
     "Wages",
   ];
 
-  const testComponentKeys = {
-    standardStatsHeaders: expectedPlayerStandardStatsHeaders,
-    bioParagraphs: expectedBioParagraphs,
-  };
-
   
 
+  
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -122,16 +99,7 @@ describe("SimpleCompetitionTable component", async () => {
 
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
-  
-  const expectedCompetitionStatistics: StatisticsType = {
-    BySeason: { "2024": competitionStatisticsObject },
-    GameLog: {},
-  };
-
-  const expectedCompetitionComponentKeys: ComponentKeysObject = {
-    simpleCompetitionTableRowHeaders,
-    fullCompetitionTableRowHeaders,
-  };
+    
 
   const clubStandardStatsHeaders: Array<string> = [
     "Name",
@@ -185,15 +153,6 @@ describe("SimpleCompetitionTable component", async () => {
     RedCards: 0,
   };
 
-  const expectedClubStatistics: StatisticsType = {
-    BySeason: { "2024": testClubStatisticsOne },
-    GameLog: {},
-  };
-
-  const expectedClubComponentKeys: ComponentKeysObject = {
-    clubStandardStatsHeaders,
-    clubSummaryStatsHeaders,
-  };
 
   const playerStandardStatsHeaders: Array<string> = [
     "Matches Played",
@@ -385,7 +344,7 @@ describe("SimpleCompetitionTable component", async () => {
   };
 
 
-  const testClubs: Array<Club> = [testClubOne, testClubTwo];
+  const testClubs: Array<Club> = [testClubOne, testClubTwo, testClubThree, testClubFour];
   
   const testCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
@@ -416,7 +375,7 @@ describe("SimpleCompetitionTable component", async () => {
   const testNameOne: string = "Mikel Arteta";
   const testClubNameOne: string = "Arsenal";
   const testSeason: string = "2024";
-
+  const testFirstDay: Date = new Date("8/18/24");
 
 
   const testSave: Save = {
@@ -424,9 +383,11 @@ describe("SimpleCompetitionTable component", async () => {
       Country: testCountry,
       MainCompetition: testCompetitionName,
       Club: testClubNameOne,
-      Seasons: 1,
-      CurrentSeason: "2024",
-      allCompetitions: testAllCompetitionsOne
+    Seasons: 1,
+    CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
+    allCompetitions: testAllCompetitionsOne,
+    saveID: "1"
   };
 
 
@@ -435,9 +396,20 @@ describe("SimpleCompetitionTable component", async () => {
   });
 
   test("test SimpleCompetitionTable component", async () => {
-    render(<SimpleCompetitionTable save={testSave}
-	     season={testSeason}
+
+    const TestSimpleCompetitionTable = ({testInitialSaveContext}) => {
+      return (<div id="test-simple-comp-table">
+      <SaveContext.Provider value={testInitialSaveContext}>
+      <SimpleCompetitionTable 
+		season={testSeason}/>
+      </SaveContext.Provider>
+      </div>)
+    };
+    
+    setup(<TestSimpleCompetitionTable
+	     testInitialSaveContext={testSave}
     />);
+    
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),

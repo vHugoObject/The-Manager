@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import React from "react";
+import { setup } from '../../UITestingUtilities'
 import { render, screen, cleanup } from "@testing-library/react";
 import { describe, expect, test, afterEach } from "vitest";
 import {
@@ -24,6 +25,7 @@ import {
   ContractType,
 } from "../../../Players/PlayerTypes";
 import { playerSkills } from "../../../Players/PlayerSkills";
+import { SaveContext } from "../../DatabaseManagement";
 import { SimpleSquadTable } from "../SimpleSquadTable";
 
 describe("SimpleSquadTable Components", async () => {
@@ -48,23 +50,6 @@ describe("SimpleSquadTable Components", async () => {
   ];
 
 
-
-  
-
-  
-
-  const expectedBioParagraphs: Array<string> = [
-    "Position",
-    "Footed",
-    "Height",
-    "Weight",
-    "Age",
-    "National Team",
-    "Club",
-    "Wages",
-  ];
-
-  
 
   
 
@@ -387,7 +372,7 @@ describe("SimpleSquadTable Components", async () => {
   const testNameOne: string = "Mikel Arteta";
   const testClubNameOne: string = "Arsenal";
   const testSeason: string = "2024";
-
+  const testFirstDay: Date = new Date("8/18/24");
   
   const expectedPlayerStats = testPlayersOne.map((player: Player) => {
     return {
@@ -404,9 +389,11 @@ describe("SimpleSquadTable Components", async () => {
       Country: testCountry,
       MainCompetition: testCompetitionName,
       Club: testClubNameOne,
-      Seasons: 1,
-      CurrentSeason: "2024",
-      allCompetitions: testAllCompetitionsOne
+    Seasons: 1,    
+    CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
+    allCompetitions: testAllCompetitionsOne,
+    saveID: "1"
   };
 
   
@@ -415,9 +402,20 @@ describe("SimpleSquadTable Components", async () => {
   });
 
   test("test SimpleSquadTable", async () => {
-    render(<SimpleSquadTable save={testSave}
-	     season={testSeason}
+
+    const TestSimpleSquadTable = ({testInitialSaveContext}) => {
+      return (<div id="test-simple-squad-table">
+      <SaveContext.Provider value={testInitialSaveContext}>
+      <SimpleSquadTable
+	season={testSeason}/>
+      </SaveContext.Provider>
+      </div>)
+    };
+
+    setup(<TestSimpleSquadTable
+	     testInitialSaveContext={testSave}
     />);
+    
     expectedSimpleClubStandardStatsHeaders.forEach(
       (expectedColumnHeader, index) => {
         expect(

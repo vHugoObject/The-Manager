@@ -17,13 +17,7 @@ import {
   simulationReducer,
 } from "./SimulationManagement";
 import {
-  dbReducer,
-  DBContext,
   SaveContext,
-  DBDispatchContext,
-  DBActionType,
-  SaveSummary,
-  CurrentDBState,
 } from "./DatabaseManagement";
 import { Save, SaveID } from '../StorageUtilities/SaveTypes'
 
@@ -68,13 +62,13 @@ export const MainScreen = () => {
           <SimulationDispatchContext.Provider value={dispatch}>
             <SideMenu />
             <SimMenu />
-            {currentSave && <SimpleCompetitionTable save={currentSave}
+            {currentSave && <SimpleCompetitionTable 
 			      season={currentSave.CurrentSeason}
 	    />}
-            {currentSave && <ClubSummary save={currentSave}
+            {currentSave && <ClubSummary 
 			      season={currentSave.CurrentSeason}
 	    />}
-            {currentSave && <SimpleSquadTable save={currentSave}
+            {currentSave && <SimpleSquadTable 
 			      season={currentSave.CurrentSeason}
 	    />}
           </SimulationDispatchContext.Provider>

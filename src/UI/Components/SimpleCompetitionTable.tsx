@@ -1,4 +1,6 @@
 import React from "react";
+import { useContext } from "react";
+import { SaveContext } from "../DatabaseManagement"
 import { Competition } from "../../Competitions/CompetitionTypes";
 import { Club } from "../../Clubs/ClubTypes";
 import { Save, SaveID } from "../../StorageUtilities/SaveTypes";
@@ -6,7 +8,9 @@ import {  StatisticsObject } from "../../Common/CommonTypes";
 
 
 
-export const SimpleCompetitionTable = ({save, season}) => {
+export const SimpleCompetitionTable = ({season}) => {
+
+  const currentSave = useContext(SaveContext);
   const simpleCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
@@ -30,9 +34,9 @@ export const SimpleCompetitionTable = ({save, season}) => {
   };
 
 
-  const playerCountry: string = save.Country;
-  const playerMainCompetitonName: string = save.MainCompetition;
-  const playerMainCompetiton: Competition = save.allCompetitions[playerCountry][playerMainCompetitonName];
+  const playerCountry: string = currentSave.Country;
+  const playerMainCompetitonName: string = currentSave.MainCompetition;
+  const playerMainCompetiton: Competition = currentSave.allCompetitions[playerCountry][playerMainCompetitonName];
   
   return (
     <div>

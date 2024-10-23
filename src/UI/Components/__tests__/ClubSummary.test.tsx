@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { screen, render, cleanup } from "@testing-library/react";
+import { setup } from '../../UITestingUtilities'
 import { describe, expect, test, afterEach } from "vitest";
 import {
   ComponentKeysObject,
@@ -23,6 +24,7 @@ import {
   ContractType,
 } from "../../../Players/PlayerTypes";
 import { playerSkills } from "../../../Players/PlayerSkills";
+import { SaveContext } from "../../DatabaseManagement";
 import { ClubSummary } from "../ClubSummary";
 
 describe("Competition Components", async () => {
@@ -375,7 +377,7 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
   const testNameOne: string = "Mikel Arteta";
   const testClubNameOne: string = "Arsenal";
   const testSeason: string = "2024";
-
+  const testFirstDay: Date = new Date("8/18/24");
 
 
   const testSave: Save = {
@@ -384,8 +386,11 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
       MainCompetition: testCompetitionName,
       Club: testClubNameOne,
       Seasons: 1,
-      CurrentSeason: "2024",
-      allCompetitions: testAllCompetitionsOne
+    CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
+    allCompetitions: testAllCompetitionsOne,
+    saveID: "0"
+    
   };
 
 
@@ -394,9 +399,17 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
   });
 
   test("test ClubSummary", async () => {
-    render(<ClubSummary save={testSave}
-	     season={testSeason}
-    />);
+
+    const TestClubSummary = ({testInitialSaveContext}) => {
+      return (<div id="test-club-summary">
+      <SaveContext.Provider value={testInitialSaveContext}>
+      <ClubSummary season={testSeason}/>
+      </SaveContext.Provider>
+      </div>)
+    };
+
+    setup(<TestClubSummary
+	    testInitialSaveContext={testSave}/>);
 
     
     expectedClubSummaryStatsHeaders.forEach((expectedClubHeader) => {
