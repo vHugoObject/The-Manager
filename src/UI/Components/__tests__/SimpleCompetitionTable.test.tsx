@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 import React from "react";
 import { setup } from '../../UITestingUtilities'
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, expect, test, afterEach } from "vitest";
 import {
-  ComponentKeysObject,
   StatisticsObject,
   StatisticsType,
 } from "../../../Common/CommonTypes";
@@ -16,10 +15,7 @@ import {
   SkillSet,
   PositionGroup,
   Midfielder,
-  Attacker,
-  Goalkeeper,
   Defender,
-  BiographicalDetails,
   Foot,
   ContractType,
 } from "../../../Players/PlayerTypes";
@@ -37,49 +33,7 @@ describe("SimpleCompetitionTable component", async () => {
     "Points",
   ];
 
-    const fullCompetitionTableRowHeaders: Array<string> = [
-    "Club",
-    "Wins",
-    "Draws",
-    "Losses",
-    "Goals For",
-    "Goals Against",
-    "Goal Difference",
-    "Points",
-  ];
-
-   
-
-  const expectedPlayerStandardStatsHeaders: Array<string> = [
-    "Season",
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Full 90s",
-    "Goals",
-    "Assists",
-    "Goals Plus Assists",
-    "Non Penalty Goals",
-    "Penalty Kicks Made",
-    "Penalty Kicks Attempted",
-    "Yellow Cards",
-    "Red Cards",
-  ];
-
-  const expectedBioParagraphs: Array<string> = [
-    "Position",
-    "Footed",
-    "Height",
-    "Weight",
-    "Age",
-    "National Team",
-    "Club",
-    "Wages",
-  ];
-
-  
-
-  
+     
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -100,35 +54,7 @@ describe("SimpleCompetitionTable component", async () => {
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
     
-
-  const clubStandardStatsHeaders: Array<string> = [
-    "Name",
-    "National Team",
-    "Position",
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Full 90s",
-    "Goals",
-    "Assists",
-    "Goals Plus Assists",
-    "Non Penalty Goals",
-    "Penalty Kicks Made",
-    "Penalty Kicks Attempted",
-    "Yellow Cards",
-    "Red Cards",
-  ];
-
-  const clubSummaryStatsHeaders: Array<string> = [
-    "Record",
-    "Home Record",
-    "Away Record",
-    "Manager",
-    "Country",
-    "Domestic Competition",
-    "Domestic Cups",
-    "Continental Cup",
-  ];
+  
 
   const testClubStatisticsOne: StatisticsObject = {
     Wins: 0,
@@ -152,33 +78,7 @@ describe("SimpleCompetitionTable component", async () => {
     YellowCards: 0,
     RedCards: 0,
   };
-
-
-  const playerStandardStatsHeaders: Array<string> = [
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Full 90s",
-    "Goals",
-    "Assists",
-    "Goals Plus Assists",
-    "Non Penalty Goals",
-    "Penalty Kicks Made",
-    "Penalty Kicks Attempted",
-    "Yellow Cards",
-    "Red Cards",
-  ];
-
-  const playerBioParagraphs: Array<string> = [
-    "Position",
-    "Footed",
-    "Height",
-    "Weight",
-    "Age",
-    "National Team",
-    "Club",
-    "Wages",
-  ];
+  
 
   const playerStatisticsArray: Array<string> = [
     "Wins",
@@ -205,11 +105,7 @@ describe("SimpleCompetitionTable component", async () => {
     BySeason: { "2024": playerStatisticsObject },
     GameLog: {},
   };
-
-  const expectedPlayerComponentKeys: ComponentKeysObject = {
-    playerStandardStatsHeaders,
-    playerBioParagraphs,
-  };
+  
 
   const expectedContract: ContractType = {
     Wage: 1,
@@ -308,10 +204,7 @@ describe("SimpleCompetitionTable component", async () => {
     GameLog: {},
   };
 
-  const testClubComponentKeys: ComponentKeysObject = {
-    clubStandardStatsHeaders,
-    clubSummaryStatsHeaders,
-  };
+  
   const testClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
@@ -351,11 +244,7 @@ describe("SimpleCompetitionTable component", async () => {
     GameLog: {},
   };
 
-  const testCompetitionComponentKeys: ComponentKeysObject = {
-    simpleCompetitionTableRowHeaders,
-    fullCompetitionTableRowHeaders,
-  };
-  
+    
   const testCompetitionOne: Competition = {
     Name: "English Premier League",
     Clubs: testClubs,

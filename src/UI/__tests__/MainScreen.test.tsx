@@ -509,12 +509,19 @@ describe("Competition Components", async () => {
       expect(screen.getByRole("button", { name: buttonName })).toBeTruthy();
     });
 
+    const expectedDate: string = testFirstDay.toDateString();
+    await waitFor(() =>
+    expect(
+        screen.getByText(expectedDate, { selector: "h2[id=current-date]" }),
+    ).toBeTruthy()
+    )
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),
       ).toBeTruthy(),
     );
 
+       
         const lastSimpleCompHeaderKey =
       simpleCompetitionTableRowHeaders.length - 1;
     const lastSimpleCompHeader =

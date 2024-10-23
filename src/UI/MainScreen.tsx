@@ -9,6 +9,7 @@ import {
   SideMenu,
   SimMenu,
   SiteBanner,
+  CurrentDate
 } from "./Components/index";
 import {
   SimulationContext,
@@ -62,6 +63,7 @@ export const MainScreen = () => {
           <SimulationDispatchContext.Provider value={dispatch}>
             <SideMenu />
             <SimMenu />
+	    {currentSave && <CurrentDate />}
             {currentSave && <SimpleCompetitionTable 
 			      season={currentSave.CurrentSeason}
 	    />}

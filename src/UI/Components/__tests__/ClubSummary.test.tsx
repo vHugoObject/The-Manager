@@ -27,7 +27,7 @@ import { playerSkills } from "../../../Players/PlayerSkills";
 import { SaveContext } from "../../DatabaseManagement";
 import { ClubSummary } from "../ClubSummary";
 
-describe("Competition Components", async () => {
+describe("Club Summary Components", async () => {
 const simpleCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",

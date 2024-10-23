@@ -413,6 +413,7 @@ describe("test the app from the root", async () => {
   const testNameOne: string = "Mikel Arteta";
   const testClubNameOne: string = "Arsenal";
   const testSeason: string = "2024";
+  const testFirstDay: Date = new Date("8/18/24");
 
 
   const expectedPlayerStats = testPlayersOne.map((player: Player) => {
@@ -430,7 +431,8 @@ describe("test the app from the root", async () => {
       MainCompetition: testCompetitionName,
       Club: testClubNameOne,
       Seasons: 1,
-      CurrentSeason: "2024",
+    CurrentSeason: "2024",
+    CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
     saveID: "0"
   };
@@ -519,6 +521,14 @@ describe("test the app from the root", async () => {
     );
     
     // wait for main screen to load
+    const expectedDate: string = testFirstDay.toDateString();
+    await waitFor(() =>
+    expect(
+        screen.getByText(expectedDate, { selector: "h2[id=current-date]" }),
+    ).toBeTruthy()
+    )
+    
+    
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),
@@ -595,7 +605,13 @@ describe("test the app from the root", async () => {
     await user.click(screen.getByRole("button", { name: "Play_0" }));
 
     
-    // wait for main screen to load
+      // wait for main screen to load
+      const expectedDate: string = testFirstDay.toDateString();
+    await waitFor(() =>
+    expect(
+        screen.getByText(expectedDate, { selector: "h2[id=current-date]" }),
+    ).toBeTruthy()
+    )
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),

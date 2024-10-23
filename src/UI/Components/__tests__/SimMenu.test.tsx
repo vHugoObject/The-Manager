@@ -31,7 +31,8 @@ describe("Menu test suites", async () => {
     "until-deadline",
     "until-season-end",
   ];
-  const testInitialSimulationStatus = SimulationState.initializing;
+
+      const testInitialSimulationStatus = SimulationState.initializing;
 
   test("Test SimForwardOptions", async () => {
     render(<SimForwardOptions />);
@@ -47,7 +48,7 @@ describe("Menu test suites", async () => {
   });
 
   test("Test SimMenuDropDown with non-simming context", async () => {
-    
+
     
     const testDispatcher = () => {
       return;
@@ -72,6 +73,10 @@ describe("Menu test suites", async () => {
   });
 
   test("Test SimMenuDropDown with simming context", async () => {
+    const testInitialSimulationStatus: CurrentSimulationStatus = {
+      saveID: 1,
+      simulationState: SimulationState.simming,
+    };
 
     const testDispatcher = () => {
       return;
@@ -94,6 +99,10 @@ describe("Menu test suites", async () => {
   });
 
   test("Test the full menu component", async () => {
+    const testInitialSimulationStatus: CurrentSimulationStatus = {
+      saveID: 1,
+      simulationState: SimulationState.initializing,
+    };
 
     const TestSimMenu = ({ testInitialSimulationStatus }) => {
       const [currentSimulationStatus, testDispatcher] = useReducer(
