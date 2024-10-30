@@ -39,16 +39,6 @@ describe("Competition Components", async () => {
     "Points",
   ];
 
-    const fullCompetitionTableRowHeaders: Array<string> = [
-    "Club",
-    "Wins",
-    "Draws",
-    "Losses",
-    "Goals For",
-    "Goals Against",
-    "Goal Difference",
-    "Points",
-  ];
 
   const expectedClubSummaryStatsHeaders = [
     "Record",
@@ -100,10 +90,7 @@ describe("Competition Components", async () => {
     "Wages",
   ];
 
-  const testComponentKeys = {
-    standardStatsHeaders: expectedPlayerStandardStatsHeaders,
-    bioParagraphs: expectedBioParagraphs,
-  };
+  
 
   
 
@@ -127,44 +114,9 @@ describe("Competition Components", async () => {
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
   
-  const expectedCompetitionStatistics: StatisticsType = {
-    BySeason: { "2024": competitionStatisticsObject },
-    GameLog: {},
-  };
+  
 
-  const expectedCompetitionComponentKeys: ComponentKeysObject = {
-    simpleCompetitionTableRowHeaders,
-    fullCompetitionTableRowHeaders,
-  };
-
-  const clubStandardStatsHeaders: Array<string> = [
-    "Name",
-    "National Team",
-    "Position",
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Full 90s",
-    "Goals",
-    "Assists",
-    "Goals Plus Assists",
-    "Non Penalty Goals",
-    "Penalty Kicks Made",
-    "Penalty Kicks Attempted",
-    "Yellow Cards",
-    "Red Cards",
-  ];
-
-  const clubSummaryStatsHeaders: Array<string> = [
-    "Record",
-    "Home Record",
-    "Away Record",
-    "Manager",
-    "Country",
-    "Domestic Competition",
-    "Domestic Cups",
-    "Continental Cup",
-  ];
+  
 
   const testClubStatisticsOne: StatisticsObject = {
     Wins: 0,
@@ -189,41 +141,7 @@ describe("Competition Components", async () => {
     RedCards: 0,
   };
 
-  const expectedClubStatistics: StatisticsType = {
-    BySeason: { "2024": testClubStatisticsOne },
-    GameLog: {},
-  };
 
-  const expectedClubComponentKeys: ComponentKeysObject = {
-    clubStandardStatsHeaders,
-    clubSummaryStatsHeaders,
-  };
-
-  const playerStandardStatsHeaders: Array<string> = [
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Full 90s",
-    "Goals",
-    "Assists",
-    "Goals Plus Assists",
-    "Non Penalty Goals",
-    "Penalty Kicks Made",
-    "Penalty Kicks Attempted",
-    "Yellow Cards",
-    "Red Cards",
-  ];
-
-  const playerBioParagraphs: Array<string> = [
-    "Position",
-    "Footed",
-    "Height",
-    "Weight",
-    "Age",
-    "National Team",
-    "Club",
-    "Wages",
-  ];
 
   const playerStatisticsObject: StatisticsObject = {
   MatchesPlayed: 0,
@@ -245,10 +163,6 @@ describe("Competition Components", async () => {
     GameLog: {},
   };
 
-  const expectedPlayerComponentKeys: ComponentKeysObject = {
-    playerStandardStatsHeaders,
-    playerBioParagraphs,
-  };
 
   const expectedContract: ContractType = {
     Wage: 1,
@@ -347,15 +261,14 @@ describe("Competition Components", async () => {
     GameLog: {},
   };
 
-  const testClubComponentKeys: ComponentKeysObject = {
-    clubStandardStatsHeaders,
-    clubSummaryStatsHeaders,
-  };
+  
   const testClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,
+    Squad: testPlayersOne,
+    Starting11: [],
+    Bench: []
 
   };
 
@@ -363,14 +276,18 @@ describe("Competition Components", async () => {
     ID: 1,
     Name: "Chelsea",
     Statistics: testClubStatistics,
-    Players: testPlayersTwo,
+    Squad: testPlayersTwo,
+    Starting11: [],
+    Bench: []
   };
 
   const testClubThree: Club = {
     ID: 2,
     Name: "Everton",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,
+    Squad: testPlayersOne,
+    Starting11: [],
+    Bench: []
   
   };
 
@@ -378,7 +295,9 @@ describe("Competition Components", async () => {
     ID: 3,
     Name: "Ashton Villa",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,
+    Squad: testPlayersOne,
+    Starting11: [],
+    Bench: []
 
   };
 
@@ -390,10 +309,7 @@ describe("Competition Components", async () => {
     GameLog: {},
   };
 
-  const testCompetitionComponentKeys: ComponentKeysObject = {
-    simpleCompetitionTableRowHeaders,
-    fullCompetitionTableRowHeaders,
-  };
+
   
   const testCompetitionOne: Competition = {
     Name: "English Premier League",

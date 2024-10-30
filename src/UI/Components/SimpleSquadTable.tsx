@@ -32,7 +32,7 @@ export const SimpleSquadTable = ({season}) => {
   
   
   const getPlayerStatistics = (club: Club, season: string) => {
-    return club.Players.map((player: Player) => {
+    return club.Squad.map((player: Player) => {
       const stats: StatisticsObject = player.Statistics.BySeason[season];
       return {
         Name: player["Name"],

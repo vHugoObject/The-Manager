@@ -18,66 +18,9 @@ import {
 import { StatisticsObject, StatisticsType } from "../../Common/CommonTypes";
 
 describe("Club Utilities tests", () => {
-  const expectedPlayerStandardStatsHeaders = [
-    "Season",
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Full 90s",
-    "Goals",
-    "Assists",
-    "Goals Plus Assists",
-    "Non Penalty Goals",
-    "Penalty Kicks Made",
-    "Penalty Kicks Attempted",
-    "Yellow Cards",
-    "Red Cards",
-  ];
 
-  const expectedBioParagraphs = [
-    "Position",
-    "Footed",
-    "Height",
-    "Weight",
-    "Age",
-    "National Team",
-    "Club",
-    "Wages",
-  ];
 
-  const expectedClubStandardStatsHeaders = [
-    "Name",
-    "National Team",
-    "Position",
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Full 90s",
-    "Goals",
-    "Assists",
-    "Goals Plus Assists",
-    "Non Penalty Goals",
-    "Penalty Kicks Made",
-    "Penalty Kicks Attempted",
-    "Yellow Cards",
-    "Red Cards",
-  ];
 
-  const expectedClubSummaryStatsHeaders = [
-    "Record",
-    "Home Record",
-    "Away Record",
-    "Manager",
-    "Country",
-    "Domestic Competition",
-    "Domestic Cups",
-    "Continental Cup",
-  ];
-
-  const expectedPlayerComponentKeys = {
-    standardStatsHeaders: expectedPlayerStandardStatsHeaders,
-    bioParagraphs: expectedBioParagraphs,
-  };
 
   const expectedContract: ContractType = {
     Wage: 1,
@@ -158,24 +101,24 @@ describe("Club Utilities tests", () => {
 
   const testPlayers: Array<Player> = [testPlayerOne, testPlayerTwo];
 
-  const testClubComponentKeys = {
-    clubSummaryStatsHeaders: expectedClubSummaryStatsHeaders,
-    clubStandardStatsHeaders: expectedClubStandardStatsHeaders,
-  };
+  
 
   const expectedClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: expectedStatistics,
-    Players: testPlayers,
-
+    Squad: testPlayers,
+    Starting11: [],
+    Bench: []
   };
 
   const expectedClubTwo: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: expectedStatistics,
-    Players: expect.anything(),
+    Squad: expect.anything(),
+    Starting11: expect.anything(),
+    Bench: expect.anything()
   };
 
   const testTeamName: string = "Arsenal";
@@ -225,7 +168,7 @@ describe("Club Utilities tests", () => {
 
     expect(actualClub).toStrictEqual(expectedClubTwo);
 
-    const actualPlayers: Array<Player> = actualClub.Players;
+    const actualPlayers: Array<Player> = actualClub.Squad;
     expect(actualPlayers.length).toBe(25);
     expectTypeOf(actualPlayers).toEqualTypeOf(testPlayers);
     actualPlayers.forEach((testPlayer) => {

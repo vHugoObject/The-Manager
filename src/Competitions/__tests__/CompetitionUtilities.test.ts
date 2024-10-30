@@ -67,11 +67,6 @@ describe("Competition Utilities tests", () => {
     GameLog: {},
   };
 
-  const expectedCompetitionComponentKeys: ComponentKeysObject = {
-    simpleCompetitionTableRowHeaders,
-    fullCompetitionTableRowHeaders,
-  };
-
   const clubStandardStatsHeaders: Array<string> = [
     "Name",
     "National Team",
@@ -301,14 +296,18 @@ describe("Competition Utilities tests", () => {
       ID: 0,
       Name: "Arsenal",
       Statistics: expectedClubStatistics,
-      Players: expect.anything(),
+      Squad: expect.anything(),
+      Starting11: [],
+      Bench: []
     };
 
     const expectedClubTwo: Club = {
       ID: 1,
       Name: "Brentford",
       Statistics: expectedClubStatistics,
-      Players: expect.anything(),
+      Squad: expect.anything(),
+      Starting11: [],
+      Bench: []
     };
 
     const expectedClubs: Array<Club> = [expectedClubOne, expectedClubTwo];
@@ -327,14 +326,18 @@ describe("Competition Utilities tests", () => {
       ID: 0,
       Name: "Arsenal",
       Statistics: expectedClubStatistics,
-      Players: testPlayersOne,
+      Squad: testPlayersOne,
+      Starting11: [],
+      Bench: []
     };
 
     const expectedClubTwo: Club = {
       ID: 1,
       Name: "Brentford",
       Statistics: expectedClubStatistics,
-      Players: testPlayersTwo,
+      Squad: testPlayersTwo,
+      Starting11: [],
+      Bench: []
 
     };
 
@@ -354,14 +357,18 @@ describe("Competition Utilities tests", () => {
       ID: 0,
       Name: "Arsenal",
       Statistics: expectedClubStatistics,
-      Players: expect.anything(),
+      Squad: expect.anything(),
+      Starting11: [],
+      Bench: []
     };
 
     const expectedClubTwo: Club = {
       ID: 1,
       Name: "Brentford",
       Statistics: expectedClubStatistics,
-      Players: expect.anything(),
+      Squad: expect.anything(),
+      Starting11: [],
+      Bench: []
     };
 
     const expectedCompetitionNoPlayers = {
@@ -379,7 +386,7 @@ describe("Competition Utilities tests", () => {
     expect(actualCompetition).toStrictEqual(expectedCompetitionNoPlayers);
     actualCompetition.Clubs.forEach((actualClub: Club) => {
       expectTypeOf(actualClub).toEqualTypeOf(expectedClubOne)
-      const actualPlayers: Array<Player> = actualClub.Players;
+      const actualPlayers: Array<Player> = actualClub.Squad;
       expect(actualPlayers.length).toBe(25);
       expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
       actualPlayers.forEach((testPlayer) => {
@@ -393,14 +400,18 @@ describe("Competition Utilities tests", () => {
       ID: 0,
       Name: "Arsenal",
       Statistics: expectedClubStatistics,
-      Players: testPlayersOne,
+      Squad: testPlayersOne,
+      Starting11: [],
+      Bench: []
     };
 
     const expectedClubTwo: Club = {
       ID: 1,
       Name: "Brentford",
       Statistics: expectedClubStatistics,
-      Players: testPlayersTwo,
+      Squad: testPlayersTwo,
+      Starting11: [],
+      Bench: []
     };
 
     const expectedCompetitionWithPlayers = {

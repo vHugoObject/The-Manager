@@ -13,8 +13,10 @@
   },
   "dependencies": {
     "@faker-js/faker": "^9.0.3",
+    "date-fns": "^4.1.0",
     "idb": "^8.0.0",
     "lodash": "^4.17.21",
+    "lodash.product": "^18.10.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"

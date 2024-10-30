@@ -455,7 +455,10 @@ describe("NewGame Components", async () => {
       ID: 0,
       Name: testClub,
       Statistics: expectedClubStatistics,
-      Players: testPlayersOne
+      Squad: testPlayersOne,
+      Starting11: [],
+      Bench: []
+      
     };
 
     const expectedCompetition: Competition = {
@@ -490,7 +493,7 @@ describe("NewGame Components", async () => {
       expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition)
       actualCompetition.Clubs.forEach((actualClub: Club) => {
 	expectTypeOf(actualClub).toEqualTypeOf(expectedClub)
-	const actualPlayers: Array<Player> = actualClub.Players;
+	const actualPlayers: Array<Player> = actualClub.Squad;
 	expect(actualPlayers.length).toBe(25);
 	expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
 	actualPlayers.forEach((testPlayer) => {

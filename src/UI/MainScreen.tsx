@@ -53,7 +53,7 @@ export const MainScreen = () => {
     }
   }, [saveID, currentSimulationStatus]);
 
-  // do we need to use context with 
+  
   return (
     <div id="main-screen">
       <SiteBanner />

@@ -337,14 +337,19 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,  
+    Squad: testPlayersOne,
+    Starting11: [],
+    Bench: []
+    
   };
 
   const testClubTwo: Club = {
     ID: 1,
     Name: "Chelsea",
     Statistics: testClubStatistics,
-    Players: testPlayersTwo,
+    Squad: testPlayersTwo,
+    Starting11: [],
+    Bench: []
   };
   
 

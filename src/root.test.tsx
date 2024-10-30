@@ -354,31 +354,36 @@ describe("test the app from the root", async () => {
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,
-
+    Squad: testPlayersOne,
+    Starting11: [],
+    Bench: []
   };
 
   const testClubTwo: Club = {
     ID: 1,
     Name: "Chelsea",
     Statistics: testClubStatistics,
-    Players: testPlayersTwo,
+    Squad: testPlayersTwo,
+    Starting11: [],
+    Bench: []
   };
 
   const testClubThree: Club = {
     ID: 2,
     Name: "Everton",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,
-  
+    Squad: testPlayersOne,
+    Starting11: [],
+    Bench: []
   };
 
   const testClubFour: Club = {
     ID: 3,
     Name: "Ashton Villa",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,
-
+    Squad: testPlayersOne,
+    Starting11: [],
+    Bench: []
   };
 
 
@@ -662,6 +667,28 @@ describe("test the app from the root", async () => {
     });
 
   test("test go back to start screen from main screen ", async () => {
+    await addSaveToDB(testSave);
+    const TestApp = () => (
+      <div>
+        <App />
+      </div>
+    );
+    const { user } = renderWithRouter(<TestApp />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Play_0" })).toBeTruthy(),
+    );
+    await user.click(screen.getByRole("button", { name: "Play_0" }));
+
+    
+    await waitFor(() =>
+      expect(
+        screen.getByText(testCompetitionName, { selector: "h2" }),
+      ).toBeTruthy(),
+    );
+  });
+
+  test("test ability to switch save TBD****", async () => {
     await addSaveToDB(testSave);
     const TestApp = () => (
       <div>

@@ -9,5 +9,7 @@ export interface Club {
   ID: number;
   Name: string;
   Statistics: StatisticsType;
-  Players: Array<Player>;
+  Squad: Array<Player>;
+  Starting11: Array<Player>;
+  Bench: Array<Player>;
 }

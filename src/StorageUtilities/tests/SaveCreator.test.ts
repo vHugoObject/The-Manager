@@ -274,8 +274,9 @@ describe("Competition Utilities tests", () => {
       ID: 0,
       Name: testClub,
       Statistics: expectedClubStatistics,
-      Players: expect.anything(),
-    
+      Squad: expect.anything(),
+      Starting11: [],
+      Bench: []
     };
 
     const expectedCompetition: Competition = {
@@ -318,7 +319,7 @@ describe("Competition Utilities tests", () => {
       actualCompetition.Clubs.forEach((actualClub: Club) => {
 	expect(actualClub).toStrictEqual(expectedClub)
 	expectTypeOf(actualClub).toEqualTypeOf(expectedClub)
-	const actualPlayers: Array<Player> = actualClub.Players;
+	const actualPlayers: Array<Player> = actualClub.Squad;
 	expect(actualPlayers.length).toBe(25);
 	expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
 	actualPlayers.forEach((testPlayer) => {
