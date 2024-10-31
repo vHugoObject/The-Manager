@@ -74,7 +74,6 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerSkills = (): Record<string, SkillSet> => {
-    console.log("");
     return Object.fromEntries(
       Object.entries(playerSkills).map(([name, set]) => [
         name,
@@ -477,8 +476,6 @@ describe("simulateMatch test suite", async () => {
       },
     );
 
-    console.log(actualSimulatedMatch.HomeOverallStatistics["Expected Goals"]);
-    console.log(actualSimulatedMatch.AwayOverallStatistics["Expected Goals"]);
     Object.values(actualSimulatedMatch.AwayOverallStatistics).forEach(
       (value) => {
         expect(value).toBeGreaterThanOrEqual(0);

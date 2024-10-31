@@ -675,9 +675,6 @@ describe("MatchUtilities test suite", () => {
         testNormalizedAwayProb,
         testTheta,
       );
-      if (actualJointProbability == 0) {
-        console.log(testGoals, testHomeProb, testAwayProb);
-      }
 
       expect(actualJointProbability).toBeGreaterThan(0);
       expect(actualJointProbability).toBeLessThan(1);

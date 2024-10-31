@@ -21,7 +21,8 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
     const country: string = formJSON["country"];
     const club: string = formJSON["club"];
     const currentSeason: string = "2024"; // will get this from the form eventually
-    const firstDay: string = "8/18/24";
+    //
+    const firstDay: string = "8/11/24";
     return createSave(
       playerName,
       country,
