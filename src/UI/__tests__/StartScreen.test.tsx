@@ -1,10 +1,6 @@
 // @vitest-environment jsdom
 import React from "react";
-import {
-  screen,
-  cleanup,
-  waitFor
-} from "@testing-library/react";
+import { screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, expect, test, afterEach } from "vitest";
 import "fake-indexeddb/auto";
 import { renderWithRouter, setup } from "../UITestingUtilities";
@@ -25,7 +21,10 @@ import {
 } from "../../Players/PlayerTypes";
 import { Club } from "../../Clubs/ClubTypes";
 import { playerSkills } from "../../Players/PlayerSkills";
-import { Competition, AllCompetitions } from "../../Competitions/CompetitionTypes";
+import {
+  Competition,
+  AllCompetitions,
+} from "../../Competitions/CompetitionTypes";
 import {
   getSaveValue,
   addSaveToDB,
@@ -260,7 +259,7 @@ describe("StartScreen test suite", async () => {
     Value: 1,
     Rating: 80,
     Skills: testPlayerSkills,
-    Statistics: expectedPlayerStatistics
+    Statistics: expectedPlayerStatistics,
   };
 
   const testPlayerThree: Player = {
@@ -278,7 +277,7 @@ describe("StartScreen test suite", async () => {
     Value: 1,
     Rating: 80,
     Skills: testPlayerSkills,
-    Statistics: expectedPlayerStatistics
+    Statistics: expectedPlayerStatistics,
   };
 
   const testPlayerFour: Player = {
@@ -296,12 +295,11 @@ describe("StartScreen test suite", async () => {
     Value: 1,
     Rating: 80,
     Skills: testPlayerSkills,
-    Statistics: expectedPlayerStatistics
+    Statistics: expectedPlayerStatistics,
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwo: Array<Player> = [testPlayerThree, testPlayerFour];
-  
 
   const testClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
@@ -318,7 +316,7 @@ describe("StartScreen test suite", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubTwo: Club = {
@@ -327,7 +325,7 @@ describe("StartScreen test suite", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersTwo,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubThree: Club = {
@@ -336,7 +334,7 @@ describe("StartScreen test suite", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubFour: Club = {
@@ -345,13 +343,12 @@ describe("StartScreen test suite", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
-
 
   const testClubsOne: Array<Club> = [testClubOne, testClubTwo];
   const testClubsTwo: Array<Club> = [testClubThree, testClubFour];
-  
+
   const testCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
@@ -361,12 +358,12 @@ describe("StartScreen test suite", async () => {
     simpleCompetitionTableRowHeaders,
     fullCompetitionTableRowHeaders,
   };
-  
+
   const testCompetitionOne: Competition = {
     Name: "English Premier League",
     Clubs: testClubsOne,
     Statistics: testCompetitionStatistics,
-  };    
+  };
 
   const testCompetitionTwo: Competition = {
     Name: "The Championship",
@@ -383,13 +380,13 @@ describe("StartScreen test suite", async () => {
   const testAllCompetitionsTwo: AllCompetitions = {
     England: {
       "English Premier League": testCompetitionOne,
-      "The Championship": testCompetitionTwo
+      "The Championship": testCompetitionTwo,
     },
   };
 
   const testCountry: string = "England";
   const testCompetitionNameOne: string = "English Premier League";
-  const testCompetitionNameTwo: string = "The Championship";  
+  const testCompetitionNameTwo: string = "The Championship";
   const testNameOne = "Mikel Arteta";
   const testNameTwo = "Unai Emery";
   const testClubNameOne: string = "Arsenal";
@@ -397,64 +394,59 @@ describe("StartScreen test suite", async () => {
   const testSeason: string = "2024";
   const testFirstDay: Date = new Date("8/18/24");
 
-
   const testSaveOne: Save = {
-      Name: testNameOne,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameOne,
-      Club: testClubNameOne,
-      Seasons: 1,
+    Name: testNameOne,
+    Country: testCountry,
+    MainCompetition: testCompetitionNameOne,
+    Club: testClubNameOne,
+    Seasons: 1,
     CurrentSeason: "2024",
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
-    saveID: "0"
-    
+    saveID: "0",
   };
 
   const testSaveTwo: Save = {
-      Name: testNameTwo,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameTwo,
-      Club: testClubNameTwo,
-      Seasons: 1,
+    Name: testNameTwo,
+    Country: testCountry,
+    MainCompetition: testCompetitionNameTwo,
+    Club: testClubNameTwo,
+    Seasons: 1,
     CurrentSeason: "2024",
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsTwo,
-    saveID: "1"
+    saveID: "1",
   };
 
-
   const expectedSaveOne: Save = {
-      Name: testNameOne,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameOne,
-      Club: testClubNameOne,
-      Seasons: 1,
+    Name: testNameOne,
+    Country: testCountry,
+    MainCompetition: testCompetitionNameOne,
+    Club: testClubNameOne,
+    Seasons: 1,
     CurrentSeason: "2024",
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
-    saveID: "0"
+    saveID: "0",
   };
 
   const expectedSaveTwo: Save = {
-      Name: testNameTwo,
-      Country: testCountry,
-      MainCompetition: testCompetitionNameTwo,
-      Club: testClubNameTwo,
-      Seasons: 1,
+    Name: testNameTwo,
+    Country: testCountry,
+    MainCompetition: testCompetitionNameTwo,
+    Club: testClubNameTwo,
+    Seasons: 1,
     CurrentSeason: "2024",
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsTwo,
-    saveID: "1"
+    saveID: "1",
   };
 
-    
   const testSaves: Array<Save> = [testSaveOne, testSaveTwo];
-  const expectedSaves: Array<Save> = [expectedSaveOne, expectedSaveTwo];  
+  const expectedSaves: Array<Save> = [expectedSaveOne, expectedSaveTwo];
   const testSavesCount: number = testSaves.length - 1;
 
   const testDBName: string = "the-manager";
-
 
   const firstTestSaveSummary: SaveSummary = {
     SaveID: 0,
@@ -476,8 +468,7 @@ describe("StartScreen test suite", async () => {
     secondTestSaveSummary,
   ];
 
-  const testInitialDBState: CurrentDBState = CurrentDBState.initializing
-
+  const testInitialDBState: CurrentDBState = CurrentDBState.initializing;
 
   const testDispatcher = () => {
     return;
@@ -657,7 +648,7 @@ describe("StartScreen test suite", async () => {
     const saveIDOne = await addSaveToDB(testSaveOne);
     const saveIDTwo = await addSaveToDB(testSaveTwo);
     const testSaveIDs = [saveIDOne, saveIDTwo];
-    const saveIDSCount = testSaveIDs.length - 1;    
+    const saveIDSCount = testSaveIDs.length - 1;
 
     const { user } = renderWithRouter(<StartScreen />);
 

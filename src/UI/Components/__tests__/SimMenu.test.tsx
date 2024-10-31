@@ -32,7 +32,7 @@ describe("Menu test suites", async () => {
     "until-season-end",
   ];
 
-      const testInitialSimulationStatus = SimulationState.initializing;
+  const testInitialSimulationStatus = SimulationState.initializing;
 
   test("Test SimForwardOptions", async () => {
     render(<SimForwardOptions />);
@@ -48,8 +48,6 @@ describe("Menu test suites", async () => {
   });
 
   test("Test SimMenuDropDown with non-simming context", async () => {
-
-    
     const testDispatcher = () => {
       return;
     };

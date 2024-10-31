@@ -214,7 +214,6 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTwo: Player = {
@@ -251,7 +250,6 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerFour: Player = {
@@ -298,7 +296,7 @@ describe("Competition Utilities tests", () => {
       Statistics: expectedClubStatistics,
       Squad: expect.anything(),
       Starting11: [],
-      Bench: []
+      Bench: [],
     };
 
     const expectedClubTwo: Club = {
@@ -307,7 +305,7 @@ describe("Competition Utilities tests", () => {
       Statistics: expectedClubStatistics,
       Squad: expect.anything(),
       Starting11: [],
-      Bench: []
+      Bench: [],
     };
 
     const expectedClubs: Array<Club> = [expectedClubOne, expectedClubTwo];
@@ -328,7 +326,7 @@ describe("Competition Utilities tests", () => {
       Statistics: expectedClubStatistics,
       Squad: testPlayersOne,
       Starting11: [],
-      Bench: []
+      Bench: [],
     };
 
     const expectedClubTwo: Club = {
@@ -337,8 +335,7 @@ describe("Competition Utilities tests", () => {
       Statistics: expectedClubStatistics,
       Squad: testPlayersTwo,
       Starting11: [],
-      Bench: []
-
+      Bench: [],
     };
 
     const expectedClubs: Array<Club> = [expectedClubOne, expectedClubTwo];
@@ -359,7 +356,7 @@ describe("Competition Utilities tests", () => {
       Statistics: expectedClubStatistics,
       Squad: expect.anything(),
       Starting11: [],
-      Bench: []
+      Bench: [],
     };
 
     const expectedClubTwo: Club = {
@@ -368,7 +365,7 @@ describe("Competition Utilities tests", () => {
       Statistics: expectedClubStatistics,
       Squad: expect.anything(),
       Starting11: [],
-      Bench: []
+      Bench: [],
     };
 
     const expectedCompetitionNoPlayers = {
@@ -385,7 +382,7 @@ describe("Competition Utilities tests", () => {
 
     expect(actualCompetition).toStrictEqual(expectedCompetitionNoPlayers);
     actualCompetition.Clubs.forEach((actualClub: Club) => {
-      expectTypeOf(actualClub).toEqualTypeOf(expectedClubOne)
+      expectTypeOf(actualClub).toEqualTypeOf(expectedClubOne);
       const actualPlayers: Array<Player> = actualClub.Squad;
       expect(actualPlayers.length).toBe(25);
       expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
@@ -402,7 +399,7 @@ describe("Competition Utilities tests", () => {
       Statistics: expectedClubStatistics,
       Squad: testPlayersOne,
       Starting11: [],
-      Bench: []
+      Bench: [],
     };
 
     const expectedClubTwo: Club = {
@@ -411,7 +408,7 @@ describe("Competition Utilities tests", () => {
       Statistics: expectedClubStatistics,
       Squad: testPlayersTwo,
       Starting11: [],
-      Bench: []
+      Bench: [],
     };
 
     const expectedCompetitionWithPlayers = {

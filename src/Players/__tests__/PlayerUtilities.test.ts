@@ -86,17 +86,18 @@ describe("Player utilities tests", () => {
     Years: 1,
   };
 
-    const getRandomNumberInRange = (min: number, max: number): number => {
-  const minCeiled = Math.ceil(min);
-  const maxFloored = Math.floor(max);
-  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
-};
-
+  const getRandomNumberInRange = (min: number, max: number): number => {
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+  };
 
   const testPlayerSkills: Record<string, SkillSet> = Object.fromEntries(
     Object.entries(playerSkills).map(([name, set]) => [
       name,
-      Object.fromEntries(set.map((skill: string) => [skill, getRandomNumberInRange(0,100)])),
+      Object.fromEntries(
+        set.map((skill: string) => [skill, getRandomNumberInRange(0, 100)]),
+      ),
     ]),
   );
 

@@ -20,17 +20,19 @@ import {
   Goalkeeper,
   Foot,
   ContractType,
-  Defender
+  Defender,
 } from "../../Players/PlayerTypes";
 import { playerSkills } from "../../Players/PlayerSkills";
-import { Competition, AllCompetitions } from "../../Competitions/CompetitionTypes";
+import {
+  Competition,
+  AllCompetitions,
+} from "../../Competitions/CompetitionTypes";
 import { Club } from "../../Clubs/ClubTypes";
-import { Save, SaveID } from '../../StorageUtilities/SaveTypes'
-import { addSaveToDB } from '../../StorageUtilities/SaveUtilities'
+import { Save, SaveID } from "../../StorageUtilities/SaveTypes";
+import { addSaveToDB } from "../../StorageUtilities/SaveUtilities";
 import { MainScreen } from "../MainScreen";
 
 describe("Competition Components", async () => {
-
   const simpleCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
@@ -38,7 +40,6 @@ describe("Competition Components", async () => {
     "Losses",
     "Points",
   ];
-
 
   const expectedClubSummaryStatsHeaders = [
     "Record",
@@ -61,7 +62,6 @@ describe("Competition Components", async () => {
     "Yellow Cards",
     "Red Cards",
   ];
-  
 
   const expectedPlayerStandardStatsHeaders: Array<string> = [
     "Season",
@@ -90,10 +90,6 @@ describe("Competition Components", async () => {
     "Wages",
   ];
 
-  
-
-  
-
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -113,10 +109,6 @@ describe("Competition Components", async () => {
 
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
-  
-  
-
-  
 
   const testClubStatisticsOne: StatisticsObject = {
     Wins: 0,
@@ -141,28 +133,25 @@ describe("Competition Components", async () => {
     RedCards: 0,
   };
 
-
-
   const playerStatisticsObject: StatisticsObject = {
-  MatchesPlayed: 0,
-  Starts: 0,
-  Minutes: 0,
-  Full90s: 0,
-  Goals: 0,
-  Assists: 0,
-  GoalsPlusAssists: 0,
-  NonPenaltyGoals: 0,
-  PenaltyKicksMade: 0,
-  PenaltyKicksAttempted: 0,
-  YellowCards: 0,
-  RedCards: 0,
-};
+    MatchesPlayed: 0,
+    Starts: 0,
+    Minutes: 0,
+    Full90s: 0,
+    Goals: 0,
+    Assists: 0,
+    GoalsPlusAssists: 0,
+    NonPenaltyGoals: 0,
+    PenaltyKicksMade: 0,
+    PenaltyKicksAttempted: 0,
+    YellowCards: 0,
+    RedCards: 0,
+  };
 
   const expectedPlayerStatistics: StatisticsType = {
     BySeason: { "2024": playerStatisticsObject },
     GameLog: {},
   };
-
 
   const expectedContract: ContractType = {
     Wage: 1,
@@ -192,7 +181,6 @@ describe("Competition Components", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTwo: Player = {
@@ -211,7 +199,6 @@ describe("Competition Components", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerThree: Player = {
@@ -230,7 +217,6 @@ describe("Competition Components", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerFour: Player = {
@@ -249,27 +235,23 @@ describe("Competition Components", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwo: Array<Player> = [testPlayerThree, testPlayerFour];
-  
 
   const testClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
     GameLog: {},
   };
 
-  
   const testClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
-
+    Bench: [],
   };
 
   const testClubTwo: Club = {
@@ -278,7 +260,7 @@ describe("Competition Components", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersTwo,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubThree: Club = {
@@ -287,8 +269,7 @@ describe("Competition Components", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
-  
+    Bench: [],
   };
 
   const testClubFour: Club = {
@@ -297,34 +278,28 @@ describe("Competition Components", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
-
+    Bench: [],
   };
 
-
   const testClubs: Array<Club> = [testClubOne, testClubTwo];
-  
+
   const testCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
   };
 
-
-  
   const testCompetitionOne: Competition = {
     Name: "English Premier League",
     Clubs: testClubs,
-    Statistics: testCompetitionStatistics,  
-  };    
-  
+    Statistics: testCompetitionStatistics,
+  };
 
   const testAllCompetitionsOne: AllCompetitions = {
     England: {
       "English Premier League": testCompetitionOne,
     },
   };
-  
-  
+
   const testCountry: string = "England";
   const testCompetitionName: string = "English Premier League";
   const testNameOne: string = "Mikel Arteta";
@@ -337,39 +312,35 @@ describe("Competition Components", async () => {
       Name: player.Name,
       NationalTeam: player.NationalTeam,
       Position: player.Position,
-      ...player.Statistics.BySeason[testSeason]
-    }
-  })
+      ...player.Statistics.BySeason[testSeason],
+    };
+  });
 
   const testSave: Save = {
-      Name: testNameOne,
-      Country: testCountry,
-      MainCompetition: testCompetitionName,
-      Club: testClubNameOne,
-      Seasons: 1,
+    Name: testNameOne,
+    Country: testCountry,
+    MainCompetition: testCompetitionName,
+    Club: testClubNameOne,
+    Seasons: 1,
     CurrentSeason: "2024",
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
-    saveID: "1"
-    
+    saveID: "1",
   };
-  
+
   const testSeasonStatistics: Array<StatisticsObject> = [
     testClubOne.Statistics,
-    testClubTwo.Statistics    
+    testClubTwo.Statistics,
   ].map((club, index) => {
-
     const statisticsOnly = club["BySeason"][testSeason];
 
     statisticsOnly["Club"] = testClubs[index].Name;
     return statisticsOnly;
   });
 
-  
-
   const testDBName: string = "the-manager";
-    
-  const saveID: SaveID = await addSaveToDB(testSave)
+
+  const saveID: SaveID = await addSaveToDB(testSave);
 
   const simButtonNames: Array<string> = [
     "one-day",
@@ -427,19 +398,17 @@ describe("Competition Components", async () => {
 
     const expectedDate: string = testFirstDay.toDateString();
     await waitFor(() =>
-    expect(
+      expect(
         screen.getByText(expectedDate, { selector: "h2[id=current-date]" }),
-    ).toBeTruthy()
-    )
+      ).toBeTruthy(),
+    );
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),
       ).toBeTruthy(),
     );
 
-       
-        const lastSimpleCompHeaderKey =
-      simpleCompetitionTableRowHeaders.length - 1;
+    const lastSimpleCompHeaderKey = simpleCompetitionTableRowHeaders.length - 1;
     const lastSimpleCompHeader =
       simpleCompetitionTableRowHeaders[lastSimpleCompHeaderKey];
     const lastSimpleCompHeaderJoined = lastSimpleCompHeader.replace(/\s/g, "");
@@ -452,25 +421,20 @@ describe("Competition Components", async () => {
       ).toBeTruthy(),
     );
 
-
-        simpleCompetitionTableRowHeaders.forEach((expectedColumnHeader) => {
+    simpleCompetitionTableRowHeaders.forEach((expectedColumnHeader) => {
       expect(
         screen.getByText(expectedColumnHeader, { selector: "th" }),
       ).toBeTruthy();
     });
 
-    
     await waitFor(() => {
       const lastClub: Club = testClubs[testClubs.length - 1];
-      const lastStatFromLastClub: StatisticsObject = lastClub.Statistics.BySeason[testSeason];      
+      const lastStatFromLastClub: StatisticsObject =
+        lastClub.Statistics.BySeason[testSeason];
       expect(
-        screen.getByText(
-	  lastStatFromLastClub[lastSimpleCompHeaderJoined]
-          ,
-          {
-            selector: `td[id='${lastSimpleCompHeaderJoined}_${testClubs.length - 1}']`,
-          },
-        ),
+        screen.getByText(lastStatFromLastClub[lastSimpleCompHeaderJoined], {
+          selector: `td[id='${lastSimpleCompHeaderJoined}_${testClubs.length - 1}']`,
+        }),
       ).toBeTruthy();
     });
 
@@ -478,32 +442,23 @@ describe("Competition Components", async () => {
       const clubStats: StatisticsObject = club.Statistics.BySeason[testSeason];
       clubStats["Club"] = club.Name;
       simpleCompetitionTableRowHeaders.forEach((header: string) => {
-	expect(
-        screen.getByText(
-	  clubStats[header],          
-          {
+        expect(
+          screen.getByText(clubStats[header], {
             selector: `td[id='${header}_${index}']`,
-          },
-        ),
-      ).toBeTruthy();
-      })
-    })
-
+          }),
+        ).toBeTruthy();
+      });
+    });
 
     expect(screen.getByText(testClubOne.Name, { selector: "h2" })).toBeTruthy();
 
     expectedClubSummaryStatsHeaders.forEach((expectedClubHeader) => {
-      const testStat = testClubOne.Statistics.BySeason[testSeason][
-            expectedClubHeader.replace(/\s/g, "")
-      ]
+      const testStat =
+        testClubOne.Statistics.BySeason[testSeason][
+          expectedClubHeader.replace(/\s/g, "")
+        ];
       const expectedParagraphValue = new RegExp(
-        String.prototype.concat(
-          "^",
-          expectedClubHeader,
-          ":",
-          " ",
-          testStat,
-        ),
+        String.prototype.concat("^", expectedClubHeader, ":", " ", testStat),
       );
       expect(
         screen.getByText(expectedParagraphValue, { selector: "strong" }),
@@ -538,7 +493,6 @@ describe("Competition Components", async () => {
     );
 
     await waitFor(() =>
-      
       expect(
         screen.getByText(
           expectedPlayerStats[expectedPlayerStats.length - 1][
@@ -552,16 +506,17 @@ describe("Competition Components", async () => {
     );
 
     expectedPlayerStats.forEach((player, index) => {
-      expectedSimpleClubStandardStatsHeaders.forEach(
-	(expectedColumnHeader) => {
-	  const expectedColumnHeaderJoined = expectedColumnHeader.replace(/\s/g, "");	  
+      expectedSimpleClubStandardStatsHeaders.forEach((expectedColumnHeader) => {
+        const expectedColumnHeaderJoined = expectedColumnHeader.replace(
+          /\s/g,
+          "",
+        );
         expect(
           screen.getByText(player[expectedColumnHeaderJoined], {
             selector: `td[id='${expectedColumnHeaderJoined}_${index}']`,
           }),
         ).toBeTruthy();
-      },
-    )      
+      });
     });
   });
 });

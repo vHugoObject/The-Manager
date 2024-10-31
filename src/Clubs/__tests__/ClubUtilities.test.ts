@@ -18,10 +18,6 @@ import {
 import { StatisticsObject, StatisticsType } from "../../Common/CommonTypes";
 
 describe("Club Utilities tests", () => {
-
-
-
-
   const expectedContract: ContractType = {
     Wage: 1,
     Years: 1,
@@ -96,12 +92,9 @@ describe("Club Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedStatistics,
-
   };
 
   const testPlayers: Array<Player> = [testPlayerOne, testPlayerTwo];
-
-  
 
   const expectedClubOne: Club = {
     ID: 0,
@@ -109,7 +102,7 @@ describe("Club Utilities tests", () => {
     Statistics: expectedStatistics,
     Squad: testPlayers,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const expectedClubTwo: Club = {
@@ -118,7 +111,7 @@ describe("Club Utilities tests", () => {
     Statistics: expectedStatistics,
     Squad: expect.anything(),
     Starting11: expect.anything(),
-    Bench: expect.anything()
+    Bench: expect.anything(),
   };
 
   const testTeamName: string = "Arsenal";

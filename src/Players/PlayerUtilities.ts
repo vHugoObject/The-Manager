@@ -74,7 +74,7 @@ export const getRandomNumberInRange = (min: number, max: number): number => {
   const maxFloored = Math.floor(max);
   return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
 };
-  
+
 export const generatePlayerSkills = (
   positionGroup: PositionGroup,
 ): Record<string, SkillSet> => {
@@ -82,12 +82,16 @@ export const generatePlayerSkills = (
   return Object.fromEntries(
     Object.entries(playerSkills).map(([name, set]) => [
       name,
-      Object.fromEntries(set.map((skill: string) => [skill, getRandomNumberInRange(0,100)]))
+      Object.fromEntries(
+        set.map((skill: string) => [skill, getRandomNumberInRange(0, 100)]),
+      ),
     ]),
   );
 };
 
-export const generatePosition = (positionGroup: PositionGroup): PositionType => {
+export const generatePosition = (
+  positionGroup: PositionGroup,
+): PositionType => {
   if (positionGroup == PositionGroup.Goalkeeper) {
     return Goalkeeper.GK;
   }

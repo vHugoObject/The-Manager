@@ -140,7 +140,7 @@ export const SaveGamesTable = ({ saves }) => {
   const SavesTableBody = ({ saves }) => {
     return (
       <tbody>
-      {saves.map((saveData: Save, index: number) => (
+        {saves.map((saveData: Save, index: number) => (
           <SaveGamesTableRow
             saveSummary={saveSummaryCreator(saveData)}
             rowIndex={index}

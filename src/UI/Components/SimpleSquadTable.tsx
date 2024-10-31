@@ -1,15 +1,12 @@
 import React from "react";
 import { useContext } from "react";
-import { SaveContext } from "../DatabaseManagement"
+import { SaveContext } from "../DatabaseManagement";
 import { Competition } from "../../Competitions/CompetitionTypes";
 import { Club } from "../../Clubs/ClubTypes";
 import { Player } from "../../Players/PlayerTypes";
-import {  StatisticsObject } from "../../Common/CommonTypes";
+import { StatisticsObject } from "../../Common/CommonTypes";
 
-
-export const SimpleSquadTable = ({season}) => {
-  
-
+export const SimpleSquadTable = ({ season }) => {
   const currentSave = useContext(SaveContext);
   const simpleSquadTableHeaders: Array<string> = [
     "Name",
@@ -24,13 +21,15 @@ export const SimpleSquadTable = ({season}) => {
     "Red Cards",
   ];
 
-    const playerCountry: string = currentSave.Country;
+  const playerCountry: string = currentSave.Country;
   const playerMainCompetitonName: string = currentSave.MainCompetition;
   const playerClubName = currentSave.Club;
-  const playerMainCompetiton: Competition = currentSave.allCompetitions[playerCountry][playerMainCompetitonName];
-  const playerClub: Club = playerMainCompetiton.Clubs.find((club) => club.Name === playerClubName)
-  
-  
+  const playerMainCompetiton: Competition =
+    currentSave.allCompetitions[playerCountry][playerMainCompetitonName];
+  const playerClub: Club = playerMainCompetiton.Clubs.find(
+    (club) => club.Name === playerClubName,
+  );
+
   const getPlayerStatistics = (club: Club, season: string) => {
     return club.Squad.map((player: Player) => {
       const stats: StatisticsObject = player.Statistics.BySeason[season];
@@ -61,10 +60,7 @@ export const SimpleSquadTable = ({season}) => {
           </tr>
         </thead>
         <tbody>
-          {getPlayerStatistics(
-            playerClub,
-            season,
-          ).map((player, index) => (
+          {getPlayerStatistics(playerClub, season).map((player, index) => (
             <tr key={index}>
               {Object.entries(player).map(([subKey, subValue]) => (
                 <td key={subKey} id={`${subKey}_${index}`}>

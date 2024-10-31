@@ -16,13 +16,21 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
   const navigate = useNavigate();
 
   const createNewGame = (formJSON): Save => {
-    const playerName: string = formJSON["manager-name"];    
+    const playerName: string = formJSON["manager-name"];
     const domesticLeague: string = formJSON["domestic-league"];
     const country: string = formJSON["country"];
     const club: string = formJSON["club"];
     const currentSeason: string = "2024"; // will get this from the form eventually
-    const firstDay: string = "8/18/24"; 
-    return createSave(playerName, country, domesticLeague, currentSeason, firstDay, club, countriesLeaguesClubs)    
+    const firstDay: string = "8/18/24";
+    return createSave(
+      playerName,
+      country,
+      domesticLeague,
+      currentSeason,
+      firstDay,
+      club,
+      countriesLeaguesClubs,
+    );
   };
 
   const handleStartGame = (e) => {
@@ -32,7 +40,7 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
     const formJSON = Object.fromEntries(formData.entries());
     const save: Save = createNewGame(formJSON);
     addSaveToDB(save)
-      .then((saveID: SaveID) => {	
+      .then((saveID: SaveID) => {
         navigate(`/save/${saveID}`);
       })
       .catch((error) => console.error("Failed to save game to db", error));
@@ -40,9 +48,7 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
 
   const chooseName = (
     <div>
-    <label htmlFor="save-name"
-	   class="grid grid-cols-1 gap-2"
-    >
+      <label htmlFor="save-name" class="grid grid-cols-1 gap-2">
         {" "}
         Choose a name:
         <input
@@ -58,9 +64,7 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
 
   const chooseCountry = (
     <div>
-    <label htmlFor="country-options"
-	   class="grid grid-cols-1 gap-2"
-    >
+      <label htmlFor="country-options" class="grid grid-cols-1 gap-2">
         {" "}
         Choose a country:
         <select
@@ -83,9 +87,7 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
 
   const chooseLeague = (
     <div>
-    <label htmlFor="domestic-league-options"
-	   class="grid grid-cols-1 gap-3"
-    >
+      <label htmlFor="domestic-league-options" class="grid grid-cols-1 gap-3">
         {" "}
         Choose a domestic league:
         <select
@@ -114,9 +116,7 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
 
   const chooseClub = (
     <div>
-    <label htmlFor="club-options"
-	   class="grid grid-cols-1 gap-2"
-    >
+      <label htmlFor="club-options" class="grid grid-cols-1 gap-2">
         {" "}
         Choose a club:
         <select
@@ -144,9 +144,7 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
   );
 
   const startGameButton = (
-    <div id="start-game"
-      class="grid grid-cols-1 gap-2"
-    >
+    <div id="start-game" class="grid grid-cols-1 gap-2">
       <button name="start-game" type="submit">
         Start Game
       </button>
@@ -154,14 +152,16 @@ export const NewGame = ({ countriesLeaguesClubs }) => {
   );
 
   return (
-    <div id="new-game"
-      class="grid grid-cols-1 gap-5"
-    >
+    <div id="new-game" class="grid grid-cols-1 gap-5">
       <SiteBanner />
       <div id="new-game-form">
         <SideMenu />
-        <form role="form" method="post" onSubmit={handleStartGame}
-		      class="grid grid-cols-4 gap-4">
+        <form
+          role="form"
+          method="post"
+          onSubmit={handleStartGame}
+          class="grid grid-cols-4 gap-4"
+        >
           {chooseName}
           {chooseCountry}
           {chooseLeague}

@@ -15,13 +15,14 @@ import {
 } from "../../Players/PlayerTypes";
 import { Club } from "../../Clubs/ClubTypes";
 import { playerSkills } from "../../Players/PlayerSkills";
-import { Competition, BaseCompetitions } from "../../Competitions/CompetitionTypes";
+import {
+  Competition,
+  BaseCompetitions,
+} from "../../Competitions/CompetitionTypes";
 import { createSave } from "../SaveCreator";
 import { Save } from "../SaveTypes";
 
 describe("Competition Utilities tests", () => {
-
-
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -46,8 +47,6 @@ describe("Competition Utilities tests", () => {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
   };
-
-
 
   const clubStandardStatsHeaders: Array<string> = [
     "Name",
@@ -214,7 +213,6 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerThree: Player = {
@@ -251,7 +249,6 @@ describe("Competition Utilities tests", () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
- 
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
@@ -263,10 +260,10 @@ describe("Competition Utilities tests", () => {
   const testClub: string = "Arsenal";
   const testPlayerName: string = "Mikel Arteta";
   const testCompetitions: BaseCompetitions = {
-      England: { "English Premier League": [testClub] },
-    }
+    England: { "English Premier League": [testClub] },
+  };
 
-  const testFirstDay: string = "08/18/24"
+  const testFirstDay: string = "08/18/24";
   const expectedFirstDay: Date = new Date(testFirstDay);
 
   test("Test createSave", () => {
@@ -276,15 +273,14 @@ describe("Competition Utilities tests", () => {
       Statistics: expectedClubStatistics,
       Squad: expect.anything(),
       Starting11: [],
-      Bench: []
+      Bench: [],
     };
 
     const expectedCompetition: Competition = {
       Name: "English Premier League",
       Clubs: expect.anything(),
       Statistics: expectedCompetitionStatistics,
-    };    
-        
+    };
 
     const expectedSave: Save = {
       Name: testPlayerName,
@@ -295,8 +291,8 @@ describe("Competition Utilities tests", () => {
       CurrentSeason: "2024",
       CurrentDate: expectedFirstDay,
       allCompetitions: expect.anything(),
-      saveID: expect.any(String)
-    }; 
+      saveID: expect.any(String),
+    };
 
     const actualSave: Save = createSave(
       testPlayerName,
@@ -305,7 +301,7 @@ describe("Competition Utilities tests", () => {
       testSeason,
       testFirstDay,
       testClub,
-      testCompetitions
+      testCompetitions,
     );
     const actualCompetitions: Array<Competition> = Object.values(
       actualSave.allCompetitions,
@@ -315,18 +311,17 @@ describe("Competition Utilities tests", () => {
 
     actualCompetitions.forEach((actualCompetition, index) => {
       expect(actualCompetition).toStrictEqual(expectedCompetition);
-      expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition)
+      expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition);
       actualCompetition.Clubs.forEach((actualClub: Club) => {
-	expect(actualClub).toStrictEqual(expectedClub)
-	expectTypeOf(actualClub).toEqualTypeOf(expectedClub)
-	const actualPlayers: Array<Player> = actualClub.Squad;
-	expect(actualPlayers.length).toBe(25);
-	expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
-	actualPlayers.forEach((testPlayer) => {
+        expect(actualClub).toStrictEqual(expectedClub);
+        expectTypeOf(actualClub).toEqualTypeOf(expectedClub);
+        const actualPlayers: Array<Player> = actualClub.Squad;
+        expect(actualPlayers.length).toBe(25);
+        expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
+        actualPlayers.forEach((testPlayer) => {
           expectTypeOf(testPlayer).toEqualTypeOf(testPlayerOne);
+        });
       });
-      });
-    });      
     });
   });
-
+});

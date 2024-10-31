@@ -8,17 +8,16 @@ export const openSaveDB = async (): Promise<IDBPDatabase> => {
   const db = await openDB(mainDatabase, version, {
     upgrade(db) {
       db.createObjectStore(saveStore, {
-        keyPath: "saveID"
+        keyPath: "saveID",
       });
     },
   });
-  return db
-}
+  return db;
+};
 
 export const addSaveToDB = async (save: Save): Promise<IDBValidKey> => {
-
   const saveStore: string = "save-games";
-  const db: IDBPDatabase = await openSaveDB()
+  const db: IDBPDatabase = await openSaveDB();
 
   const saveID: SaveID = await db.add(saveStore, save);
   db.close();
@@ -27,7 +26,7 @@ export const addSaveToDB = async (save: Save): Promise<IDBValidKey> => {
 
 export const getSaveValue = async (key: SaveID): Promise<Save> => {
   const saveStore: string = "save-games";
-  const db: IDBPDatabase = await openSaveDB()
+  const db: IDBPDatabase = await openSaveDB();
 
   const result = await db.get(saveStore, key);
   db.close();
@@ -35,31 +34,26 @@ export const getSaveValue = async (key: SaveID): Promise<Save> => {
 };
 
 export const updateSaveValue = async (save: Save): Promise<void> => {
-
   const saveStore: string = "save-games";
-  const db: IDBPDatabase = await openSaveDB()
+  const db: IDBPDatabase = await openSaveDB();
 
   await db.put(saveStore, save);
   db.close();
 };
 
 export const getAllSaveKeys = async (): Promise<Array<IDBValidKey>> => {
-
   const saveStore: string = "save-games";
-  const db: IDBPDatabase = await openSaveDB()
+  const db: IDBPDatabase = await openSaveDB();
 
-  
   const saveKeys = await db.getAllKeys(saveStore);
   db.close();
   return saveKeys;
 };
 
 export const getAllSaveValues = async (): Promise<Array<Save>> => {
-
   const saveStore: string = "save-games";
-  const db: IDBPDatabase = await openSaveDB()
+  const db: IDBPDatabase = await openSaveDB();
 
-  
   const saveValues = await db.getAll(saveStore);
   db.close();
   return saveValues;

@@ -91,7 +91,7 @@ export const createCompetition = (
 
   return {
     Name: competition,
-    Clubs,  
+    Clubs,
     Statistics: generateCompetitionStatisticsObject(season),
   };
 };

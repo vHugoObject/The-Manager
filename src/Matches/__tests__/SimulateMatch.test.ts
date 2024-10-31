@@ -1,12 +1,9 @@
 import { describe, expect, test, expectTypeOf } from "vitest";
-import { sum } from 'lodash';
-import {
-  StatisticsObject,
-  StatisticsType,
-} from "../../Common/CommonTypes";
+import { sum } from "lodash";
+import { StatisticsObject, StatisticsType } from "../../Common/CommonTypes";
 import { playerSkills } from "../../Players/PlayerSkills";
 import { Club } from "../../Clubs/ClubTypes";
-import { Match, SquadStatus } from '../MatchTypes'
+import { Match, SquadStatus } from "../MatchTypes";
 import {
   Player,
   SkillSet,
@@ -16,13 +13,12 @@ import {
   Goalkeeper,
   Foot,
   ContractType,
-  Defender
+  Defender,
 } from "../../Players/PlayerTypes";
-import { createMatch } from '../CreateMatch';
-import { simulateMatch } from '../SimulateMatch';
+import { createMatch } from "../CreateMatch";
+import { simulateMatch } from "../SimulateMatch";
 
-describe("simulateMatch test suite", async() => {
-
+describe("simulateMatch test suite", async () => {
   const testClubStatisticsOne: StatisticsObject = {
     Wins: 0,
     Draws: 0,
@@ -45,47 +41,49 @@ describe("simulateMatch test suite", async() => {
     YellowCards: 0,
     RedCards: 0,
   };
-  
-    const playerStatisticsObject: StatisticsObject = {
-  MatchesPlayed: 0,
-  Starts: 0,
-  Minutes: 0,
-  Full90s: 0,
-  Goals: 0,
-  Assists: 0,
-  GoalsPlusAssists: 0,
-  NonPenaltyGoals: 0,
-  PenaltyKicksMade: 0,
-  PenaltyKicksAttempted: 0,
-  YellowCards: 0,
-  RedCards: 0,
-    };
 
-    const expectedPlayerStatistics: StatisticsType = {
+  const playerStatisticsObject: StatisticsObject = {
+    MatchesPlayed: 0,
+    Starts: 0,
+    Minutes: 0,
+    Full90s: 0,
+    Goals: 0,
+    Assists: 0,
+    GoalsPlusAssists: 0,
+    NonPenaltyGoals: 0,
+    PenaltyKicksMade: 0,
+    PenaltyKicksAttempted: 0,
+    YellowCards: 0,
+    RedCards: 0,
+  };
+
+  const expectedPlayerStatistics: StatisticsType = {
     BySeason: { "2024": playerStatisticsObject },
     GameLog: {},
-    };
-  
+  };
+
   const expectedContract: ContractType = {
     Wage: 1,
     Years: 1,
   };
 
-
   const getRandomNumberInRange = (min: number, max: number): number => {
-  const minCeiled = Math.ceil(min);
-  const maxFloored = Math.floor(max);
-  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
-};
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+  };
 
   const testPlayerSkills = (): Record<string, SkillSet> => {
-    console.log("")
+    console.log("");
     return Object.fromEntries(
-    Object.entries(playerSkills).map(([name, set]) => [
-      name,
-      Object.fromEntries(set.map((skill: string) => [skill, getRandomNumberInRange(25,100)])),
-    ]),
-  )};
+      Object.entries(playerSkills).map(([name, set]) => [
+        name,
+        Object.fromEntries(
+          set.map((skill: string) => [skill, getRandomNumberInRange(25, 100)]),
+        ),
+      ]),
+    );
+  };
 
   const testPlayerOne: Player = {
     ID: 0,
@@ -103,7 +101,6 @@ describe("simulateMatch test suite", async() => {
     Rating: 65,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTwo: Player = {
@@ -122,7 +119,6 @@ describe("simulateMatch test suite", async() => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerThree: Player = {
@@ -141,7 +137,6 @@ describe("simulateMatch test suite", async() => {
     Rating: 85,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerFour: Player = {
@@ -160,9 +155,7 @@ describe("simulateMatch test suite", async() => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
-
 
   const testPlayerFive: Player = {
     ID: 4,
@@ -180,7 +173,6 @@ describe("simulateMatch test suite", async() => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerSix: Player = {
@@ -199,7 +191,6 @@ describe("simulateMatch test suite", async() => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerSeven: Player = {
@@ -218,7 +209,6 @@ describe("simulateMatch test suite", async() => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerEight: Player = {
@@ -237,7 +227,6 @@ describe("simulateMatch test suite", async() => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerNine: Player = {
@@ -256,7 +245,6 @@ describe("simulateMatch test suite", async() => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTen: Player = {
@@ -275,7 +263,6 @@ describe("simulateMatch test suite", async() => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerEleven: Player = {
@@ -294,47 +281,87 @@ describe("simulateMatch test suite", async() => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
-  const allTestOutfieldPlayers: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour, testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight, testPlayerNine, testPlayerTen,
+  const allTestOutfieldPlayers: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+    testPlayerNine,
+    testPlayerTen,
   ];
 
-  const allTestPlayers: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour, testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight, testPlayerNine, testPlayerTen,
-    testPlayerEleven
+  const allTestPlayers: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+    testPlayerNine,
+    testPlayerTen,
+    testPlayerEleven,
   ];
-  
-  const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour];
-  const testStartersOne: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour];
-  const testBenchOne: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour];
 
-  
-  const testPlayersTwo: Array<Player> = [testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight];
-  const testStartersTwo: Array<Player> = [testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight, testPlayerNine, testPlayerTen];
-  const testBenchTwo: Array<Player> = [testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight];
-  
+  const testPlayersOne: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+  ];
+  const testStartersOne: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+  ];
+  const testBenchOne: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+  ];
+
+  const testPlayersTwo: Array<Player> = [
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+  ];
+  const testStartersTwo: Array<Player> = [
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+    testPlayerNine,
+    testPlayerTen,
+  ];
+  const testBenchTwo: Array<Player> = [
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+  ];
+
   const testClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
     GameLog: {},
   };
-  
+
   const testClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
     Squad: allTestPlayers,
     Starting11: allTestPlayers,
-    Bench: testBenchOne
+    Bench: testBenchOne,
   };
 
   const testClubTwo: Club = {
@@ -343,10 +370,10 @@ describe("simulateMatch test suite", async() => {
     Statistics: testClubStatistics,
     Squad: allTestPlayers,
     Starting11: allTestPlayers,
-    Bench: testBenchOne
+    Bench: testBenchOne,
   };
 
-  const expectedTeamStatistics = [    
+  const expectedTeamStatistics = [
     "Possession",
     "Shots on target",
     "Expected Goals",
@@ -364,7 +391,7 @@ describe("simulateMatch test suite", async() => {
     "Throw Ins",
     "Long Balls",
   ];
-  
+
   const testEmptyTeamStatistics = Object.fromEntries(
     expectedTeamStatistics.map((header) => [header.replace(/\s/g, ""), 0]),
   );
@@ -401,57 +428,61 @@ describe("simulateMatch test suite", async() => {
 
   const testMatchDate: Date = new Date("September 21, 2024");
 
-  const testCompetition: string = "English Premier League"
+  const testCompetition: string = "English Premier League";
 
   const testHomeStatus: SquadStatus = {
     onField: testClubOne.Starting11,
     onBench: testClubOne.Bench,
     subbedOut: [],
     injured: [],
-    suspended: []    
-  }
+    suspended: [],
+  };
 
   const testAwayStatus: SquadStatus = {
     onField: testClubTwo.Starting11,
     onBench: testClubTwo.Bench,
     subbedOut: [],
     injured: [],
-    suspended: []    
-  }
+    suspended: [],
+  };
 
-  const testMatchScore = { Arsenal: 0, Chelsea: 0 }
-  
+  const testMatchScore = { Arsenal: 0, Chelsea: 0 };
+
   const expectedMatch: Match = {
     MatchDate: testMatchDate,
     MatchScore: testMatchScore,
     Competition: testCompetition,
     Home: testClubOne,
-    Away: testClubTwo,  
+    Away: testClubTwo,
     HomeSquad: testHomeStatus,
     AwaySquad: testAwayStatus,
     HomeOverallStatistics: testEmptyTeamStatistics,
     AwayOverallStatistics: testEmptyTeamStatistics,
-    Simulated: true
-  };  
-  test("test simulateMatch", async() => {
-    
-    const testMatch: Match = await createMatch(testMatchDate, testClubOne, testClubTwo, testCompetition);
+    Simulated: true,
+  };
+  test("test simulateMatch", async () => {
+    const testMatch: Match = await createMatch(
+      testMatchDate,
+      testClubOne,
+      testClubTwo,
+      testCompetition,
+    );
     const actualSimulatedMatch: Match = await simulateMatch(testMatch);
-    expectTypeOf(actualSimulatedMatch).toEqualTypeOf(testMatch);    
+    expectTypeOf(actualSimulatedMatch).toEqualTypeOf(testMatch);
     expect(actualSimulatedMatch.Simulated).toBe(true);
-    
-    Object.values(actualSimulatedMatch.HomeOverallStatistics).forEach((value) => {
 
-      expect(value).toBeGreaterThanOrEqual(0)
-    })
+    Object.values(actualSimulatedMatch.HomeOverallStatistics).forEach(
+      (value) => {
+        expect(value).toBeGreaterThanOrEqual(0);
+      },
+    );
 
-    Object.values(actualSimulatedMatch.AwayOverallStatistics).forEach((value) => {
-      expect(value).toBeGreaterThanOrEqual(0)
-    })
-    
-    
-  })
-
-  
+    console.log(actualSimulatedMatch.HomeOverallStatistics["Expected Goals"]);
+    console.log(actualSimulatedMatch.AwayOverallStatistics["Expected Goals"]);
+    Object.values(actualSimulatedMatch.AwayOverallStatistics).forEach(
+      (value) => {
+        expect(value).toBeGreaterThanOrEqual(0);
+      },
+    );
+  });
 });
-  

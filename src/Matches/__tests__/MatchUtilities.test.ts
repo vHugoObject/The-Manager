@@ -1,14 +1,11 @@
 import { describe, expect, test, expectTypeOf } from "vitest";
-import 'lodash.product';
-import _ from 'lodash';
-import { sum, range } from 'lodash';
-import {
-  StatisticsObject,
-  StatisticsType,
-} from "../../Common/CommonTypes";
+import "lodash.product";
+import _ from "lodash";
+import { sum, range } from "lodash";
+import { StatisticsObject, StatisticsType } from "../../Common/CommonTypes";
 import { playerSkills } from "../../Players/PlayerSkills";
 import { Club } from "../../Clubs/ClubTypes";
-import { Match, SquadStatus } from '../MatchTypes'
+import { Match, SquadStatus } from "../MatchTypes";
 import {
   Player,
   SkillSet,
@@ -18,9 +15,10 @@ import {
   Goalkeeper,
   Foot,
   ContractType,
-  Defender
+  Defender,
 } from "../../Players/PlayerTypes";
-import { createEmptyMatchStatistics,
+import {
+  createEmptyMatchStatistics,
   calculateDefenseStrength,
   calculateAttackStrength,
   calculateHomeStrength,
@@ -30,10 +28,10 @@ import { createEmptyMatchStatistics,
   calculateJointProbability,
   createJointProbabilitiesMatrixForGoals,
   randomScore,
-  matchExpectedGoals } from '../MatchUtilities';
+  matchExpectedGoals,
+} from "../MatchUtilities";
 
-describe("MatchUtilities test suite",  () => {
-
+describe("MatchUtilities test suite", () => {
   const testClubStatisticsOne: StatisticsObject = {
     Wins: 0,
     Draws: 0,
@@ -56,46 +54,48 @@ describe("MatchUtilities test suite",  () => {
     YellowCards: 0,
     RedCards: 0,
   };
-  
-    const playerStatisticsObject: StatisticsObject = {
-  MatchesPlayed: 0,
-  Starts: 0,
-  Minutes: 0,
-  Full90s: 0,
-  Goals: 0,
-  Assists: 0,
-  GoalsPlusAssists: 0,
-  NonPenaltyGoals: 0,
-  PenaltyKicksMade: 0,
-  PenaltyKicksAttempted: 0,
-  YellowCards: 0,
-  RedCards: 0,
-    };
 
-    const expectedPlayerStatistics: StatisticsType = {
+  const playerStatisticsObject: StatisticsObject = {
+    MatchesPlayed: 0,
+    Starts: 0,
+    Minutes: 0,
+    Full90s: 0,
+    Goals: 0,
+    Assists: 0,
+    GoalsPlusAssists: 0,
+    NonPenaltyGoals: 0,
+    PenaltyKicksMade: 0,
+    PenaltyKicksAttempted: 0,
+    YellowCards: 0,
+    RedCards: 0,
+  };
+
+  const expectedPlayerStatistics: StatisticsType = {
     BySeason: { "2024": playerStatisticsObject },
     GameLog: {},
-    };
-  
+  };
+
   const expectedContract: ContractType = {
     Wage: 1,
     Years: 1,
   };
 
-
   const getRandomNumberInRange = (min: number, max: number): number => {
-  const minCeiled = Math.ceil(min);
-  const maxFloored = Math.floor(max);
-  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
-};
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+  };
 
   const testPlayerSkills = (): Record<string, SkillSet> => {
     return Object.fromEntries(
-    Object.entries(playerSkills).map(([name, set]) => [
-      name,
-      Object.fromEntries(set.map((skill: string) => [skill, getRandomNumberInRange(25,100)])),
-    ]),
-  )};
+      Object.entries(playerSkills).map(([name, set]) => [
+        name,
+        Object.fromEntries(
+          set.map((skill: string) => [skill, getRandomNumberInRange(25, 100)]),
+        ),
+      ]),
+    );
+  };
 
   const testPlayerOne: Player = {
     ID: 0,
@@ -113,7 +113,6 @@ describe("MatchUtilities test suite",  () => {
     Rating: 65,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTwo: Player = {
@@ -132,7 +131,6 @@ describe("MatchUtilities test suite",  () => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerThree: Player = {
@@ -151,7 +149,6 @@ describe("MatchUtilities test suite",  () => {
     Rating: 85,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerFour: Player = {
@@ -170,9 +167,7 @@ describe("MatchUtilities test suite",  () => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
-
 
   const testPlayerFive: Player = {
     ID: 4,
@@ -190,7 +185,6 @@ describe("MatchUtilities test suite",  () => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerSix: Player = {
@@ -209,7 +203,6 @@ describe("MatchUtilities test suite",  () => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerSeven: Player = {
@@ -228,7 +221,6 @@ describe("MatchUtilities test suite",  () => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerEight: Player = {
@@ -247,7 +239,6 @@ describe("MatchUtilities test suite",  () => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerNine: Player = {
@@ -266,7 +257,6 @@ describe("MatchUtilities test suite",  () => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTen: Player = {
@@ -285,7 +275,6 @@ describe("MatchUtilities test suite",  () => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerEleven: Player = {
@@ -304,47 +293,87 @@ describe("MatchUtilities test suite",  () => {
     Rating: 80,
     Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
-
   };
 
-  const allTestOutfieldPlayers: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour, testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight, testPlayerNine, testPlayerTen,
+  const allTestOutfieldPlayers: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+    testPlayerNine,
+    testPlayerTen,
   ];
 
-  const allTestPlayers: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour, testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight, testPlayerNine, testPlayerTen,
-    testPlayerEleven
+  const allTestPlayers: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+    testPlayerNine,
+    testPlayerTen,
+    testPlayerEleven,
   ];
-  
-  const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour];
-  const testStartersOne: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour];
-  const testBenchOne: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour];
 
-  
-  const testPlayersTwo: Array<Player> = [testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight];
-  const testStartersTwo: Array<Player> = [testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight, testPlayerNine, testPlayerTen];
-  const testBenchTwo: Array<Player> = [testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight];
-  
+  const testPlayersOne: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+  ];
+  const testStartersOne: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+  ];
+  const testBenchOne: Array<Player> = [
+    testPlayerOne,
+    testPlayerTwo,
+    testPlayerThree,
+    testPlayerFour,
+  ];
+
+  const testPlayersTwo: Array<Player> = [
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+  ];
+  const testStartersTwo: Array<Player> = [
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+    testPlayerNine,
+    testPlayerTen,
+  ];
+  const testBenchTwo: Array<Player> = [
+    testPlayerFive,
+    testPlayerSix,
+    testPlayerSeven,
+    testPlayerEight,
+  ];
+
   const testClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
     GameLog: {},
   };
-  
+
   const testClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: testStartersOne,
-    Bench: testBenchOne
+    Bench: testBenchOne,
   };
 
   const testClubTwo: Club = {
@@ -353,7 +382,7 @@ describe("MatchUtilities test suite",  () => {
     Statistics: testClubStatistics,
     Squad: testPlayersTwo,
     Starting11: testStartersTwo,
-    Bench: testBenchOne
+    Bench: testBenchOne,
   };
 
   const expectedTeamStatistics = [
@@ -374,7 +403,7 @@ describe("MatchUtilities test suite",  () => {
     "Throw Ins",
     "Long Balls",
   ];
-  
+
   const testEmptyTeamStatistics = Object.fromEntries(
     expectedTeamStatistics.map((header) => [header.replace(/\s/g, ""), 0]),
   );
@@ -411,507 +440,584 @@ describe("MatchUtilities test suite",  () => {
 
   const testMatchDate: Date = new Date("September 21, 2024");
 
-  const testCompetition: string = "English Premier League"
+  const testCompetition: string = "English Premier League";
 
   const testHomeStatus: SquadStatus = {
     onField: testClubOne.Starting11,
     onBench: testClubOne.Bench,
     subbedOut: [],
     injured: [],
-    suspended: []    
-  }
+    suspended: [],
+  };
 
   const testAwayStatus: SquadStatus = {
     onField: testClubTwo.Starting11,
     onBench: testClubTwo.Bench,
     subbedOut: [],
     injured: [],
-    suspended: []    
-  }
-  
+    suspended: [],
+  };
+
   const expectedMatch: Match = {
     MatchDate: testMatchDate,
     MatchScore: { Arsenal: 0, Chelsea: 0 },
     Competition: testCompetition,
     Home: testClubOne,
-    Away: testClubTwo,  
+    Away: testClubTwo,
     HomeSquad: testHomeStatus,
     AwaySquad: testAwayStatus,
     HomeOverallStatistics: testEmptyTeamStatistics,
     AwayOverallStatistics: testEmptyTeamStatistics,
-    Simulated: false
+    Simulated: false,
   };
 
-      const attackCategories = new Set(["ballSkills", "mentalSkills",
-      "physicalSkills", "passingSkills", "shootingSkills"]);
+  const attackCategories = new Set([
+    "ballSkills",
+    "mentalSkills",
+    "physicalSkills",
+    "passingSkills",
+    "shootingSkills",
+  ]);
 
-      
-    const defenseCategories = new Set(["defenseSkills", "mentalSkills",
-      "physicalSkills"]);
+  const defenseCategories = new Set([
+    "defenseSkills",
+    "mentalSkills",
+    "physicalSkills",
+  ]);
 
-    const goalkeepingCategories = new Set(["defenseSkills", "mentalSkills",
-      "physicalSkills", "goalkeepingSkills"]);
+  const goalkeepingCategories = new Set([
+    "defenseSkills",
+    "mentalSkills",
+    "physicalSkills",
+    "goalkeepingSkills",
+  ]);
 
+  const averageByCategory = (
+    player: Player,
+    categories: Set<string>,
+  ): Array<number> => {
+    return Object.entries(player.Skills)
+      .filter(([key, value]) => categories.has(key))
+      .map(
+        ([key, value]) =>
+          sum(Object.values(value)) / Object.values(value).length,
+      );
+  };
 
-  const averageByCategory = (player: Player, categories: Set<string>): Array<number> => {
-      return Object.entries(player.Skills).filter(([key,value]) => categories.has(key)).map(([key, value]) => sum(Object.values(value)) / Object.values(value).length)
-    }
+  const playerRating = (player: Player, categories: Set<string>): number => {
+    return sum(averageByCategory(player, categories)) / categories.size;
+  };
 
-    const playerRating = (player: Player, categories: Set<string>): number => {
-      return sum(averageByCategory(player, categories))/categories.size
-    }
-
-  test("test createEmptyMatchStatistics",  () => {
+  test("test createEmptyMatchStatistics", () => {
     const actualMatchStatistics = createEmptyMatchStatistics();
-    
-    expect(actualMatchStatistics).toStrictEqual(testEmptyTeamStatistics)
-    
-  });
-  
-    
-  test("test calculateDefenseStrength",  () => {
-           
-    const goalkeepingRating: number = playerRating(testPlayerEleven, goalkeepingCategories);
-    
-    const outfieldPlayerDefenseRatings: Array<number> = allTestOutfieldPlayers.map((player: Player) => {
-      return playerRating(player, defenseCategories)
-    })
 
-    const expectedDefenseStrength: number = sum(outfieldPlayerDefenseRatings.concat(goalkeepingRating))/11
-
-    const actualDefenseStrength: number = calculateDefenseStrength(allTestPlayers)
-    
-    expect(actualDefenseStrength).toBe(expectedDefenseStrength)
-  });
-    
-  
-  test("test calculateAttackStrength",  () => {            
-    
-    const allAttackRatings: Array<number> = allTestPlayers.map((player: Player) => {
-      return playerRating(player, attackCategories)
-    })
-
-    const expectedAttackStrength: number = sum(allAttackRatings)/11
-
-    const actualAttackStrength: number = calculateAttackStrength(allTestPlayers)
-
-    expect(actualAttackStrength).toBe(expectedAttackStrength)
-    
+    expect(actualMatchStatistics).toStrictEqual(testEmptyTeamStatistics);
   });
 
-  test("test calculateHomeStrength",  () => {
+  test("test calculateDefenseStrength with a goalkeeper", () => {
+    const goalkeepingRating: number = playerRating(
+      testPlayerEleven,
+      goalkeepingCategories,
+    );
 
-    const testDefenseStrength: number = calculateDefenseStrength(allTestPlayers)
-    const testAttackStrength: number = calculateAttackStrength(allTestPlayers)
-    
-    const actualHomeStrength: number = calculateHomeStrength(testAttackStrength, testDefenseStrength);
+    const outfieldPlayerDefenseRatings: Array<number> =
+      allTestOutfieldPlayers.map((player: Player) => {
+        return playerRating(player, defenseCategories);
+      });
+
+    const expectedDefenseStrength: number =
+      sum(outfieldPlayerDefenseRatings.concat(goalkeepingRating)) /
+      allTestPlayers.length;
+
+    const actualDefenseStrength: number =
+      calculateDefenseStrength(allTestPlayers);
+
+    expect(actualDefenseStrength).toBe(expectedDefenseStrength);
+  });
+
+  test("test calculateDefenseStrength without a goalkeeper", () => {
+    const outfieldPlayerDefenseRatings: Array<number> =
+      allTestOutfieldPlayers.map((player: Player) => {
+        return playerRating(player, defenseCategories);
+      });
+
+    const expectedDefenseStrength: number =
+      sum(outfieldPlayerDefenseRatings) / allTestOutfieldPlayers.length;
+
+    const actualDefenseStrength: number = calculateDefenseStrength(
+      allTestOutfieldPlayers,
+    );
+
+    expect(actualDefenseStrength).toBe(expectedDefenseStrength);
+  });
+
+  test("test calculateAttackStrength", () => {
+    const allAttackRatings: Array<number> = allTestPlayers.map(
+      (player: Player) => {
+        return playerRating(player, attackCategories);
+      },
+    );
+
+    const expectedAttackStrength: number =
+      sum(allAttackRatings) / allTestPlayers.length;
+
+    const actualAttackStrength: number =
+      calculateAttackStrength(allTestPlayers);
+
+    expect(actualAttackStrength).toBe(expectedAttackStrength);
+  });
+
+  test("test calculateHomeStrength", () => {
+    const testDefenseStrength: number =
+      calculateDefenseStrength(allTestPlayers);
+    const testAttackStrength: number = calculateAttackStrength(allTestPlayers);
+
+    const actualHomeStrength: number = calculateHomeStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
 
     expect(actualHomeStrength).toBeGreaterThan(0);
     expect(actualHomeStrength).toBeLessThan(1);
-    
-  })
+  });
 
-  test("test calculateAwayStrength",  () => {
+  test("test calculateAwayStrength", () => {
+    const testDefenseStrength: number =
+      calculateDefenseStrength(allTestPlayers);
+    const testAttackStrength: number = calculateAttackStrength(allTestPlayers);
 
-    const testDefenseStrength: number = calculateDefenseStrength(allTestPlayers)
-    const testAttackStrength: number = calculateAttackStrength(allTestPlayers)
-
-    const actualAwayStrength: number = calculateAwayStrength(testAttackStrength, testDefenseStrength);
+    const actualAwayStrength: number = calculateAwayStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
 
     expect(actualAwayStrength).toBeGreaterThan(0);
     expect(actualAwayStrength).toBeLessThan(1);
-
-    
-    
-  })
-
-  test("test weibullCDFGoals",  () => {
-
-    const testDefenseStrength: number = calculateDefenseStrength(allTestPlayers)
-    const testAttackStrength: number = calculateAttackStrength(allTestPlayers)
-    
-    const testHomeStrength: number = calculateHomeStrength(testAttackStrength, testDefenseStrength);
-    const possibleGoals: Array<number> = [0,1,2,3,4,5];
-    const testShape: number = 1.864;
-    possibleGoals.forEach((goals) => {
-      const actualCDF: number = weibullCDFGoals(testShape, testHomeStrength, goals);
-      expect(actualCDF).toBeLessThan(1);    
-    })
-
-    
-    
   });
 
-  test("test weibullCDFGoalsList",  () => {
-
-    const testDefenseStrength: number = calculateDefenseStrength(allTestPlayers);
+  test("test weibullCDFGoals", () => {
+    const testDefenseStrength: number =
+      calculateDefenseStrength(allTestPlayers);
     const testAttackStrength: number = calculateAttackStrength(allTestPlayers);
-    
-    const testHomeStrength: number = calculateHomeStrength(testAttackStrength, testDefenseStrength);
 
-    const testRange: Array<number> = [0,1,2,3,4,5];
+    const testHomeStrength: number = calculateHomeStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
+    const possibleGoals: Array<number> = [0, 1, 2, 3, 4, 5];
     const testShape: number = 1.864;
-    
+    possibleGoals.forEach((goals) => {
+      const actualCDF: number = weibullCDFGoals(
+        testShape,
+        testHomeStrength,
+        goals,
+      );
+      expect(actualCDF).toBeLessThan(1);
+    });
+  });
+
+  test("test weibullCDFGoalsList", () => {
+    const testDefenseStrength: number =
+      calculateDefenseStrength(allTestPlayers);
+    const testAttackStrength: number = calculateAttackStrength(allTestPlayers);
+
+    const testHomeStrength: number = calculateHomeStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
+
+    const testRange: Array<number> = [0, 1, 2, 3, 4, 5];
+    const testShape: number = 1.864;
 
     const expectedRange: Array<number> = testRange.map((goals) => {
       return weibullCDFGoals(testShape, testHomeStrength, goals);
-    })
+    });
 
     const actualRange: Array<number> = weibullCDFGoalsList(testHomeStrength);
-    expect(actualRange).toStrictEqual(expectedRange);    
-    
+    expect(actualRange).toStrictEqual(expectedRange);
   });
-  
 
-  test("test calculateJointProbability",  () => {
+  test("test calculateJointProbability", () => {
+    const testDefenseStrength: number =
+      calculateDefenseStrength(allTestPlayers);
+    const testAttackStrength: number = calculateAttackStrength(allTestPlayers);
 
-    const testDefenseStrength: number = calculateDefenseStrength(allTestPlayers)
-    const testAttackStrength: number = calculateAttackStrength(allTestPlayers)
-    
-    const testHomeStrength: number = calculateHomeStrength(testAttackStrength, testDefenseStrength);
+    const testHomeStrength: number = calculateHomeStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
 
-    const testAwayStrength: number = calculateAwayStrength(testAttackStrength, testDefenseStrength);
+    const testAwayStrength: number = calculateAwayStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
 
-    
-    const testTheta: number = Math.random()
+    const testTheta: number = Math.random();
 
     const testShape: number = 1.864;
-    range(0,100).forEach((_) => {
-      const testGoals: number = getRandomNumberInRange(0,5);
-      const testHomeProb: number = weibullCDFGoals(testShape, testHomeStrength, testGoals);
-      const testAwayProb: number = weibullCDFGoals(testShape, testAwayStrength, testGoals);
-      const testTotalProb: number = testHomeProb + testAwayProb
-      const testNormalizedHomeProb: number = testHomeProb/testTotalProb
-      const testNormalizedAwayProb: number = testAwayProb/testTotalProb
-      const actualJointProbability = calculateJointProbability(testNormalizedHomeProb, testNormalizedAwayProb, testTheta)
-      if (actualJointProbability == 0){
-	console.log(testGoals, testHomeProb, testAwayProb)
-      }	
-	
+    range(0, 100).forEach((_) => {
+      const testGoals: number = getRandomNumberInRange(0, 5);
+      const testHomeProb: number = weibullCDFGoals(
+        testShape,
+        testHomeStrength,
+        testGoals,
+      );
+      const testAwayProb: number = weibullCDFGoals(
+        testShape,
+        testAwayStrength,
+        testGoals,
+      );
+      const testTotalProb: number = testHomeProb + testAwayProb;
+      const testNormalizedHomeProb: number = testHomeProb / testTotalProb;
+      const testNormalizedAwayProb: number = testAwayProb / testTotalProb;
+      const actualJointProbability = calculateJointProbability(
+        testNormalizedHomeProb,
+        testNormalizedAwayProb,
+        testTheta,
+      );
+      if (actualJointProbability == 0) {
+        console.log(testGoals, testHomeProb, testAwayProb);
+      }
+
       expect(actualJointProbability).toBeGreaterThan(0);
-      expect(actualJointProbability).toBeLessThan(1);    
-    })
-    
-    
-    
-  })
+      expect(actualJointProbability).toBeLessThan(1);
+    });
+  });
 
-  test("test createJointProbabilitiesMatrix",  () => {
+  test("test createJointProbabilitiesMatrix", () => {
+    const testDefenseStrength: number =
+      calculateDefenseStrength(allTestPlayers);
+    const testAttackStrength: number = calculateAttackStrength(allTestPlayers);
 
-    const testDefenseStrength: number = calculateDefenseStrength(allTestPlayers)
-    const testAttackStrength: number = calculateAttackStrength(allTestPlayers)
-    
-    const testHomeStrength: number = calculateHomeStrength(testAttackStrength, testDefenseStrength);
+    const testHomeStrength: number = calculateHomeStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
 
-    const testAwayStrength: number = calculateAwayStrength(testAttackStrength, testDefenseStrength);
-   
-    const actualGoalMatrix: Array<[[number,number],number]> = createJointProbabilitiesMatrixForGoals(testHomeStrength, testAwayStrength);
+    const testAwayStrength: number = calculateAwayStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
 
+    const actualGoalMatrix: Array<[[number, number], number]> =
+      createJointProbabilitiesMatrixForGoals(
+        testHomeStrength,
+        testAwayStrength,
+      );
 
     const actualGoalMatrixSet = new Set(actualGoalMatrix);
     expect(actualGoalMatrixSet.size).toBe(36);
-    const actualScoreMatrixSet = new Set(actualGoalMatrix.map(([score, _]) => score))
-    expect(actualScoreMatrixSet.size).toBe(36)
-    
+    const actualScoreMatrixSet = new Set(
+      actualGoalMatrix.map(([score, _]) => score),
+    );
+    expect(actualScoreMatrixSet.size).toBe(36);
+
     actualGoalMatrix.forEach(([scores, probability]) => {
       scores.forEach((score) => {
-	expect(score).toBeGreaterThanOrEqual(0)
-	expect(score).toBeLessThanOrEqual(5)
-      })
-      expect(probability).toBeGreaterThan(0)
-      expect(probability).toBeLessThan(1)
-    })
-    
-    
-  })
+        expect(score).toBeGreaterThanOrEqual(0);
+        expect(score).toBeLessThanOrEqual(5);
+      });
+      expect(probability).toBeGreaterThan(0);
+      expect(probability).toBeLessThan(1);
+    });
+  });
 
-  test("test randomScore",  () => {
-
+  test("test randomScore", () => {
     let betterTeamWins: number = 0;
     let draws: number = 0;
     let underDogWins: number = 0;
-    
-    range(0,1000).forEach((_) => {
-          const testPlayerOne: Player = {
-    ID: 0,
-    Name: "Rodri",
-    PositionGroup: PositionGroup.Midfielder,
-    Position: Midfielder.CDM,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "Spain",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 65,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
 
-  };
+    range(0, 1000).forEach((_) => {
+      const testPlayerOne: Player = {
+        ID: 0,
+        Name: "Rodri",
+        PositionGroup: PositionGroup.Midfielder,
+        Position: Midfielder.CDM,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "Spain",
+        Club: "Arsenal",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 65,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  const testPlayerTwo: Player = {
-    ID: 1,
-    Name: "Luka Modric",
-    PositionGroup: PositionGroup.Midfielder,
-    Position: Midfielder.LM,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
+      const testPlayerTwo: Player = {
+        ID: 1,
+        Name: "Luka Modric",
+        PositionGroup: PositionGroup.Midfielder,
+        Position: Midfielder.LM,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "England",
+        Club: "Arsenal",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 80,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  };
+      const testPlayerThree: Player = {
+        ID: 2,
+        Name: "Toni Kroos",
+        PositionGroup: PositionGroup.Midfielder,
+        Position: Midfielder.RM,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "Spain",
+        Club: "Manchester City",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 85,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  const testPlayerThree: Player = {
-    ID: 2,
-    Name: "Toni Kroos",
-    PositionGroup: PositionGroup.Midfielder,
-    Position: Midfielder.RM,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "Spain",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 85,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
+      const testPlayerFour: Player = {
+        ID: 3,
+        Name: "Gabriel",
+        PositionGroup: PositionGroup.Defender,
+        Position: Defender.LCB,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "England",
+        Club: "Manchester City",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 80,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  };
+      const testPlayerFive: Player = {
+        ID: 4,
+        Name: "William Saliba",
+        PositionGroup: PositionGroup.Defender,
+        Position: Defender.RCB,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "Spain",
+        Club: "Arsenal",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 80,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  const testPlayerFour: Player = {
-    ID: 3,
-    Name: "Gabriel",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.LCB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
+      const testPlayerSix: Player = {
+        ID: 5,
+        Name: "Marcelo",
+        PositionGroup: PositionGroup.Defender,
+        Position: Defender.LB,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "England",
+        Club: "Arsenal",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 80,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  };
+      const testPlayerSeven: Player = {
+        ID: 6,
+        Name: "Trent",
+        PositionGroup: PositionGroup.Defender,
+        Position: Defender.RB,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "Spain",
+        Club: "Manchester City",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 80,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
+      const testPlayerEight: Player = {
+        ID: 7,
+        Name: "Karim Benzema",
+        PositionGroup: PositionGroup.Attacker,
+        Position: Attacker.ST,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "England",
+        Club: "Manchester City",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 80,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  const testPlayerFive: Player = {
-    ID: 4,
-    Name: "William Saliba",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.RCB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "Spain",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
+      const testPlayerNine: Player = {
+        ID: 8,
+        Name: "Bernardo Silva",
+        PositionGroup: PositionGroup.Attacker,
+        Position: Attacker.LW,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "England",
+        Club: "Manchester City",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 80,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  };
+      const testPlayerTen: Player = {
+        ID: 9,
+        Name: "Rodrygo",
+        PositionGroup: PositionGroup.Attacker,
+        Position: Attacker.RW,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "England",
+        Club: "Manchester City",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 80,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  const testPlayerSix: Player = {
-    ID: 5,
-    Name: "Marcelo",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.LB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
+      const testPlayerEleven: Player = {
+        ID: 9,
+        Name: "Ederson",
+        PositionGroup: PositionGroup.Goalkeeper,
+        Position: Goalkeeper.GK,
+        PreferredFoot: Foot.Right,
+        Weight: 76,
+        Height: 183,
+        Age: 25,
+        NationalTeam: "England",
+        Club: "Manchester City",
+        Contract: expectedContract,
+        Value: 1,
+        Rating: 80,
+        Skills: testPlayerSkills(),
+        Statistics: expectedPlayerStatistics,
+      };
 
-  };
+      const allTestOutfieldPlayers: Array<Player> = [
+        testPlayerOne,
+        testPlayerTwo,
+        testPlayerThree,
+        testPlayerFour,
+        testPlayerFive,
+        testPlayerSix,
+        testPlayerSeven,
+        testPlayerEight,
+        testPlayerNine,
+        testPlayerTen,
+      ];
 
-  const testPlayerSeven: Player = {
-    ID: 6,
-    Name: "Trent",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.RB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "Spain",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
+      const allTestPlayers: Array<Player> = [
+        testPlayerOne,
+        testPlayerTwo,
+        testPlayerThree,
+        testPlayerFour,
+        testPlayerFive,
+        testPlayerSix,
+        testPlayerSeven,
+        testPlayerEight,
+        testPlayerNine,
+        testPlayerTen,
+        testPlayerEleven,
+      ];
+      const testDefenseStrength: number =
+        calculateDefenseStrength(allTestPlayers);
+      const testAttackStrength: number =
+        calculateAttackStrength(allTestPlayers);
 
-  };
+      const testHomeStrength: number = calculateHomeStrength(
+        testAttackStrength,
+        testDefenseStrength,
+      );
+      const testAwayStrength: number = calculateAwayStrength(
+        testAttackStrength,
+        testDefenseStrength,
+      );
 
-  const testPlayerEight: Player = {
-    ID: 7,
-    Name: "Karim Benzema",
-    PositionGroup: PositionGroup.Attacker,
-    Position: Attacker.ST,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
+      const testGoalMatrix: Array<[[number, number], number]> =
+        createJointProbabilitiesMatrixForGoals(
+          testHomeStrength,
+          testAwayStrength,
+        );
 
-  };
+      const actualScore: [number, number] = randomScore(testGoalMatrix);
+      actualScore.forEach((score) => {
+        expect(score).toBeGreaterThanOrEqual(0);
+        expect(score).toBeLessThanOrEqual(5);
+      });
 
-  const testPlayerNine: Player = {
-    ID: 8,
-    Name: "Bernardo Silva",
-    PositionGroup: PositionGroup.Attacker,
-    Position: Attacker.LW,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-
-  };
-
-  const testPlayerTen: Player = {
-    ID: 9,
-    Name: "Rodrygo",
-    PositionGroup: PositionGroup.Attacker,
-    Position: Attacker.RW,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-
-  };
-
-  const testPlayerEleven: Player = {
-    ID: 9,
-    Name: "Ederson",
-    PositionGroup: PositionGroup.Goalkeeper,
-    Position: Goalkeeper.GK,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-
-  };
-
-  const allTestOutfieldPlayers: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour, testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight, testPlayerNine, testPlayerTen,
-  ];
-
-  const allTestPlayers: Array<Player> = [testPlayerOne, testPlayerTwo,
-    testPlayerThree, testPlayerFour, testPlayerFive, testPlayerSix,
-    testPlayerSeven, testPlayerEight, testPlayerNine, testPlayerTen,
-    testPlayerEleven
-  ];
-    const testDefenseStrength: number = calculateDefenseStrength(allTestPlayers)
-    const testAttackStrength: number = calculateAttackStrength(allTestPlayers)
-    
-      const testHomeStrength: number = calculateHomeStrength(testAttackStrength, testDefenseStrength)      
-      const testAwayStrength: number = calculateAwayStrength(testAttackStrength, testDefenseStrength);
-      
-   
-    const testGoalMatrix: Array<[[number,number],number]> = createJointProbabilitiesMatrixForGoals(testHomeStrength, testAwayStrength);
-
-    
-    
-      const actualScore: [number, number] = randomScore(testGoalMatrix)      
-    actualScore.forEach((score) => {
-	expect(score).toBeGreaterThanOrEqual(0)
-	expect(score).toBeLessThanOrEqual(5)
-    })
-
-      if (actualScore[0] > actualScore[1]){
-	betterTeamWins += 1
+      if (actualScore[0] > actualScore[1]) {
+        betterTeamWins += 1;
       }
 
-      if (actualScore[0] == actualScore[1]){
-	draws += 1
+      if (actualScore[0] == actualScore[1]) {
+        draws += 1;
       }
 
-      if (actualScore[0] < actualScore[1]){
-	underDogWins += 1
+      if (actualScore[0] < actualScore[1]) {
+        underDogWins += 1;
       }
-      
-    })
-    expect(betterTeamWins).toBeGreaterThan(underDogWins)
-    
-
-  })
-
+    });
+    expect(betterTeamWins).toBeGreaterThan(underDogWins);
+  });
 
   test("test matchExpectedGoals", () => {
+    const testDefenseStrength: number =
+      calculateDefenseStrength(allTestPlayers);
+    const testAttackStrength: number = calculateAttackStrength(allTestPlayers);
 
-    const testDefenseStrength: number = calculateDefenseStrength(allTestPlayers)
-    const testAttackStrength: number = calculateAttackStrength(allTestPlayers)
-    
-      const testHomeStrength: number = calculateHomeStrength(testAttackStrength, testDefenseStrength)      
-    const testAwayStrength: number = calculateAwayStrength(testAttackStrength, testDefenseStrength);
-    
-    const testGoalMatrix: Array<[[number,number],number]> = createJointProbabilitiesMatrixForGoals(testHomeStrength, testAwayStrength);
+    const testHomeStrength: number = calculateHomeStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
+    const testAwayStrength: number = calculateAwayStrength(
+      testAttackStrength,
+      testDefenseStrength,
+    );
 
-       
+    const testGoalMatrix: Array<[[number, number], number]> =
+      createJointProbabilitiesMatrixForGoals(
+        testHomeStrength,
+        testAwayStrength,
+      );
+
     const actualScore: [number, number] = matchExpectedGoals(testGoalMatrix);
 
     actualScore.forEach((score) => {
-	expect(score).toBeGreaterThanOrEqual(0)
-	expect(score).toBeLessThanOrEqual(5)
+      expect(score).toBeGreaterThanOrEqual(0);
+      expect(score).toBeLessThanOrEqual(5);
     });
-    
-          
-  })
-
-  
-
-
-})
-
-
+  });
+});

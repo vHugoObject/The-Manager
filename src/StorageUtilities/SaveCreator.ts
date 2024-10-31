@@ -1,6 +1,9 @@
-import { simpleFaker } from '@faker-js/faker';
-import { createCompetition } from '../Competitions/CompetitionUtilities';
-import { Competition, BaseCompetitions } from '../Competitions/CompetitionTypes';
+import { simpleFaker } from "@faker-js/faker";
+import { createCompetition } from "../Competitions/CompetitionUtilities";
+import {
+  Competition,
+  BaseCompetitions,
+} from "../Competitions/CompetitionTypes";
 import { Save } from "./SaveTypes";
 
 export const createSave = (
@@ -10,23 +13,29 @@ export const createSave = (
   startingSeason: string,
   firstDay: string,
   Club: string,
-  countriesLeaguesClubs: BaseCompetitions
+  countriesLeaguesClubs: BaseCompetitions,
 ): Save => {
-
-  
-  const allCompetitions: Record<string, Record<string, Competition>> = Object.fromEntries(
+  const allCompetitions: Record<
+    string,
+    Record<string, Competition>
+  > = Object.fromEntries(
     Object.entries(countriesLeaguesClubs).map(([country, competitions]) => {
-      return [country, Object.fromEntries(
-    Object.entries(competitions).map(([competitionName, clubs]) => {
-      return [competitionName, createCompetition(
-	competitionName, startingSeason, clubs
-      )]
-    })
-      )]
-    }))
-  
+      return [
+        country,
+        Object.fromEntries(
+          Object.entries(competitions).map(([competitionName, clubs]) => {
+            return [
+              competitionName,
+              createCompetition(competitionName, startingSeason, clubs),
+            ];
+          }),
+        ),
+      ];
+    }),
+  );
+
   return {
-    Name,    
+    Name,
     Country,
     MainCompetition,
     Club,
@@ -34,6 +43,6 @@ export const createSave = (
     CurrentSeason: startingSeason,
     CurrentDate: new Date(firstDay),
     allCompetitions,
-    saveID: simpleFaker.string.numeric(4)
-  }
+    saveID: simpleFaker.string.numeric(4),
+  };
 };

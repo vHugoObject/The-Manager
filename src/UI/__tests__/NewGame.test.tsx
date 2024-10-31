@@ -19,7 +19,10 @@ import {
 } from "../../Players/PlayerTypes";
 import { Club } from "../../Clubs/ClubTypes";
 import { playerSkills } from "../../Players/PlayerSkills";
-import { Competition, BaseCompetitions } from "../../Competitions/CompetitionTypes";
+import {
+  Competition,
+  BaseCompetitions,
+} from "../../Competitions/CompetitionTypes";
 import { deleteDB } from "idb";
 import { Save } from "../../StorageUtilities/SaveTypes";
 import { getAllSaveValues } from "../../StorageUtilities/SaveUtilities";
@@ -31,7 +34,7 @@ describe("NewGame Components", async () => {
     cleanup();
   });
 
-    const fullCompetitionTableRowHeaders: Array<string> = [
+  const fullCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
     "Draws",
@@ -290,7 +293,7 @@ describe("NewGame Components", async () => {
   const testName = "Jose Mourinho";
   const testCompetitionName: string = "English Premier League";
   const testSeason: string = "2024";
-  const testClub: string = "Arsenal";  
+  const testClub: string = "Arsenal";
 
   const testDBName: string = "the-manager";
   const saves: string = "save-games";
@@ -387,12 +390,10 @@ describe("NewGame Components", async () => {
   });
 
   test("test start new game", async () => {
-    
-    
     const expectedLeagues = Object.keys(
       testAvailableCountriesLeaguesClubs[testCountry],
     );
-    
+
     const { user } = renderWithRouter(
       <NewGame countriesLeaguesClubs={testAvailableCountriesLeaguesClubs} />,
     );
@@ -450,15 +451,14 @@ describe("NewGame Components", async () => {
     await user.click(
       screen.getByText("Start Game", { selector: "button[type='submit']" }),
     );
-    
+
     const expectedClub: Club = {
       ID: 0,
       Name: testClub,
       Statistics: expectedClubStatistics,
       Squad: testPlayersOne,
       Starting11: [],
-      Bench: []
-      
+      Bench: [],
     };
 
     const expectedCompetition: Competition = {
@@ -468,7 +468,7 @@ describe("NewGame Components", async () => {
     };
 
     const testFirstDay: Date = new Date("8/18/24");
-    
+
     const expectedSave: Save = {
       Name: testName,
       Country: testCountry,
@@ -478,8 +478,8 @@ describe("NewGame Components", async () => {
       CurrentSeason: "2024",
       CurrentDate: testFirstDay,
       allCompetitions: expect.anything(),
-      saveID: expect.any(String)
-    }; 
+      saveID: expect.any(String),
+    };
 
     const actualSaves: Array<Save> = await getAllSaveValues();
     const actualSave: Save = actualSaves[0];
@@ -488,19 +488,18 @@ describe("NewGame Components", async () => {
       actualSave.allCompetitions,
     ).flatMap((actualComp) => Object.values(actualComp));
 
-    
     actualCompetitions.forEach((actualCompetition) => {
-      expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition)
+      expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition);
       actualCompetition.Clubs.forEach((actualClub: Club) => {
-	expectTypeOf(actualClub).toEqualTypeOf(expectedClub)
-	const actualPlayers: Array<Player> = actualClub.Squad;
-	expect(actualPlayers.length).toBe(25);
-	expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
-	actualPlayers.forEach((testPlayer) => {
+        expectTypeOf(actualClub).toEqualTypeOf(expectedClub);
+        const actualPlayers: Array<Player> = actualClub.Squad;
+        expect(actualPlayers.length).toBe(25);
+        expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
+        actualPlayers.forEach((testPlayer) => {
           expectTypeOf(testPlayer).toEqualTypeOf(testPlayerOne);
+        });
       });
-      });
-    });      
+    });
     await deleteDB(testDBName);
   });
 });

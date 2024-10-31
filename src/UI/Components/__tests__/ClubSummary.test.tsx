@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { screen, render, cleanup } from "@testing-library/react";
-import { setup } from '../../UITestingUtilities'
+import { setup } from "../../UITestingUtilities";
 import { describe, expect, test, afterEach } from "vitest";
 import {
   ComponentKeysObject,
@@ -9,7 +9,10 @@ import {
   StatisticsType,
 } from "../../../Common/CommonTypes";
 import { Save, SaveID } from "../../../StorageUtilities/SaveTypes";
-import { Competition, AllCompetitions } from "../../../Competitions/CompetitionTypes";
+import {
+  Competition,
+  AllCompetitions,
+} from "../../../Competitions/CompetitionTypes";
 import { Club } from "../../../Clubs/ClubTypes";
 import {
   Player,
@@ -28,7 +31,7 @@ import { SaveContext } from "../../DatabaseManagement";
 import { ClubSummary } from "../ClubSummary";
 
 describe("Club Summary Components", async () => {
-const simpleCompetitionTableRowHeaders: Array<string> = [
+  const simpleCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
     "Draws",
@@ -36,7 +39,7 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
     "Points",
   ];
 
-    const fullCompetitionTableRowHeaders: Array<string> = [
+  const fullCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
     "Draws",
@@ -46,10 +49,6 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
     "Goal Difference",
     "Points",
   ];
-
-
-
-  
 
   const expectedPlayerStandardStatsHeaders: Array<string> = [
     "Season",
@@ -78,10 +77,6 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
     "Wages",
   ];
 
-  
-
-  
-
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -101,7 +96,7 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
 
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
-  
+
   const expectedCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
@@ -141,7 +136,7 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
     "Continental Cup",
   ];
 
-    const expectedClubSummaryStatsHeaders: Array<string> = [
+  const expectedClubSummaryStatsHeaders: Array<string> = [
     "Record",
     "Home Record",
     "Away Record",
@@ -177,8 +172,6 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
     BySeason: { "2024": testClubStatisticsOne },
     GameLog: {},
   };
-
-  
 
   const playerStandardStatsHeaders: Array<string> = [
     "Matches Played",
@@ -265,7 +258,6 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTwo: Player = {
@@ -284,7 +276,6 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerThree: Player = {
@@ -325,22 +316,19 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwo: Array<Player> = [testPlayerThree, testPlayerFour];
-  
 
   const testClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
     GameLog: {},
   };
 
-  
   const testClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
-    
+    Bench: [],
   };
 
   const testClubTwo: Club = {
@@ -349,34 +337,28 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
     Statistics: testClubStatistics,
     Squad: testPlayersTwo,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
-  
-
 
   const testClubs: Array<Club> = [testClubOne, testClubTwo];
-  
+
   const testCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
   };
 
-  
-  
   const testCompetitionOne: Competition = {
     Name: "English Premier League",
     Clubs: testClubs,
     Statistics: testCompetitionStatistics,
-  };    
-  
+  };
 
   const testAllCompetitionsOne: AllCompetitions = {
     England: {
       "English Premier League": testCompetitionOne,
     },
   };
-  
-  
+
   const testCountry: string = "England";
   const testCompetitionName: string = "English Premier League";
   const testNameOne: string = "Mikel Arteta";
@@ -384,51 +366,42 @@ const simpleCompetitionTableRowHeaders: Array<string> = [
   const testSeason: string = "2024";
   const testFirstDay: Date = new Date("8/18/24");
 
-
   const testSave: Save = {
     Name: testNameOne,
-      Country: testCountry,
-      MainCompetition: testCompetitionName,
-      Club: testClubNameOne,
-      Seasons: 1,
+    Country: testCountry,
+    MainCompetition: testCompetitionName,
+    Club: testClubNameOne,
+    Seasons: 1,
     CurrentSeason: "2024",
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
-    saveID: "0"
-    
+    saveID: "0",
   };
-
 
   afterEach(async () => {
     cleanup();
   });
 
   test("test ClubSummary", async () => {
-
-    const TestClubSummary = ({testInitialSaveContext}) => {
-      return (<div id="test-club-summary">
-      <SaveContext.Provider value={testInitialSaveContext}>
-      <ClubSummary season={testSeason}/>
-      </SaveContext.Provider>
-      </div>)
+    const TestClubSummary = ({ testInitialSaveContext }) => {
+      return (
+        <div id="test-club-summary">
+          <SaveContext.Provider value={testInitialSaveContext}>
+            <ClubSummary season={testSeason} />
+          </SaveContext.Provider>
+        </div>
+      );
     };
 
-    setup(<TestClubSummary
-	    testInitialSaveContext={testSave}/>);
+    setup(<TestClubSummary testInitialSaveContext={testSave} />);
 
-    
     expectedClubSummaryStatsHeaders.forEach((expectedClubHeader) => {
-      const testStat = testClubOne.Statistics.BySeason[testSeason][
-            expectedClubHeader.replace(/\s/g, "")
-      ]
+      const testStat =
+        testClubOne.Statistics.BySeason[testSeason][
+          expectedClubHeader.replace(/\s/g, "")
+        ];
       const expectedParagraphValue = new RegExp(
-        String.prototype.concat(
-          "^",
-          expectedClubHeader,
-          ":",
-          " ",
-          testStat,
-        ),
+        String.prototype.concat("^", expectedClubHeader, ":", " ", testStat),
       );
       expect(
         screen.getByText(expectedParagraphValue, { selector: "strong" }),

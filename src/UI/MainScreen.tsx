@@ -9,7 +9,7 @@ import {
   SideMenu,
   SimMenu,
   SiteBanner,
-  CurrentDate
+  CurrentDate,
 } from "./Components/index";
 import {
   SimulationContext,
@@ -17,13 +17,11 @@ import {
   SimulationState,
   simulationReducer,
 } from "./SimulationManagement";
-import {
-  SaveContext,
-} from "./DatabaseManagement";
-import { Save, SaveID } from '../StorageUtilities/SaveTypes'
+import { SaveContext } from "./DatabaseManagement";
+import { Save, SaveID } from "../StorageUtilities/SaveTypes";
 
 export const MainScreen = () => {
-  let saveID: SaveID = useParams().saveID
+  let saveID: SaveID = useParams().saveID;
   const [currentSave, setCurrentSave] = useState(null);
   const [currentSimulationStatus, dispatch] = useReducer(
     simulationReducer,
@@ -53,29 +51,28 @@ export const MainScreen = () => {
     }
   }, [saveID, currentSimulationStatus]);
 
-  
   return (
     <div id="main-screen">
       <SiteBanner />
       <div id="main-screen-options">
-      <SaveContext.Provider value={currentSave}>
-        <SimulationContext.Provider value={currentSimulationStatus}>
-          <SimulationDispatchContext.Provider value={dispatch}>
-            <SideMenu />
-            <SimMenu />
-	    {currentSave && <CurrentDate />}
-            {currentSave && <SimpleCompetitionTable 
-			      season={currentSave.CurrentSeason}
-	    />}
-            {currentSave && <ClubSummary 
-			      season={currentSave.CurrentSeason}
-	    />}
-            {currentSave && <SimpleSquadTable 
-			      season={currentSave.CurrentSeason}
-	    />}
-          </SimulationDispatchContext.Provider>
+        <SaveContext.Provider value={currentSave}>
+          <SimulationContext.Provider value={currentSimulationStatus}>
+            <SimulationDispatchContext.Provider value={dispatch}>
+              <SideMenu />
+              <SimMenu />
+              {currentSave && <CurrentDate />}
+              {currentSave && (
+                <SimpleCompetitionTable season={currentSave.CurrentSeason} />
+              )}
+              {currentSave && (
+                <ClubSummary season={currentSave.CurrentSeason} />
+              )}
+              {currentSave && (
+                <SimpleSquadTable season={currentSave.CurrentSeason} />
+              )}
+            </SimulationDispatchContext.Provider>
           </SimulationContext.Provider>
-	  </SaveContext.Provider>
+        </SaveContext.Provider>
       </div>
     </div>
   );

@@ -139,6 +139,6 @@ export const createClub = (
     Statistics: generateClubStatisticsObject(season),
     Squad: teamPlayers,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 };

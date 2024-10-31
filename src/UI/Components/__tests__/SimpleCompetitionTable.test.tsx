@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import React from "react";
-import { setup } from '../../UITestingUtilities'
+import { setup } from "../../UITestingUtilities";
 import { screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, expect, test, afterEach } from "vitest";
-import {
-  StatisticsObject,
-  StatisticsType,
-} from "../../../Common/CommonTypes";
+import { StatisticsObject, StatisticsType } from "../../../Common/CommonTypes";
 import { Save, SaveID } from "../../../StorageUtilities/SaveTypes";
-import { Competition, AllCompetitions } from "../../../Competitions/CompetitionTypes";
+import {
+  Competition,
+  AllCompetitions,
+} from "../../../Competitions/CompetitionTypes";
 import { Club } from "../../../Clubs/ClubTypes";
 import {
   Player,
@@ -24,7 +24,6 @@ import { SaveContext } from "../../DatabaseManagement";
 import { SimpleCompetitionTable } from "../SimpleCompetitionTable";
 
 describe("SimpleCompetitionTable component", async () => {
-
   const simpleCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
@@ -33,7 +32,6 @@ describe("SimpleCompetitionTable component", async () => {
     "Points",
   ];
 
-     
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -53,8 +51,6 @@ describe("SimpleCompetitionTable component", async () => {
 
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
-    
-  
 
   const testClubStatisticsOne: StatisticsObject = {
     Wins: 0,
@@ -78,7 +74,6 @@ describe("SimpleCompetitionTable component", async () => {
     YellowCards: 0,
     RedCards: 0,
   };
-  
 
   const playerStatisticsArray: Array<string> = [
     "Wins",
@@ -105,7 +100,6 @@ describe("SimpleCompetitionTable component", async () => {
     BySeason: { "2024": playerStatisticsObject },
     GameLog: {},
   };
-  
 
   const expectedContract: ContractType = {
     Wage: 1,
@@ -135,7 +129,6 @@ describe("SimpleCompetitionTable component", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTwo: Player = {
@@ -154,7 +147,6 @@ describe("SimpleCompetitionTable component", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerThree: Player = {
@@ -173,7 +165,6 @@ describe("SimpleCompetitionTable component", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerFour: Player = {
@@ -192,26 +183,23 @@ describe("SimpleCompetitionTable component", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwo: Array<Player> = [testPlayerThree, testPlayerFour];
-  
 
   const testClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
     GameLog: {},
   };
 
-  
   const testClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubTwo: Club = {
@@ -220,7 +208,7 @@ describe("SimpleCompetitionTable component", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersTwo,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubThree: Club = {
@@ -229,7 +217,7 @@ describe("SimpleCompetitionTable component", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubFour: Club = {
@@ -238,32 +226,33 @@ describe("SimpleCompetitionTable component", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
+  const testClubs: Array<Club> = [
+    testClubOne,
+    testClubTwo,
+    testClubThree,
+    testClubFour,
+  ];
 
-  const testClubs: Array<Club> = [testClubOne, testClubTwo, testClubThree, testClubFour];
-  
   const testCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
   };
 
-    
   const testCompetitionOne: Competition = {
     Name: "English Premier League",
     Clubs: testClubs,
-    Statistics: testCompetitionStatistics,  
-  };    
-  
+    Statistics: testCompetitionStatistics,
+  };
 
   const testAllCompetitionsOne: AllCompetitions = {
     England: {
       "English Premier League": testCompetitionOne,
     },
   };
-  
-  
+
   const testCountry: string = "England";
   const testCompetitionName: string = "English Premier League";
   const testNameOne: string = "Mikel Arteta";
@@ -271,47 +260,42 @@ describe("SimpleCompetitionTable component", async () => {
   const testSeason: string = "2024";
   const testFirstDay: Date = new Date("8/18/24");
 
-
   const testSave: Save = {
-      Name: testNameOne,
-      Country: testCountry,
-      MainCompetition: testCompetitionName,
-      Club: testClubNameOne,
+    Name: testNameOne,
+    Country: testCountry,
+    MainCompetition: testCompetitionName,
+    Club: testClubNameOne,
     Seasons: 1,
     CurrentSeason: "2024",
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
-    saveID: "1"
+    saveID: "1",
   };
-
 
   afterEach(async () => {
     cleanup();
   });
 
   test("test SimpleCompetitionTable component", async () => {
-
-    const TestSimpleCompetitionTable = ({testInitialSaveContext}) => {
-      return (<div id="test-simple-comp-table">
-      <SaveContext.Provider value={testInitialSaveContext}>
-      <SimpleCompetitionTable 
-		season={testSeason}/>
-      </SaveContext.Provider>
-      </div>)
+    const TestSimpleCompetitionTable = ({ testInitialSaveContext }) => {
+      return (
+        <div id="test-simple-comp-table">
+          <SaveContext.Provider value={testInitialSaveContext}>
+            <SimpleCompetitionTable season={testSeason} />
+          </SaveContext.Provider>
+        </div>
+      );
     };
-    
-    setup(<TestSimpleCompetitionTable
-	     testInitialSaveContext={testSave}
-    />);
-    
+
+    setup(<TestSimpleCompetitionTable testInitialSaveContext={testSave} />);
+
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),
       ).toBeTruthy(),
     );
 
-    const lastSimpleCompHeaderKey =
-      simpleCompetitionTableRowHeaders.length - 1;
+    const lastSimpleCompHeaderKey = simpleCompetitionTableRowHeaders.length - 1;
     const lastSimpleCompHeader =
       simpleCompetitionTableRowHeaders[lastSimpleCompHeaderKey];
     const lastSimpleCompHeaderJoined = lastSimpleCompHeader.replace(/\s/g, "");
@@ -330,19 +314,14 @@ describe("SimpleCompetitionTable component", async () => {
       ).toBeTruthy();
     });
 
-    
-
     await waitFor(() => {
       const lastClub: Club = testClubs[testClubs.length - 1];
-      const lastStatFromLastClub: StatisticsObject = lastClub.Statistics.BySeason[testSeason];      
+      const lastStatFromLastClub: StatisticsObject =
+        lastClub.Statistics.BySeason[testSeason];
       expect(
-        screen.getByText(
-	  lastStatFromLastClub[lastSimpleCompHeaderJoined]
-          ,
-          {
-            selector: `td[id='${lastSimpleCompHeaderJoined}_${testClubs.length - 1}']`,
-          },
-        ),
+        screen.getByText(lastStatFromLastClub[lastSimpleCompHeaderJoined], {
+          selector: `td[id='${lastSimpleCompHeaderJoined}_${testClubs.length - 1}']`,
+        }),
       ).toBeTruthy();
     });
 
@@ -350,17 +329,12 @@ describe("SimpleCompetitionTable component", async () => {
       const clubStats: StatisticsObject = club.Statistics.BySeason[testSeason];
       clubStats["Club"] = club.Name;
       simpleCompetitionTableRowHeaders.forEach((header: string) => {
-	expect(
-        screen.getByText(
-	  clubStats[header],          
-          {
+        expect(
+          screen.getByText(clubStats[header], {
             selector: `td[id='${header}_${index}']`,
-          },
-        ),
-      ).toBeTruthy();
-      })
-    })
-   
-
+          }),
+        ).toBeTruthy();
+      });
+    });
   });
 });

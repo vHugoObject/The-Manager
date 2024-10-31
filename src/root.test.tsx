@@ -24,12 +24,10 @@ import {
 import { playerSkills } from "./Players/PlayerSkills";
 import { Club } from "./Clubs/ClubTypes";
 import { addSaveToDB } from "./StorageUtilities/SaveUtilities";
-import { Save, SaveID } from './StorageUtilities/SaveTypes'
+import { Save, SaveID } from "./StorageUtilities/SaveTypes";
 import { App } from "./root";
 
 describe("test the app from the root", async () => {
-
-
   const simpleCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
@@ -38,7 +36,7 @@ describe("test the app from the root", async () => {
     "Points",
   ];
 
-    const fullCompetitionTableRowHeaders: Array<string> = [
+  const fullCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
     "Draws",
@@ -70,7 +68,6 @@ describe("test the app from the root", async () => {
     "Yellow Cards",
     "Red Cards",
   ];
-  
 
   const expectedPlayerStandardStatsHeaders: Array<string> = [
     "Season",
@@ -104,8 +101,6 @@ describe("test the app from the root", async () => {
     bioParagraphs: expectedBioParagraphs,
   };
 
-  
-
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -125,7 +120,7 @@ describe("test the app from the root", async () => {
 
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
-  
+
   const expectedCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
@@ -225,19 +220,19 @@ describe("test the app from the root", async () => {
   ];
 
   const playerStatisticsObject: StatisticsObject = {
-  MatchesPlayed: 0,
-  Starts: 0,
-  Minutes: 0,
-  Full90s: 0,
-  Goals: 0,
-  Assists: 0,
-  GoalsPlusAssists: 0,
-  NonPenaltyGoals: 0,
-  PenaltyKicksMade: 0,
-  PenaltyKicksAttempted: 0,
-  YellowCards: 0,
-  RedCards: 0,
-};
+    MatchesPlayed: 0,
+    Starts: 0,
+    Minutes: 0,
+    Full90s: 0,
+    Goals: 0,
+    Assists: 0,
+    GoalsPlusAssists: 0,
+    NonPenaltyGoals: 0,
+    PenaltyKicksMade: 0,
+    PenaltyKicksAttempted: 0,
+    YellowCards: 0,
+    RedCards: 0,
+  };
 
   const expectedPlayerStatistics: StatisticsType = {
     BySeason: { "2024": playerStatisticsObject },
@@ -277,7 +272,6 @@ describe("test the app from the root", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTwo: Player = {
@@ -296,7 +290,6 @@ describe("test the app from the root", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerThree: Player = {
@@ -315,7 +308,6 @@ describe("test the app from the root", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerFour: Player = {
@@ -334,12 +326,10 @@ describe("test the app from the root", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwo: Array<Player> = [testPlayerThree, testPlayerFour];
-  
 
   const testClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
@@ -356,7 +346,7 @@ describe("test the app from the root", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubTwo: Club = {
@@ -365,7 +355,7 @@ describe("test the app from the root", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersTwo,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubThree: Club = {
@@ -374,7 +364,7 @@ describe("test the app from the root", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
   const testClubFour: Club = {
@@ -383,12 +373,11 @@ describe("test the app from the root", async () => {
     Statistics: testClubStatistics,
     Squad: testPlayersOne,
     Starting11: [],
-    Bench: []
+    Bench: [],
   };
 
-
   const testClubs: Array<Club> = [testClubOne, testClubTwo];
-  
+
   const testCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
@@ -398,21 +387,19 @@ describe("test the app from the root", async () => {
     simpleCompetitionTableRowHeaders,
     fullCompetitionTableRowHeaders,
   };
-  
+
   const testCompetitionOne: Competition = {
     Name: "English Premier League",
     Clubs: testClubs,
-    Statistics: testCompetitionStatistics,  
-  };    
-  
+    Statistics: testCompetitionStatistics,
+  };
 
   const testAllCompetitionsOne: AllCompetitions = {
     England: {
       "English Premier League": testCompetitionOne,
     },
   };
-  
-  
+
   const testCountry: string = "England";
   const testCompetitionName: string = "English Premier League";
   const testNameOne: string = "Mikel Arteta";
@@ -420,59 +407,56 @@ describe("test the app from the root", async () => {
   const testSeason: string = "2024";
   const testFirstDay: Date = new Date("8/18/24");
 
-
   const expectedPlayerStats = testPlayersOne.map((player: Player) => {
     return {
       Name: player.Name,
       NationalTeam: player.NationalTeam,
       Position: player.Position,
-      ...player.Statistics.BySeason[testSeason]
-    }
-  })
+      ...player.Statistics.BySeason[testSeason],
+    };
+  });
 
   const testSave: Save = {
-      Name: testNameOne,
-      Country: testCountry,
-      MainCompetition: testCompetitionName,
-      Club: testClubNameOne,
-      Seasons: 1,
+    Name: testNameOne,
+    Country: testCountry,
+    MainCompetition: testCompetitionName,
+    Club: testClubNameOne,
+    Seasons: 1,
     CurrentSeason: "2024",
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
-    saveID: "0"
+    saveID: "0",
   };
-  
+
   const testSeasonStatistics: Array<StatisticsObject> = [
     testClubOne.Statistics,
-    testClubTwo.Statistics    
+    testClubTwo.Statistics,
   ].map((club, index) => {
-
     const statisticsOnly = club["BySeason"][testSeason];
 
     statisticsOnly["Club"] = testClubs[index].Name;
     return statisticsOnly;
   });
 
-      const lastSimpleClubStandardStatsHeaderKey: number =
-      expectedSimpleClubStandardStatsHeaders.length - 1;
-    const lastSimpleClubStandardStatsHeader: string =
-      expectedSimpleClubStandardStatsHeaders[
-        lastSimpleClubStandardStatsHeaderKey
-      ];
+  const lastSimpleClubStandardStatsHeaderKey: number =
+    expectedSimpleClubStandardStatsHeaders.length - 1;
+  const lastSimpleClubStandardStatsHeader: string =
+    expectedSimpleClubStandardStatsHeaders[
+      lastSimpleClubStandardStatsHeaderKey
+    ];
 
-      const lastSimpleCompHeaderKey: number =
-      simpleCompetitionTableRowHeaders.length - 1;
-    const lastSimpleCompHeader: string =
-      simpleCompetitionTableRowHeaders[lastSimpleCompHeaderKey];
-    const lastSimpleCompHeaderJoined: string = lastSimpleCompHeader.replace(
-      /\s/g,
-      "",
-    );
+  const lastSimpleCompHeaderKey: number =
+    simpleCompetitionTableRowHeaders.length - 1;
+  const lastSimpleCompHeader: string =
+    simpleCompetitionTableRowHeaders[lastSimpleCompHeaderKey];
+  const lastSimpleCompHeaderJoined: string = lastSimpleCompHeader.replace(
+    /\s/g,
+    "",
+  );
 
-   
   const testDBName = "the-manager";
   afterEach(async () => {
-    deleteDB(testDBName)
+    deleteDB(testDBName);
     cleanup();
   });
 
@@ -524,16 +508,15 @@ describe("test the app from the root", async () => {
     await user.click(
       screen.getByText("Start Game", { selector: "button[type='submit']" }),
     );
-    
+
     // wait for main screen to load
     const expectedDate: string = testFirstDay.toDateString();
     await waitFor(() =>
-    expect(
+      expect(
         screen.getByText(expectedDate, { selector: "h2[id=current-date]" }),
-    ).toBeTruthy()
-    )
-    
-    
+      ).toBeTruthy(),
+    );
+
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),
@@ -550,21 +533,18 @@ describe("test the app from the root", async () => {
 
     await waitFor(() => {
       const lastClub: Club = testClubs[testClubs.length - 1];
-      const lastStatFromLastClub: StatisticsObject = lastClub.Statistics.BySeason[testSeason];      
+      const lastStatFromLastClub: StatisticsObject =
+        lastClub.Statistics.BySeason[testSeason];
       expect(
-        screen.getByText(
-	  lastStatFromLastClub[lastSimpleCompHeaderJoined]
-          ,
-          {
-            selector: `td[id='${lastSimpleCompHeaderJoined}_${testClubs.length - 1}']`,
-          },
-        ),
+        screen.getByText(lastStatFromLastClub[lastSimpleCompHeaderJoined], {
+          selector: `td[id='${lastSimpleCompHeaderJoined}_${testClubs.length - 1}']`,
+        }),
       ).toBeTruthy();
     });
 
     const lastSimpleClubStandardStatsHeaderJoined: string =
       lastSimpleClubStandardStatsHeader.replace(/\s/g, "");
-    
+
     await waitFor(() =>
       expect(
         screen.getByText(lastSimpleClubStandardStatsHeader, {
@@ -577,7 +557,7 @@ describe("test the app from the root", async () => {
       expect(
         screen.getByText(
           expectedPlayerStats[expectedPlayerStats.length - 1][
-	  lastSimpleClubStandardStatsHeader.replace(/\s/g, "")
+            lastSimpleClubStandardStatsHeader.replace(/\s/g, "")
           ],
           {
             selector: `td[id='${lastSimpleClubStandardStatsHeaderJoined}_${expectedPlayerStats.length - 1}']`,
@@ -585,10 +565,9 @@ describe("test the app from the root", async () => {
         ),
       ),
     );
+  });
 
-  })
-
-    test("start an old save ", async () => {
+  test("start an old save ", async () => {
     await addSaveToDB(testSave);
     const TestApp = () => (
       <div>
@@ -601,28 +580,24 @@ describe("test the app from the root", async () => {
       screen.getByText("The Manager", { selector: "h2[id='site-banner']" }),
     ).toBeTruthy();
 
-
-
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Play_0" })).toBeTruthy(),
     );
 
     await user.click(screen.getByRole("button", { name: "Play_0" }));
 
-    
-      // wait for main screen to load
-      const expectedDate: string = testFirstDay.toDateString();
+    // wait for main screen to load
+    const expectedDate: string = testFirstDay.toDateString();
     await waitFor(() =>
-    expect(
+      expect(
         screen.getByText(expectedDate, { selector: "h2[id=current-date]" }),
-    ).toBeTruthy()
-    )
+      ).toBeTruthy(),
+    );
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),
       ).toBeTruthy(),
     );
-
 
     await waitFor(() =>
       expect(
@@ -632,13 +607,11 @@ describe("test the app from the root", async () => {
       ).toBeTruthy(),
     );
 
-
     simpleCompetitionTableRowHeaders.forEach((expectedColumnHeader) => {
       expect(
         screen.getByText(expectedColumnHeader, { selector: "th" }),
       ).toBeTruthy();
     });
-
 
     const lastSimpleClubStandardStatsHeaderJoined: string =
       lastSimpleClubStandardStatsHeader.replace(/\s/g, "");
@@ -662,9 +635,7 @@ describe("test the app from the root", async () => {
         ),
       ),
     );
-
-
-    });
+  });
 
   test("test go back to start screen from main screen ", async () => {
     await addSaveToDB(testSave);
@@ -680,7 +651,6 @@ describe("test the app from the root", async () => {
     );
     await user.click(screen.getByRole("button", { name: "Play_0" }));
 
-    
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),
@@ -702,7 +672,6 @@ describe("test the app from the root", async () => {
     );
     await user.click(screen.getByRole("button", { name: "Play_0" }));
 
-    
     await waitFor(() =>
       expect(
         screen.getByText(testCompetitionName, { selector: "h2" }),

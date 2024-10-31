@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import React from "react";
-import { setup } from '../../UITestingUtilities'
+import { setup } from "../../UITestingUtilities";
 import { screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, expect, test, afterEach } from "vitest";
-import {
-  StatisticsObject,
-  StatisticsType,
-} from "../../../Common/CommonTypes";
+import { StatisticsObject, StatisticsType } from "../../../Common/CommonTypes";
 import { Save, SaveID } from "../../../StorageUtilities/SaveTypes";
-import { Competition, AllCompetitions } from "../../../Competitions/CompetitionTypes";
+import {
+  Competition,
+  AllCompetitions,
+} from "../../../Competitions/CompetitionTypes";
 import { Club } from "../../../Clubs/ClubTypes";
 import {
   Player,
@@ -24,7 +24,7 @@ import { SaveContext } from "../../DatabaseManagement";
 import { CurrentDate } from "../CurrentDate";
 
 describe("CurrentDate Components", async () => {
-    const simpleCompetitionTableRowHeaders: Array<string> = [
+  const simpleCompetitionTableRowHeaders: Array<string> = [
     "Club",
     "Wins",
     "Draws",
@@ -32,7 +32,6 @@ describe("CurrentDate Components", async () => {
     "Points",
   ];
 
-     
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -52,8 +51,6 @@ describe("CurrentDate Components", async () => {
 
   const competitionStatisticsObject: Record<string, number> =
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
-    
-  
 
   const testClubStatisticsOne: StatisticsObject = {
     Wins: 0,
@@ -77,7 +74,6 @@ describe("CurrentDate Components", async () => {
     YellowCards: 0,
     RedCards: 0,
   };
-  
 
   const playerStatisticsArray: Array<string> = [
     "Wins",
@@ -104,7 +100,6 @@ describe("CurrentDate Components", async () => {
     BySeason: { "2024": playerStatisticsObject },
     GameLog: {},
   };
-  
 
   const expectedContract: ContractType = {
     Wage: 1,
@@ -134,7 +129,6 @@ describe("CurrentDate Components", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerTwo: Player = {
@@ -153,7 +147,6 @@ describe("CurrentDate Components", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerThree: Player = {
@@ -172,7 +165,6 @@ describe("CurrentDate Components", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayerFour: Player = {
@@ -191,25 +183,21 @@ describe("CurrentDate Components", async () => {
     Rating: 80,
     Skills: testPlayerSkills,
     Statistics: expectedPlayerStatistics,
-
   };
 
   const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwo: Array<Player> = [testPlayerThree, testPlayerFour];
-  
 
   const testClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
     GameLog: {},
   };
 
-  
   const testClubOne: Club = {
     ID: 0,
     Name: "Arsenal",
     Statistics: testClubStatistics,
     Players: testPlayersOne,
-
   };
 
   const testClubTwo: Club = {
@@ -224,7 +212,6 @@ describe("CurrentDate Components", async () => {
     Name: "Everton",
     Statistics: testClubStatistics,
     Players: testPlayersOne,
-  
   };
 
   const testClubFour: Club = {
@@ -232,32 +219,32 @@ describe("CurrentDate Components", async () => {
     Name: "Ashton Villa",
     Statistics: testClubStatistics,
     Players: testPlayersOne,
-
   };
 
+  const testClubs: Array<Club> = [
+    testClubOne,
+    testClubTwo,
+    testClubThree,
+    testClubFour,
+  ];
 
-  const testClubs: Array<Club> = [testClubOne, testClubTwo, testClubThree, testClubFour];
-  
   const testCompetitionStatistics: StatisticsType = {
     BySeason: { "2024": competitionStatisticsObject },
     GameLog: {},
   };
 
-    
   const testCompetitionOne: Competition = {
     Name: "English Premier League",
     Clubs: testClubs,
-    Statistics: testCompetitionStatistics,  
-  };    
-  
+    Statistics: testCompetitionStatistics,
+  };
 
   const testAllCompetitionsOne: AllCompetitions = {
     England: {
       "English Premier League": testCompetitionOne,
     },
   };
-  
-  
+
   const testCountry: string = "England";
   const testCompetitionName: string = "English Premier League";
   const testNameOne: string = "Mikel Arteta";
@@ -265,44 +252,38 @@ describe("CurrentDate Components", async () => {
   const testSeason: string = "2024";
   const testFirstDay: Date = new Date("8/18/24");
 
-
   const testSave: Save = {
-      Name: testNameOne,
-      Country: testCountry,
-      MainCompetition: testCompetitionName,
-      Club: testClubNameOne,
+    Name: testNameOne,
+    Country: testCountry,
+    MainCompetition: testCompetitionName,
+    Club: testClubNameOne,
     Seasons: 1,
     CurrentSeason: "2024",
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
-    saveID: "1"
+    saveID: "1",
   };
-
 
   afterEach(async () => {
     cleanup();
   });
 
-  
   test("CurrentDate Components", async () => {
-    const TestCurrentDate = ({testInitialSaveContext}) => {
-      return (<div id="test-simple-comp-table">
-      <SaveContext.Provider value={testInitialSaveContext}>
-      <CurrentDate/>
-      </SaveContext.Provider>
-      </div>)
+    const TestCurrentDate = ({ testInitialSaveContext }) => {
+      return (
+        <div id="test-simple-comp-table">
+          <SaveContext.Provider value={testInitialSaveContext}>
+            <CurrentDate />
+          </SaveContext.Provider>
+        </div>
+      );
     };
-    
-    setup(<TestCurrentDate
-	     testInitialSaveContext={testSave}
-    />);
 
-    
+    setup(<TestCurrentDate testInitialSaveContext={testSave} />);
+
     const expectedDate: string = testFirstDay.toDateString();
     expect(
-        screen.getByText(expectedDate, { selector: "h2[id=current-date]" }),
-      ).toBeTruthy();
-    
-  })
-  
-})
+      screen.getByText(expectedDate, { selector: "h2[id=current-date]" }),
+    ).toBeTruthy();
+  });
+});
