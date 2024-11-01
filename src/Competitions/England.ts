@@ -1,4 +1,4 @@
-const premierLeagueTeams = [
+const premierLeagueTeams: Array<string> = [
   "Liverpool",
   "Man United",
   "Leeds United",

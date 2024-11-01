@@ -1,9 +1,10 @@
-import { ComponentKeysObject, StatisticsType } from "../Common/CommonTypes";
+import { StatisticsType } from "../Common/CommonTypes";
 import { Club } from "../Clubs/ClubTypes";
 
 export interface Competition {
+  ID: string;
   Name: string;
-  Clubs: Array<Club>;
+  Clubs: Record<string, Club>;
   Statistics: StatisticsType;
 }
 

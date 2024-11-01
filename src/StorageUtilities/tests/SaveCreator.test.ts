@@ -172,15 +172,25 @@ describe("Competition Utilities tests", () => {
     Years: 1,
   };
 
-  const testPlayerSkills: Record<string, SkillSet> = Object.fromEntries(
-    Object.entries(playerSkills).map(([name, set]) => [
-      name,
-      set.map((skill: string) => [skill, 0]),
-    ]),
-  );
-
+  const getRandomNumberInRange = (min: number, max: number): number => {
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+  };
+  
+  const testPlayerSkills = (): Record<string, SkillSet> => {
+    return Object.fromEntries(
+      Object.entries(playerSkills).map(([name, set]) => [
+        name,
+        Object.fromEntries(
+          set.map((skill: string) => [skill, getRandomNumberInRange(25, 100)]),
+        ),
+      ]),
+    );
+  };
+  
   const testPlayerOne: Player = {
-    ID: 0,
+    ID: "1",
     Name: "John Doe",
     PositionGroup: PositionGroup.Midfielder,
     Position: Midfielder.CDM,
@@ -193,12 +203,12 @@ describe("Competition Utilities tests", () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
   };
 
   const testPlayerTwo: Player = {
-    ID: 1,
+    ID: "1",
     Name: "John Stones",
     PositionGroup: PositionGroup.Defender,
     Position: Defender.LCB,
@@ -211,12 +221,12 @@ describe("Competition Utilities tests", () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
   };
 
   const testPlayerThree: Player = {
-    ID: 2,
+    ID: "2",
     Name: "Luis Enrique",
     PositionGroup: PositionGroup.Midfielder,
     Position: Midfielder.CDM,
@@ -229,12 +239,12 @@ describe("Competition Utilities tests", () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
   };
 
   const testPlayerFour: Player = {
-    ID: 3,
+    ID: "3",
     Name: "Bernardo Silva",
     PositionGroup: PositionGroup.Defender,
     Position: Defender.LCB,
@@ -247,7 +257,7 @@ describe("Competition Utilities tests", () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
   };
 
@@ -268,15 +278,17 @@ describe("Competition Utilities tests", () => {
 
   test("Test createSave", () => {
     const expectedClub: Club = {
-      ID: 0,
+      ID: expect.any(String),
       Name: testClub,
       Statistics: expectedClubStatistics,
       Squad: expect.anything(),
-      Starting11: [],
-      Bench: [],
+      Starting11: {},
+      Bench: {},
+      
     };
 
     const expectedCompetition: Competition = {
+      ID: expect.any(String),
       Name: "English Premier League",
       Clubs: expect.anything(),
       Statistics: expectedCompetitionStatistics,
@@ -312,10 +324,11 @@ describe("Competition Utilities tests", () => {
     actualCompetitions.forEach((actualCompetition, index) => {
       expect(actualCompetition).toStrictEqual(expectedCompetition);
       expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition);
-      actualCompetition.Clubs.forEach((actualClub: Club) => {
+      const actualClubs: Array<Club> = Object.values(actualCompetition.Clubs);
+      actualClubs.forEach((actualClub: Club) => {
         expect(actualClub).toStrictEqual(expectedClub);
-        expectTypeOf(actualClub).toEqualTypeOf(expectedClub);
-        const actualPlayers: Array<Player> = actualClub.Squad;
+        expectTypeOf(actualClub).toEqualTypeOf(expectedClub);	
+        const actualPlayers: Array<Player> = Object.values(actualClub.Squad);
         expect(actualPlayers.length).toBe(25);
         expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOne);
         actualPlayers.forEach((testPlayer) => {

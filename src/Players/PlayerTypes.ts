@@ -60,7 +60,7 @@ export interface ContractType {
 }
 
 export interface Player {
-  ID: number;
+  ID: string;
   Name: string;
   PositionGroup: PositionGroup;
   Position: PositionType;

@@ -1,3 +1,4 @@
+import { simpleFaker } from "@faker-js/faker";
 import { Match, SquadStatus } from "./MatchTypes";
 import { Club } from "../Clubs/ClubTypes";
 import { createEmptyMatchStatistics } from "./MatchUtilities";

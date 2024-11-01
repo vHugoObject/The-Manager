@@ -1,6 +1,6 @@
+import { simpleFaker } from "@faker-js/faker";
 import { range } from "lodash";
 import {
-  ComponentKeysObject,
   StatisticsObject,
   StatisticsType,
 } from "../Common/CommonTypes";
@@ -8,39 +8,7 @@ import { Player, PositionGroup } from "../Players/PlayerTypes";
 import { createPlayer } from "../Players/PlayerUtilities";
 import { Club } from "./ClubTypes";
 
-const clubStandardStatsHeaders: Array<string> = [
-  "Name",
-  "National Team",
-  "Position",
-  "Matches Played",
-  "Starts",
-  "Minutes",
-  "Full 90s",
-  "Goals",
-  "Assists",
-  "Goals Plus Assists",
-  "Non Penalty Goals",
-  "Penalty Kicks Made",
-  "Penalty Kicks Attempted",
-  "Yellow Cards",
-  "Red Cards",
-];
 
-const clubSummaryStatsHeaders: Array<string> = [
-  "Record",
-  "Home Record",
-  "Away Record",
-  "Manager",
-  "Country",
-  "Domestic Competition",
-  "Domestic Cups",
-  "Continental Cup",
-];
-
-const clubComponentKeys: ComponentKeysObject = {
-  clubSummaryStatsHeaders,
-  clubStandardStatsHeaders,
-};
 
 const clubStatistics: StatisticsObject = {
   Wins: 0,
@@ -75,48 +43,41 @@ export const generateClubStatisticsObject = (
 };
 
 export const generateSquad = (
-  teamName: string,
-  teamID: number,
+  club: string,
+  teamID: string,
   season: string,
-  firstPlayerID: number,
 ): Array<Player> => {
-  const firstGoalieID: number = firstPlayerID;
-  const goalies = range(4).map((num) => {
+
+  const goalies = range(4).map((_) => {
     return createPlayer(
-      firstGoalieID + num,
       PositionGroup.Goalkeeper,
       season,
-      teamName,
+      club,
     );
   });
 
-  const firstDefenderID: number = firstGoalieID + 5;
-  const defenders = range(7).map((num) => {
+  const defenders = range(7).map((_) => {
     return createPlayer(
-      firstDefenderID + num,
       PositionGroup.Defender,
       season,
-      teamName,
+      club,
     );
   });
 
-  const firstMidfielderID: number = firstDefenderID + 8;
-  const midfielders = range(7).map((num) => {
+ 
+  const midfielders = range(7).map((_) => {
     return createPlayer(
-      firstMidfielderID + num,
       PositionGroup.Midfielder,
       season,
-      teamName,
+      club,
     );
   });
 
-  const firstAttackerID: number = firstMidfielderID + 8;
-  const attackers = range(7).map((num) => {
+  const attackers = range(7).map((_) => {
     return createPlayer(
-      firstAttackerID + num,
       PositionGroup.Attacker,
       season,
-      teamName,
+      club,
     );
   });
 
@@ -125,20 +86,29 @@ export const generateSquad = (
 
 export const createClub = (
   name: string,
-  id: number,
   season: string,
-  firstPlayerID: number,
   players?: Array<Player>,
 ): Club => {
-  const teamPlayers = players
+
+  const ID: string = simpleFaker.string.numeric(4);
+
+  const clubPlayers: Array<Player> = players
     ? players
-    : generateSquad(name, id, season, firstPlayerID);
+    : generateSquad(name, ID, season);
+
+
+  const createSquadObject = (players: Array<Player>) => {
+    return Object.fromEntries(players.map((player: Player) => [player.ID, player]))
+  }
+  
+  const Squad: Record<string, Player> = createSquadObject(clubPlayers)
+  
   return {
-    ID: id,
+    ID,
     Name: name,
     Statistics: generateClubStatisticsObject(season),
-    Squad: teamPlayers,
-    Starting11: [],
-    Bench: [],
+    Squad,
+    Starting11: {},
+    Bench: {},
   };
 };

@@ -151,14 +151,13 @@ export const generatePlayerStatisticsObject = (
 };
 
 export const createPlayer = (
-  id: number,
   positionGroup: PositionGroup,
   season: string,
   club?: string,
 ): Player => {
   const bio = generateBiographicalDetails(positionGroup);
   return {
-    ID: id,
+    ID: faker.string.numeric(4),
     Name: bio.Name,
     PositionGroup: positionGroup,
     Position: generatePosition(positionGroup),

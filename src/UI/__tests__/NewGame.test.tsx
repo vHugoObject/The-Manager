@@ -467,7 +467,7 @@ describe("NewGame Components", async () => {
       Statistics: expectedCompetitionStatistics,
     };
 
-    const testFirstDay: Date = new Date("8/18/24");
+    const testFirstDay: Date = new Date("8/11/24");
 
     const expectedSave: Save = {
       Name: testName,

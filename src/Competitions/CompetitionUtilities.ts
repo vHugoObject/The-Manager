@@ -1,6 +1,23 @@
+import { simpleFaker } from "@faker-js/faker";
+import {
+  Manager as TournamentManager,
+  Player as TournamentPlayer,
+    Match as TournamentMatch,
+    Tournament
+} from 'tournament-organizer/components';
+
+import {
+    LoadableTournamentValues,
+    MatchValues,
+    PlayerValues,
+    SettableMatchValues,
+    SettablePlayerValues,
+    SettableTournamentValues,
+    StandingsValues,
+    TournamentValues
+} from 'tournament-organizer/interfaces';
 import { createClub } from "../Clubs/ClubUtilities";
 import {
-  ComponentKeysObject,
   StatisticsObject,
   StatisticsType,
 } from "../Common/CommonTypes";
@@ -8,24 +25,7 @@ import { Club } from "../Clubs/ClubTypes";
 import { Player } from "../Players/PlayerTypes";
 import { Competition } from "./CompetitionTypes";
 
-const fullCompetitionTableRowHeaders: Array<string> = [
-  "Club",
-  "Wins",
-  "Draws",
-  "Losses",
-  "Goals For",
-  "Goals Against",
-  "Goal Difference",
-  "Points",
-];
 
-const simpleCompetitionTableRowHeaders: Array<string> = [
-  "Club",
-  "Wins",
-  "Draws",
-  "Losses",
-  "Points",
-];
 
 const competitionStatistics: StatisticsObject = {
   Wins: 0,
@@ -56,40 +56,45 @@ export const generateCompetitionStatisticsObject = (
 export const createCompetitionClubsWithGeneratedPlayers = (
   season: string,
   clubs: Array<string>,
-  firstPlayerID: number,
 ): Array<Club> => {
   return clubs.map((clubName: string, index: number) => {
-    const fakeFirstPlayerID = firstPlayerID * index;
-    return createClub(clubName, index, season, fakeFirstPlayerID);
+    return createClub(clubName, season);
   });
 };
 
 export const createCompetitionClubsWithGivenPlayers = (
   season: string,
   clubs: Record<string, Array<Player>>,
-  firstPlayerID: number,
 ): Array<Club> => {
-  return Object.entries(clubs).map(([clubName, players], index: number) => {
-    const fakeFirstPlayerID = firstPlayerID * index;
-    return createClub(clubName, index, season, fakeFirstPlayerID, players);
+  return Object.entries(clubs).map(([clubName, players]) => {
+    return createClub(clubName, season, players);
   });
 };
+
+
 
 export const createCompetition = (
   competition: string,
   season: string,
   clubs: Array<string> | Record<string, Array<Player>>,
 ): Competition => {
-  const CLUBFIRSTPLAYERID: number = 25;
-  const Clubs = Array.isArray(clubs)
+  const clubsArray: Array<Club> = Array.isArray(clubs)
     ? createCompetitionClubsWithGeneratedPlayers(
         season,
         clubs,
-        CLUBFIRSTPLAYERID,
       )
-    : createCompetitionClubsWithGivenPlayers(season, clubs, CLUBFIRSTPLAYERID);
+    : createCompetitionClubsWithGivenPlayers(season, clubs);
+
+  const clubsObjectCreator = (clubs: Array<Club>): Record<string, Club> => {
+      return Object.fromEntries(
+	clubs.map((club: Club) => [club.ID, club])
+      )
+    }
+  
+  const Clubs: Record<string, Club> = clubsObjectCreator(clubsArray);
 
   return {
+    ID: simpleFaker.string.numeric(4),
     Name: competition,
     Clubs,
     Statistics: generateCompetitionStatisticsObject(season),

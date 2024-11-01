@@ -102,7 +102,7 @@ describe("Player utilities tests", () => {
   );
 
   const expectedPlayer: Player = {
-    ID: 0,
+    ID: expect.any(String),
     Name: "John Doe",
     PositionGroup: PositionGroup.Midfielder,
     Position: Midfielder.CDM,
@@ -200,7 +200,7 @@ describe("Player utilities tests", () => {
 
   test("test createPlayer", () => {
     testPositionGroups.forEach((testPosition) => {
-      const actualPlayer = createPlayer(0, testPosition, "2024", "Arsenal");
+      const actualPlayer = createPlayer(testPosition, "2024", "Arsenal");
       const expectedPositionGroup = positions[testPosition];
       expect(
         expectedPositionGroup.hasOwnProperty(actualPlayer.Position),

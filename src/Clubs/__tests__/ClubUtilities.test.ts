@@ -51,15 +51,26 @@ describe("Club Utilities tests", () => {
     GameLog: {},
   };
 
-  const testPlayerSkills: Record<string, SkillSet> = Object.fromEntries(
-    Object.entries(playerSkills).map(([name, set]) => [
-      name,
-      set.map((skill: string) => [skill, 0]),
-    ]),
-  );
+  const getRandomNumberInRange = (min: number, max: number): number => {
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+  };
+  
+  const testPlayerSkills = (): Record<string, SkillSet> => {
+    return Object.fromEntries(
+      Object.entries(playerSkills).map(([name, set]) => [
+        name,
+        Object.fromEntries(
+          set.map((skill: string) => [skill, getRandomNumberInRange(25, 100)]),
+        ),
+      ]),
+    );
+  };
+
 
   const testPlayerOne: Player = {
-    ID: 0,
+    ID: "0",
     Name: "John Doe",
     PositionGroup: PositionGroup.Midfielder,
     Position: Midfielder.CDM,
@@ -72,12 +83,12 @@ describe("Club Utilities tests", () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedStatistics,
   };
 
   const testPlayerTwo: Player = {
-    ID: 1,
+    ID: "1",
     Name: "John Stones",
     PositionGroup: PositionGroup.Defender,
     Position: Defender.LCB,
@@ -90,23 +101,28 @@ describe("Club Utilities tests", () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedStatistics,
   };
 
-  const testPlayers: Array<Player> = [testPlayerOne, testPlayerTwo];
 
+  const testPlayersArray: Array<Player> = [testPlayerOne, testPlayerTwo];
+  const testPlayersObject: Record<string, Player> = Object.fromEntries(
+    testPlayersArray.map((player: Player, index) => {
+     return  [index.toString(), player]
+    }))
+  
   const expectedClubOne: Club = {
-    ID: 0,
+    ID: expect.any(String),
     Name: "Arsenal",
     Statistics: expectedStatistics,
-    Squad: testPlayers,
-    Starting11: [],
-    Bench: [],
+    Squad: testPlayersObject,
+    Starting11: {},
+    Bench: {},
   };
 
   const expectedClubTwo: Club = {
-    ID: 0,
+    ID: expect.any(String),
     Name: "Arsenal",
     Statistics: expectedStatistics,
     Squad: expect.anything(),
@@ -115,7 +131,7 @@ describe("Club Utilities tests", () => {
   };
 
   const testTeamName: string = "Arsenal";
-  const testTeamID: number = 0;
+  const testTeamID: string = "0";
   const testStartingSeason: string = "2024";
   const testFirstPlayerID: number = 0;
 
@@ -130,11 +146,10 @@ describe("Club Utilities tests", () => {
       testTeamName,
       testTeamID,
       testStartingSeason,
-      testFirstPlayerID,
     );
 
     expect(actualPlayers.length).toBe(25);
-    expectTypeOf(actualPlayers).toEqualTypeOf(testPlayers);
+    expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersArray);
     actualPlayers.forEach((testPlayer) => {
       expectTypeOf(testPlayer).toEqualTypeOf(testPlayerOne);
     });
@@ -143,10 +158,8 @@ describe("Club Utilities tests", () => {
   test("Test createClub with given players", () => {
     const actualClub: Club = createClub(
       testTeamName,
-      testTeamID,
       testStartingSeason,
-      testFirstPlayerID,
-      testPlayers,
+      testPlayersArray,
     );
     expect(actualClub).toStrictEqual(expectedClubOne);
   });
@@ -154,16 +167,14 @@ describe("Club Utilities tests", () => {
   test("Test createClub with no players", () => {
     const actualClub: Club = createClub(
       testTeamName,
-      testTeamID,
       testStartingSeason,
-      testFirstPlayerID,
     );
 
     expect(actualClub).toStrictEqual(expectedClubTwo);
 
-    const actualPlayers: Array<Player> = actualClub.Squad;
+    const actualPlayers: Array<Player> = Object.values(actualClub.Squad);
     expect(actualPlayers.length).toBe(25);
-    expectTypeOf(actualPlayers).toEqualTypeOf(testPlayers);
+    expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersArray);
     actualPlayers.forEach((testPlayer) => {
       expectTypeOf(testPlayer).toEqualTypeOf(testPlayerOne);
     });
