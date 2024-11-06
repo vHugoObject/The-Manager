@@ -231,7 +231,9 @@ describe("Competition Utilities tests", () => {
       return Object.fromEntries(
 	clubs.map((club: Club) => [club.ID, club])
       )
-    }
+  }
+
+  const testFirstMatchDay: string = new Date("08/18/24").toDateString()
 
 
   test("test generateCompetitionStatisticsObject", () => {
@@ -267,9 +269,10 @@ describe("Competition Utilities tests", () => {
       testClubsNoPlayers,
     );
 
-    // expect 25 players
-
     expect(actualClubs).toStrictEqual(expectedClubs);
+    actualClubs.forEach((club: Club) => {
+      expect(Object.values(club.Squad).length).toBe(25)
+    })
   });
 
   test("Test createCompetitionClubsWithGivenPlayers", () => {
@@ -331,7 +334,7 @@ describe("Competition Utilities tests", () => {
       ID: expect.any(String),
       Name: "English Premier League",
       Clubs: expectedClubs,
-      Statistics: expectedCompetitionStatistics,
+      Statistics: expectedCompetitionStatistics,    
     };
 
     
@@ -390,7 +393,7 @@ describe("Competition Utilities tests", () => {
       return players.map((player: Player) => player.Name)
     }
     expect(actualCompetition.Name).toBe(testCompetitionName)
-    expect(actualCompetition.Statistics).toStrictEqual(expectedCompetitionStatistics)
+    expect(actualCompetition.Statistics).toStrictEqual(expectedCompetitionStatistics)    
     const actualClubs: Array<Club> = Object.values(actualCompetition.Clubs);
     actualClubs.forEach((actualClub: Club) => {
       const expectedClub: Club = expectedClubs[actualClub.Name]

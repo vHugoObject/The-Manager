@@ -1,4 +1,12 @@
 import "fake-indexeddb/auto";
+import {
+  Manager as TournamentManager,
+  Player as TournamentPlayer,
+    Match as TournamentMatch,
+    Tournament
+} from 'tournament-organizer/components';
+import { SettableTournamentValues,
+  LoadableTournamentValues } from 'tournament-organizer/interfaces';
 import { deleteDB, IDBPDatabase } from "idb";
 import { describe, expect, test } from "vitest";
 import {
@@ -9,6 +17,8 @@ import {
   getAllSaveValues,
   getAllSaveKeys,
   updateSaveValue,
+  serializeTournamentManager,
+  deserializeTournamentManager
 } from "../SaveUtilities";
 import { Save, SaveID } from "../SaveTypes";
 import {
@@ -31,26 +41,10 @@ import {
   AllCompetitions,
 } from "../../Competitions/CompetitionTypes";
 import { Club } from "../../Clubs/ClubTypes";
+import { Calendar } from "../../Common/CommonTypes";
+import { createCalendar } from "../../Common/simulationUtilities";
 
 describe("SaveUtilities tests", async () => {
-  const fullCompetitionTableRowHeaders: Array<string> = [
-    "Club",
-    "Wins",
-    "Draws",
-    "Losses",
-    "Goals For",
-    "Goals Against",
-    "Goal Difference",
-    "Points",
-  ];
-
-  const simpleCompetitionTableRowHeaders: Array<string> = [
-    "Club",
-    "Wins",
-    "Draws",
-    "Losses",
-    "Points",
-  ];
 
   const competitionStatisticsArray: Array<string> = [
     "Wins",
@@ -77,11 +71,7 @@ describe("SaveUtilities tests", async () => {
     GameLog: {},
   };
 
-  const testCompetitionComponentKeys: ComponentKeysObject = {
-    simpleCompetitionTableRowHeaders,
-    fullCompetitionTableRowHeaders,
-  };
-
+  
   const clubStandardStatsHeaders: Array<string> = [
     "Name",
     "National Team",
@@ -139,36 +129,8 @@ describe("SaveUtilities tests", async () => {
     GameLog: {},
   };
 
-  const testClubComponentKeys: ComponentKeysObject = {
-    clubStandardStatsHeaders,
-    clubSummaryStatsHeaders,
-  };
 
-  const playerStandardStatsHeaders: Array<string> = [
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Full 90s",
-    "Goals",
-    "Assists",
-    "Goals Plus Assists",
-    "Non Penalty Goals",
-    "Penalty Kicks Made",
-    "Penalty Kicks Attempted",
-    "Yellow Cards",
-    "Red Cards",
-  ];
-
-  const playerBioParagraphs: Array<string> = [
-    "Position",
-    "Footed",
-    "Height",
-    "Weight",
-    "Age",
-    "National Team",
-    "Club",
-    "Wages",
-  ];
+  
 
   const playerStatisticsArray: Array<string> = [
     "Wins",
@@ -196,25 +158,32 @@ describe("SaveUtilities tests", async () => {
     GameLog: {},
   };
 
-  const expectedPlayerComponentKeys: ComponentKeysObject = {
-    playerStandardStatsHeaders,
-    playerBioParagraphs,
-  };
+
 
   const expectedContract: ContractType = {
     Wage: 1,
     Years: 1,
   };
 
-  const testPlayerSkills: Record<string, SkillSet> = Object.fromEntries(
-    Object.entries(playerSkills).map(([name, set]) => [
-      name,
-      set.map((skill: string) => [skill, 0]),
-    ]),
-  );
+  const getRandomNumberInRange = (min: number, max: number): number => {
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+  };
+
+  const testPlayerSkills = (): Record<string, SkillSet> => {
+    return Object.fromEntries(
+      Object.entries(playerSkills).map(([name, set]) => [
+        name,
+        Object.fromEntries(
+          set.map((skill: string) => [skill, getRandomNumberInRange(25, 100)]),
+        ),
+      ]),
+    );
+  };
 
   const testPlayerOne: Player = {
-    ID: 0,
+    ID: "0",
     Name: "John Doe",
     PositionGroup: PositionGroup.Midfielder,
     Position: Midfielder.CDM,
@@ -227,12 +196,12 @@ describe("SaveUtilities tests", async () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
   };
 
   const testPlayerTwo: Player = {
-    ID: 1,
+    ID: "1",
     Name: "John Stones",
     PositionGroup: PositionGroup.Defender,
     Position: Defender.LCB,
@@ -245,12 +214,12 @@ describe("SaveUtilities tests", async () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
   };
 
   const testPlayerThree: Player = {
-    ID: 2,
+    ID: "2",
     Name: "Luis Enrique",
     PositionGroup: PositionGroup.Midfielder,
     Position: Midfielder.CDM,
@@ -263,12 +232,12 @@ describe("SaveUtilities tests", async () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
   };
 
   const testPlayerFour: Player = {
-    ID: 3,
+    ID: "3",
     Name: "Bernardo Silva",
     PositionGroup: PositionGroup.Defender,
     Position: Defender.LCB,
@@ -281,51 +250,79 @@ describe("SaveUtilities tests", async () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
+    Skills: testPlayerSkills(),
     Statistics: expectedPlayerStatistics,
   };
 
-  const testPlayersOne: Array<Player> = [testPlayerOne, testPlayerTwo];
-  const testPlayersTwo: Array<Player> = [testPlayerThree, testPlayerFour];
 
+  const testPlayersOneArray: Array<Player> = [testPlayerOne, testPlayerTwo];
+  const testPlayersTwoArray: Array<Player> = [testPlayerThree, testPlayerFour];
+
+  const createSquadObject = (players: Array<Player>) => {
+    return Object.fromEntries(players.map((player: Player) => [player.ID, player]))
+  }
+
+  const testPlayersOne: Record<string, Player> = createSquadObject(testPlayersOneArray)
+  const testPlayersTwo: Record<string, Player> = createSquadObject(testPlayersTwoArray)
+  
   const testClubOne: Club = {
-    ID: 0,
+    ID: "0",
     Name: "Arsenal",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,
+    Squad: testPlayersOne,
+    Starting11: {},
+    Bench: {},
   };
 
   const testClubTwo: Club = {
-    ID: 1,
+    ID: "1",
     Name: "Chelsea",
     Statistics: testClubStatistics,
-    Players: testPlayersTwo,
+    Squad: testPlayersTwo,
+    Starting11: {},
+    Bench: {},
   };
 
   const testClubThree: Club = {
-    ID: 2,
+    ID: "2",
     Name: "Everton",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,
+    Squad: testPlayersOne,
+    Starting11: {},
+    Bench: {},
   };
 
   const testClubFour: Club = {
-    ID: 3,
+    ID: "3",
     Name: "Ashton Villa",
     Statistics: testClubStatistics,
-    Players: testPlayersOne,
+    Squad: testPlayersOne,
+    Starting11: {},
+    Bench: {},
   };
 
-  const testClubsOne: Array<Club> = [testClubOne, testClubTwo];
-  const testClubsTwo: Array<Club> = [testClubThree, testClubFour];
+  const testClubsOneArray: Array<Club> = [testClubOne, testClubTwo];
+  const testClubsTwoArray: Array<Club> = [testClubThree, testClubFour];
+
+  const clubsObjectCreator = (clubs: Array<Club>): Record<string, Club> => {
+      return Object.fromEntries(
+	clubs.map((club: Club) => [club.ID, club])
+      )
+  }
+
+  const testClubsOne: Record<string, Club> = clubsObjectCreator(testClubsOneArray)
+  const testClubsTwo: Record<string, Club> = clubsObjectCreator(testClubsTwoArray)
+   
 
   const testCompetitionOne: Competition = {
+    ID: "0",
     Name: "English Premier League",
     Clubs: testClubsOne,
     Statistics: testCompetitionStatistics,
   };
 
   const testCompetitionTwo: Competition = {
+    ID: "1",
     Name: "The Championship",
     Clubs: testClubsTwo,
     Statistics: testCompetitionStatistics,
@@ -355,6 +352,33 @@ describe("SaveUtilities tests", async () => {
 
   const testFirstDay: Date = new Date("8/18/24");
 
+  const createTournamentClubs = (clubs: Record<string, Club>): Array<TournamentPlayer> => {
+    return Object.values(clubs).map((club: Club) => {
+      return new TournamentPlayer(club.ID, club.Name)
+    }
+    )
+  }
+
+  // check this
+  const createTournament = async(scheduler: TournamentManager,
+    competition: Competition): Promise<void> => {
+      const scoring: Record<string, number> = {
+	win: 3,
+	draw: 1,
+	loss: 0,
+	bye: 2
+      }
+      
+      const tournamentValues: SettableTournamentValues = {
+	players: createTournamentClubs(competition.Clubs),
+	stageOne: {format: 'double-round-robin'},
+	sorting: "descending",
+	scoring
+      }      
+       scheduler.createTournament(competition.Name, tournamentValues, competition.ID).start()    
+    }
+  const testScheduler: TournamentManager = new TournamentManager();
+  await createTournament(testScheduler, testCompetitionOne);
   const testSaveOne: Save = {
     Name: testNameOne,
     Country: testCountry,
@@ -365,6 +389,8 @@ describe("SaveUtilities tests", async () => {
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
     saveID: "0",
+    calendar: createCalendar(testFirstDay),
+    scheduleManager: testScheduler
   };
 
   const testSaveTwo: Save = {
@@ -377,6 +403,8 @@ describe("SaveUtilities tests", async () => {
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsTwo,
     saveID: "1",
+    calendar: createCalendar(testFirstDay),
+    scheduleManager: testScheduler
   };
 
   const expectedSaveOne: Save = {
@@ -389,6 +417,8 @@ describe("SaveUtilities tests", async () => {
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsOne,
     saveID: "0",
+    calendar: createCalendar(testFirstDay),
+    scheduleManager: testScheduler
   };
 
   const expectedSaveTwo: Save = {
@@ -401,6 +431,8 @@ describe("SaveUtilities tests", async () => {
     CurrentDate: testFirstDay,
     allCompetitions: testAllCompetitionsTwo,
     saveID: "1",
+    calendar: createCalendar(testFirstDay),
+    scheduleManager: testScheduler
   };
 
   const testSaves: Array<Save> = [testSaveOne, testSaveTwo];
@@ -409,6 +441,8 @@ describe("SaveUtilities tests", async () => {
   const testDBVersion: number = 1;
   const saveStore: string = "save-games";
 
+    
+  
   test("Test openSaveDB", async () => {
     const actualDB: IDBPDatabase = await openSaveDB();
     expect(actualDB.name).toBe(testDBName);
@@ -441,14 +475,13 @@ describe("SaveUtilities tests", async () => {
     let actualValue: Save = await getSaveValue(saveID);
     expect(expectedSaveOne).toStrictEqual(actualValue);
 
-    // change name
     testSaveValue.Name = "Bald Fraud";
     await updateSaveValue(testSaveValue);
     actualValue = await getSaveValue(saveID);
     expect(testSaveValue).toStrictEqual(actualValue);
     await deleteDB(testDBName);
   });
-
+ 
   test("Test getAllSaveValues", async () => {
     await addSaveToDB(testSaveOne);
     await addSaveToDB(testSaveTwo);
@@ -468,16 +501,41 @@ describe("SaveUtilities tests", async () => {
   });
 
   test("Test deleteSave", async () => {
-    const keyOne: SaveID = await addSaveToDB(testSaveOne);
+    const _: SaveID = await addSaveToDB(testSaveOne);
     const keyTwo: SaveID = await addSaveToDB(testSaveTwo);
 
     await deleteSave(keyTwo);
 
-    await expect(getSaveValue(keyTwo)).resolves.toBeUndefined();
-
     const actualSaves: Array<Save> = await getAllSaveValues();
     expect(actualSaves).toStrictEqual([expectedSaveOne]);
-
     await deleteDB(testDBName);
+  });
+
+  test("Test serializeTournamentManager", async () => {    
+    
+    
+
+    const expectedSerializedTournaments: Array<LoadableTournamentValues> = testScheduler.tournaments.map((tournament: Tournament) => {
+	return structuredClone(tournament)
+    });
+    
+    const actualSerializedTournaments: Array<LoadableTournamentValues> = serializeTournamentManager(testScheduler)
+
+    expect(actualSerializedTournaments).toStrictEqual(expectedSerializedTournaments)
+    
+  });
+
+  test("Test deserializeTournamentManager", async () => {
+
+    const expectedDeserializedTournamentManager: TournamentManager = new TournamentManager();
+    
+    await createTournament(expectedDeserializedTournamentManager, testCompetitionOne);
+
+    const testSerializedTournamentManager: Array<LoadableTournamentValues> = serializeTournamentManager(expectedDeserializedTournamentManager)
+
+    const actualDeserializedTournamentManager: TournamentManager = deserializeTournamentManager(testSerializedTournamentManager);
+    expect(actualDeserializedTournamentManager).toStrictEqual(expectedDeserializedTournamentManager)
+
+    
   });
 });

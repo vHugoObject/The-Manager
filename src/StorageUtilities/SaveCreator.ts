@@ -1,12 +1,15 @@
 import { simpleFaker } from "@faker-js/faker";
+import { Manager as TournamentManager } from 'tournament-organizer/components';
 import { createCompetition } from "../Competitions/CompetitionUtilities";
+import { createSeasonCalendar } from "../Common/scheduler";
+import { Calendar } from "../Common/CommonTypes";
 import {
   Competition,
   BaseCompetitions,
 } from "../Competitions/CompetitionTypes";
 import { Save } from "./SaveTypes";
 
-export const createSave = (
+export const createSave = async(
   Name: string,
   Country: string,
   MainCompetition: string,
@@ -14,7 +17,7 @@ export const createSave = (
   firstDay: string,
   Club: string,
   countriesLeaguesClubs: BaseCompetitions,
-): Save => {
+): Promise<Save> => {
   const allCompetitions: Record<
     string,
     Record<string, Competition>
@@ -34,6 +37,9 @@ export const createSave = (
     }),
   );
 
+  const [calendar, scheduleManager] = await createSeasonCalendar(allCompetitions,
+      startingSeason);
+
   return {
     Name,
     Country,
@@ -44,5 +50,7 @@ export const createSave = (
     CurrentDate: new Date(firstDay),
     allCompetitions,
     saveID: simpleFaker.string.numeric(4),
+    calendar,
+    scheduleManager
   };
 };

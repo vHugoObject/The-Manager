@@ -1,41 +1,110 @@
 import { describe, expect, test } from "vitest";
-import { differenceInDays } from "date-fns";
-import { createCalendar, advanceNDays } from "../simulationUtilities";
+import { differenceInDays, isBefore, isAfter } from "date-fns";
+import type { EachDayOfIntervalResult, Interval } from "date-fns";
+import { CalendarEntry, Calendar } from '../CommonTypes'
+import { createCalendar, advanceOneDay, totalDoubleRoundRobinGames } from "../simulationUtilities";
+
 
 describe("simulationUtilities test suite", () => {
-
   test("test createCalendar",  () => {
     
     const testFirstDay: Date = new Date("08/11/24");
-    // opening of the summer transferWindow
-    const expectedLastDay: Date = new Date("06/14/25");
+    const expectedSeasonStartDate: Date = new Date("08/18/24");
+    const expectedSeasonEndDate: Date = new Date("06/14/25");
+    
+    const expectedSummerTransferWindowCloseDate: Date = new Date("08/30/24");
+    const expectedWinterTransferWindowOpenDate: Date = new Date("01/01/25");
+    const expectedWinterTransferWindowCloseDate: Date = new Date("02/03/25");
+    
+    const expectedDays: number = differenceInDays(expectedSeasonEndDate, testFirstDay) + 1
+    
+    const expectedSeasonStartDateValues: CalendarEntry = { 
+      matches: [],
+      seasonStartDate: true,
+      seasonEndDate: false,
+      transferWindowOpen: true
+    };
 
-    const expectedDays: number = differenceInDays(expectedLastDay, testFirstDay) + 1
+    const expectedSeasonEndDateValues: CalendarEntry  = {
+      matches: [],
+      seasonStartDate: false,
+      seasonEndDate: true,
+      transferWindowOpen: false
+    };
 
-    const expectedValue = {matches: []};
+    const expectedTransferWindowOpenValues: CalendarEntry = {
+      matches: [],
+      seasonStartDate: false,
+      seasonEndDate: false,
+      transferWindowOpen: true
+    };
 
-    const actualCalendar = createCalendar(testFirstDay);
+    const expectedTransferWindowClosedValues: CalendarEntry  = {
+      matches: [],
+      seasonStartDate: false,
+      seasonEndDate: false,
+      transferWindowOpen: false
+    };
+    
+    const actualCalendar: Calendar = createCalendar(testFirstDay);
+    
+
 
     expect(Object.keys(actualCalendar).length).toBe(expectedDays)
+    expect(Object.keys(actualCalendar)[0]).toBe(testFirstDay.toDateString())
+    expect(Object.keys(actualCalendar)[expectedDays-1]).toBe(expectedSeasonEndDate.toDateString())
+    expect(actualCalendar[expectedSeasonStartDate.toDateString()]).toStrictEqual(expectedSeasonStartDateValues)
+    expect(actualCalendar[expectedSeasonEndDate.toDateString()]).toStrictEqual(expectedSeasonEndDateValues)
+
     
-    Object.values(actualCalendar).forEach((day) => {
-      expect(day).toStrictEqual(expectedValue)
-    })
+    Object.entries(actualCalendar)
+      .forEach(([date, dateValues]) => {
+	const currentDate: Date = new Date(date);
+	if (isBefore(currentDate, expectedSeasonStartDate)){	
+	    expect(dateValues).toStrictEqual(expectedTransferWindowOpenValues)
+	  }		
+	
+	if (isAfter(currentDate, expectedSeasonStartDate)
+	  && isBefore(currentDate, expectedSummerTransferWindowCloseDate)) {
+	    expect(dateValues).toStrictEqual(expectedTransferWindowOpenValues)
+	  }
+	
+	if (isAfter(currentDate, expectedSummerTransferWindowCloseDate)
+	  && isBefore(currentDate, expectedWinterTransferWindowOpenDate)) {
+	    expect(dateValues).toStrictEqual(expectedTransferWindowClosedValues)
+	  }
+	
+	if (isAfter(currentDate, expectedWinterTransferWindowOpenDate)
+	  && isBefore(currentDate, expectedWinterTransferWindowCloseDate)) {
+	    expect(dateValues).toStrictEqual(expectedTransferWindowOpenValues)
+	  }
+
+
+	if (isAfter(currentDate, expectedWinterTransferWindowCloseDate) &&
+	  isBefore(currentDate, expectedSeasonEndDate)){
+	    expect(dateValues).toStrictEqual(expectedTransferWindowClosedValues)
+	}
+
+      })
+
+    
+    
   })
 
+  test("totalDoubleRoundRobinGames",  () => {
+
+    const tests: Array<[number, number]> = [[4,12],[6, 30], [18, 306], [20,380]]
+    tests.forEach(([clubs, expectedValue]) => {
+      const actualValue: number = totalDoubleRoundRobinGames(clubs)
+      expect(actualValue).toBe(expectedValue)
+    });
+
+    
+  });
 
   
   
-  test("advanceNDays",  () => {
-    const expectedOneDay: Date = new Date("08/19/24");
-    const expectedOneWeek: Date = new Date("08/25/24");
-    const expectedOneMonth: Date = new Date("09/18/24");
-    const expectedOneYear: Date = new Date("8/19/25");
-    const tests: Array<[number, Date]> = [
-      [1, expectedOneDay],
-      [7, expectedOneWeek],
-      [31, expectedOneMonth],
-      [365, expectedOneYear],
-    ];
+  test("advanceOneDays",  () => {
+   
   });
 });

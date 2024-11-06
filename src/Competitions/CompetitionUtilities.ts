@@ -78,6 +78,7 @@ export const createCompetition = (
   season: string,
   clubs: Array<string> | Record<string, Array<Player>>,
 ): Competition => {
+
   const clubsArray: Array<Club> = Array.isArray(clubs)
     ? createCompetitionClubsWithGeneratedPlayers(
         season,
@@ -98,5 +99,6 @@ export const createCompetition = (
     Name: competition,
     Clubs,
     Statistics: generateCompetitionStatisticsObject(season),
+
   };
 };
