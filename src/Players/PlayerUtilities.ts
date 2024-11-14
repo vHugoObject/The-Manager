@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+import { partial } from "lodash";
 import { playerSkills } from "./PlayerSkills";
 import { StatisticsType, StatisticsObject } from "../Common/CommonTypes";
 import {
@@ -150,14 +151,14 @@ export const generatePlayerStatisticsObject = (
   };
 };
 
-export const createPlayer = (
+export const createPlayer = async (
   positionGroup: PositionGroup,
   season: string,
   club?: string,
-): Player => {
+): Promise<Player> => {
   const bio = generateBiographicalDetails(positionGroup);
   return {
-    ID: faker.string.numeric(4),
+    ID: faker.string.numeric(6),
     Name: bio.Name,
     PositionGroup: positionGroup,
     Position: generatePosition(positionGroup),
@@ -174,3 +175,8 @@ export const createPlayer = (
     Statistics: generatePlayerStatisticsObject(season),
   };
 };
+
+export const createGoalkeeper = partial(createPlayer, PositionGroup.Goalkeeper);
+export const createDefender = partial(createPlayer, PositionGroup.Defender);
+export const createMidfielder = partial(createPlayer, PositionGroup.Midfielder);
+export const createAttacker = partial(createPlayer, PositionGroup.Attacker);

@@ -1,12 +1,13 @@
 import { StatisticsType } from "../Common/CommonTypes";
 import { Club } from "../Clubs/ClubTypes";
 
+// need to add country
 export interface Competition {
   ID: string;
   Name: string;
-  Clubs: Record<string, Club>;
+  Country: string;
+  Clubs: Record<string, string>;
   Statistics: StatisticsType;
 }
 
-export type BaseCompetitions = Record<string, Record<string, Array<string>>>;
-export type AllCompetitions = Record<string, Record<string, Competition>>;
+export type Competitions = Record<string, Record<string, Competition>>;

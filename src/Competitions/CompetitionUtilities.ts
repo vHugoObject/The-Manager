@@ -1,21 +1,5 @@
 import { simpleFaker } from "@faker-js/faker";
-import {
-  Manager as TournamentManager,
-  Player as TournamentPlayer,
-    Match as TournamentMatch,
-    Tournament
-} from 'tournament-organizer/components';
-
-import {
-    LoadableTournamentValues,
-    MatchValues,
-    PlayerValues,
-    SettableMatchValues,
-    SettablePlayerValues,
-    SettableTournamentValues,
-    StandingsValues,
-    TournamentValues
-} from 'tournament-organizer/interfaces';
+import { reduce, merge } from 'lodash/fp'
 import { createClub } from "../Clubs/ClubUtilities";
 import {
   StatisticsObject,
@@ -53,52 +37,77 @@ export const generateCompetitionStatisticsObject = (
   };
 };
 
-export const createCompetitionClubsWithGeneratedPlayers = (
+export const createCompetitionClubsWithGeneratedPlayers = async(
   season: string,
-  clubs: Array<string>,
-): Array<Club> => {
-  return clubs.map((clubName: string, index: number) => {
-    return createClub(clubName, season);
-  });
+  clubs: Record<string, string>,
+): Promise<Array<[Club, Record<string,Player>]>> => {
+  
+  return await Promise.all(Object.entries(clubs)
+    .map(async([clubID, clubName]) => await createClub(clubID,
+      clubName, season)))
 };
 
-export const createCompetitionClubsWithGivenPlayers = (
-  season: string,
-  clubs: Record<string, Array<Player>>,
-): Array<Club> => {
-  return Object.entries(clubs).map(([clubName, players]) => {
-    return createClub(clubName, season, players);
-  });
-};
+interface ClubsWithPlayers {
+    clubName: string;
+    players: Array<Player>;
+}
 
 
-
-export const createCompetition = (
+export const createCompetition = async(  
   competition: string,
+  country: string,
   season: string,
-  clubs: Array<string> | Record<string, Array<Player>>,
-): Competition => {
+  clubs: Record<string, string> 
+): Promise<[Competition, Record<string, Club>, Record<string, Player>]> => {
 
-  const clubsArray: Array<Club> = Array.isArray(clubs)
-    ? createCompetitionClubsWithGeneratedPlayers(
+
+  
+  let clubAndPlayersArray: Array<[Club, Record<string,Player>]> = await createCompetitionClubsWithGeneratedPlayers(
         season,
         clubs,
-      )
-    : createCompetitionClubsWithGivenPlayers(season, clubs);
+  )
+  
 
-  const clubsObjectCreator = (clubs: Array<Club>): Record<string, Club> => {
+
+  
+  const clubObjectsCreator = async(clubs: Array<Club>): Promise<Record<string, Club>> => {
       return Object.fromEntries(
 	clubs.map((club: Club) => [club.ID, club])
       )
+  }
+
+  const clubReferencesCreator = async(clubs: Array<Club>): Promise<Record<string, string>> => {
+      return Object.fromEntries(
+	clubs.map((club: Club) => [club.ID, club.Name])
+      )
+    } 
+
+  
+  const mergeFunctionForPlayer = (accumulator: Record<string, Player>,
+    value: Record<string, Player>): Record<string, Player> => {
+      return merge(accumulator, value)
+    
     }
   
-  const Clubs: Record<string, Club> = clubsObjectCreator(clubsArray);
+  const mergePlayerObjects = async(players: Array<Record<string,Player>>): Promise<Record<string,Player>> => {
+    return reduce(mergeFunctionForPlayer, {}, players)
+  }
+  
+  const clubsArray: Array<Club> = clubAndPlayersArray.map(([club, _]) => club)
+  const playersArray: Array<Record<string,Player>> = clubAndPlayersArray.map(([_, players]) => players);  
 
-  return {
+  const [clubsObject, clubReferences, playersObject] = await Promise.all([await clubObjectsCreator(clubsArray), await clubReferencesCreator(clubsArray), await mergePlayerObjects(playersArray)])
+
+
+
+  
+  const competitionObject: Competition = {
     ID: simpleFaker.string.numeric(4),
     Name: competition,
-    Clubs,
-    Statistics: generateCompetitionStatisticsObject(season),
-
+    Country: country,
+    Clubs: clubReferences,
+    Statistics: generateCompetitionStatisticsObject(season)
   };
+  
+  return [competitionObject, clubsObject, playersObject]
 };

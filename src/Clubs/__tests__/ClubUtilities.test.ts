@@ -1,3 +1,4 @@
+import { simpleFaker } from "@faker-js/faker";
 import { describe, expect, test, expectTypeOf } from "vitest";
 import {
   generateSquad,
@@ -17,7 +18,7 @@ import {
 } from "../../Players/PlayerTypes";
 import { StatisticsObject, StatisticsType } from "../../Common/CommonTypes";
 
-describe("Club Utilities tests", () => {
+describe("Club Utilities tests", async () => {
   const expectedContract: ContractType = {
     Wage: 1,
     Years: 1,
@@ -56,7 +57,7 @@ describe("Club Utilities tests", () => {
     const maxFloored = Math.floor(max);
     return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
   };
-  
+
   const testPlayerSkills = (): Record<string, SkillSet> => {
     return Object.fromEntries(
       Object.entries(playerSkills).map(([name, set]) => [
@@ -67,7 +68,6 @@ describe("Club Utilities tests", () => {
       ]),
     );
   };
-
 
   const testPlayerOne: Player = {
     ID: "0",
@@ -105,13 +105,13 @@ describe("Club Utilities tests", () => {
     Statistics: expectedStatistics,
   };
 
-
   const testPlayersArray: Array<Player> = [testPlayerOne, testPlayerTwo];
-  const testPlayersObject: Record<string, Player> = Object.fromEntries(
+  const testPlayersObject: Record<string, string> = Object.fromEntries(
     testPlayersArray.map((player: Player, index) => {
-     return  [index.toString(), player]
-    }))
-  
+      return [index.toString(), player.Name];
+    }),
+  );
+
   const expectedClubOne: Club = {
     ID: expect.any(String),
     Name: "Arsenal",
@@ -133,16 +133,16 @@ describe("Club Utilities tests", () => {
   const testTeamName: string = "Arsenal";
   const testTeamID: string = "0";
   const testStartingSeason: string = "2024";
-  const testFirstPlayerID: number = 0;
 
-  test("test generateClubStatisticsObject", () => {
-    const testSeason = "2024";
-    const actualStatistics = generateClubStatisticsObject(testSeason);
+  test("test generateClubStatisticsObject", async () => {
+    const testSeason: string = "2024";
+    const actualStatistics: StatisticsType =
+      await generateClubStatisticsObject(testSeason);
     expect(actualStatistics).toMatchObject(expectedStatistics);
   });
 
-  test("Test generateSquad", () => {
-    const actualPlayers: Array<Player> = generateSquad(
+  test("Test generateSquad", async () => {
+    const actualPlayers: Array<Player> = await generateSquad(
       testTeamName,
       testTeamID,
       testStartingSeason,
@@ -155,28 +155,36 @@ describe("Club Utilities tests", () => {
     });
   });
 
-  test("Test createClub with given players", () => {
-    const actualClub: Club = createClub(
+  test("Test createClub with given players", async () => {
+    const [actualClub, actualPlayers] = await createClub(
+      simpleFaker.string.numeric(6),
       testTeamName,
       testStartingSeason,
       testPlayersArray,
     );
+
+    const actualPlayersArray: Array<Player> = Object.values(actualPlayers);
+    expectTypeOf(actualPlayersArray).toEqualTypeOf(testPlayersArray);
     expect(actualClub).toStrictEqual(expectedClubOne);
   });
 
-  test("Test createClub with no players", () => {
-    const actualClub: Club = createClub(
+  test("Test createClub with no players", async () => {
+    const [actualClub, actualPlayers] = await createClub(
+      simpleFaker.string.numeric(6),
       testTeamName,
       testStartingSeason,
     );
 
     expect(actualClub).toStrictEqual(expectedClubTwo);
 
-    const actualPlayers: Array<Player> = Object.values(actualClub.Squad);
-    expect(actualPlayers.length).toBe(25);
-    expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersArray);
-    actualPlayers.forEach((testPlayer) => {
+    const actualPlayersArray: Array<Player> = Object.values(actualPlayers);
+    expect(actualPlayersArray.length).toBe(25);
+    expectTypeOf(actualPlayersArray).toEqualTypeOf(testPlayersArray);
+    actualPlayersArray.forEach((testPlayer: Player) => {
       expectTypeOf(testPlayer).toEqualTypeOf(testPlayerOne);
     });
+
+    const actualClubPlayers: Array<String> = Object.values(actualClub.Squad);
+    expect(actualClubPlayers.length).toBe(25);
   });
 });

@@ -1,19 +1,6 @@
 import { describe, expect, expectTypeOf, test } from "vitest";
-import {
-  generatePlayerSkills,
-  generatePlayerStatisticsObject,
-  generatePosition,
-  generateBiographicalDetails,
-  generateContract,
-  createPlayer,
-  getRandomNumberInRange,
-} from "../PlayerUtilities";
 import { playerSkills } from "../PlayerSkills";
-import {
-  ComponentKeysObject,
-  StatisticsObject,
-  StatisticsType,
-} from "../../Common/CommonTypes";
+import { StatisticsObject, StatisticsType } from "../../Common/CommonTypes";
 import {
   Player,
   SkillSet,
@@ -27,8 +14,20 @@ import {
   Foot,
   ContractType,
 } from "../PlayerTypes";
+import {
+  generatePlayerSkills,
+  generatePlayerStatisticsObject,
+  generatePosition,
+  generateBiographicalDetails,
+  generateContract,
+  createPlayer,
+  createGoalkeeper,
+  createDefender,
+  createMidfielder,
+  createAttacker,
+} from "../PlayerUtilities";
 
-describe("Player utilities tests", () => {
+describe("Player utilities tests", async () => {
   const expectedPlayerStandardStatsHeaders: Array<string> = [
     "Season",
     "Matches Played",
@@ -119,7 +118,7 @@ describe("Player utilities tests", () => {
     Statistics: expectedStatistics,
   };
 
-  const testPositionGroups = [
+  const testPositionGroups: Array<PositionGroup> = [
     PositionGroup.Midfielder,
     PositionGroup.Attacker,
     PositionGroup.Defender,
@@ -193,19 +192,64 @@ describe("Player utilities tests", () => {
   test("test calculateRating", () => {});
 
   test("test generatePlayerStatisticsObject", () => {
-    const testSeason = "2024";
-    const actualStatistics = generatePlayerStatisticsObject(testSeason);
+    const testSeason: string = "2024";
+    const actualStatistics: StatisticsType =
+      generatePlayerStatisticsObject(testSeason);
     expect(actualStatistics).toMatchObject(expectedStatistics);
   });
 
-  test("test createPlayer", () => {
-    testPositionGroups.forEach((testPosition) => {
-      const actualPlayer = createPlayer(testPosition, "2024", "Arsenal");
+  test("test createPlayer", async () => {
+    testPositionGroups.forEach(async (testPosition: PositionGroup) => {
+      const actualPlayer: Player = await createPlayer(
+        testPosition,
+        "2024",
+        "Arsenal",
+      );
       const expectedPositionGroup = positions[testPosition];
       expect(
         expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
       ).toBeTruthy();
       expectTypeOf(actualPlayer).toEqualTypeOf(expectedPlayer);
     });
+  });
+
+  test("test createGoalkeeper", async () => {
+    const testPosition: PositionGroup = PositionGroup.Goalkeeper;
+    const actualPlayer: Player = await createGoalkeeper("2024", "Arsenal");
+    const expectedPositionGroup = positions[testPosition];
+    expect(
+      expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
+    ).toBeTruthy();
+    expectTypeOf(actualPlayer).toEqualTypeOf(expectedPlayer);
+  });
+
+  test("test createDefender", async () => {
+    const testPosition: PositionGroup = PositionGroup.Defender;
+    const actualPlayer: Player = await createDefender("2024", "Arsenal");
+    const expectedPositionGroup = positions[testPosition];
+    expect(
+      expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
+    ).toBeTruthy();
+    expectTypeOf(actualPlayer).toEqualTypeOf(expectedPlayer);
+  });
+
+  test("test createMidfielder", async () => {
+    const testPosition: PositionGroup = PositionGroup.Midfielder;
+    const actualPlayer: Player = await createMidfielder("2024", "Arsenal");
+    const expectedPositionGroup = positions[testPosition];
+    expect(
+      expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
+    ).toBeTruthy();
+    expectTypeOf(actualPlayer).toEqualTypeOf(expectedPlayer);
+  });
+
+  test("test createAttacker", async () => {
+    const testPosition: PositionGroup = PositionGroup.Attacker;
+    const actualPlayer: Player = await createAttacker("2024", "Arsenal");
+    const expectedPositionGroup = positions[testPosition];
+    expect(
+      expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
+    ).toBeTruthy();
+    expectTypeOf(actualPlayer).toEqualTypeOf(expectedPlayer);
   });
 });

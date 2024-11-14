@@ -3,19 +3,21 @@ import { Player } from "../Players/PlayerTypes";
 import { StatisticsObject } from "../Common/CommonTypes";
 
 export interface SquadStatus {
-  onField: Array<Player>;
-  onBench: Array<Player>;
-  subbedOut: Array<Player>;
-  injured: Array<Player>;
-  suspended: Array<Player>;
+  onField: Record<string, Player>;
+  onBench: Record<string, Player>;
+  subbedOut: Record<string, Player>;
+  injured: Record<string, Player>;
+  suspended: Record<string, Player>;
 }
 
 export type GoalMatrix = Array<[[number, number], number]>;
 export type MatchScore = Record<string, number>;
 
 export interface Match {
+  MatchID: string;
   MatchDate: Date;
   MatchScore: MatchScore;
+  Country: string;
   Competition: string;
   Home: Club;
   Away: Club;
@@ -25,3 +27,5 @@ export interface Match {
   AwayOverallStatistics: StatisticsObject;
   Simulated: boolean;
 }
+
+

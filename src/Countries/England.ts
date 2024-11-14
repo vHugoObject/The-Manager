@@ -1,3 +1,4 @@
+import { simpleFaker } from "@faker-js/faker";
 const premierLeagueTeams: Array<string> = [
   "Liverpool",
   "Man United",

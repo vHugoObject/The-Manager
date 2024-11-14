@@ -1,14 +1,14 @@
 import { simpleFaker } from "@faker-js/faker";
 import { range } from "lodash";
+import { StatisticsObject, StatisticsType } from "../Common/CommonTypes";
+import { Player } from "../Players/PlayerTypes";
 import {
-  StatisticsObject,
-  StatisticsType,
-} from "../Common/CommonTypes";
-import { Player, PositionGroup } from "../Players/PlayerTypes";
-import { createPlayer } from "../Players/PlayerUtilities";
+  createGoalkeeper,
+  createDefender,
+  createMidfielder,
+  createAttacker,
+} from "../Players/PlayerUtilities";
 import { Club } from "./ClubTypes";
-
-
 
 const clubStatistics: StatisticsObject = {
   Wins: 0,
@@ -33,82 +33,104 @@ const clubStatistics: StatisticsObject = {
   RedCards: 0,
 };
 
-export const generateClubStatisticsObject = (
+export const generateClubStatisticsObject = async (
   season: string,
-): StatisticsType => {
+): Promise<StatisticsType> => {
   return {
     BySeason: { [season]: clubStatistics },
     GameLog: {},
   };
 };
 
-export const generateSquad = (
+export const generateSquad = async (
   club: string,
   teamID: string,
   season: string,
-): Array<Player> => {
-
-  const goalies = range(4).map((_) => {
-    return createPlayer(
-      PositionGroup.Goalkeeper,
-      season,
-      club,
+): Promise<Array<Player>> => {
+  const generateGoalies = async (): Promise<Array<Player>> => {
+    return await Promise.all(
+      range(0, 4).map(async (_) => {
+        return await createGoalkeeper(season, club);
+      }),
     );
-  });
+  };
 
-  const defenders = range(7).map((_) => {
-    return createPlayer(
-      PositionGroup.Defender,
-      season,
-      club,
+  const generateDefenders = async (): Promise<Array<Player>> => {
+    return await Promise.all(
+      range(0, 7).map(async (_) => {
+        return await createDefender(season, club);
+      }),
     );
-  });
+  };
 
- 
-  const midfielders = range(7).map((_) => {
-    return createPlayer(
-      PositionGroup.Midfielder,
-      season,
-      club,
+  const generateMidfielders = async (): Promise<Array<Player>> => {
+    return await Promise.all(
+      range(0, 7).map(async (_) => {
+        return await createMidfielder(season, club);
+      }),
     );
-  });
+  };
 
-  const attackers = range(7).map((_) => {
-    return createPlayer(
-      PositionGroup.Attacker,
-      season,
-      club,
+  const generateAttackers = async (): Promise<Array<Player>> => {
+    return await Promise.all(
+      range(0, 7).map(async (_) => {
+        return await createAttacker(season, club);
+      }),
     );
-  });
+  };
 
-  return [goalies, defenders, midfielders, attackers].flat();
+  const players: Array<Array<Player>> = await Promise.all([
+    await generateGoalies(),
+    await generateDefenders(),
+    await generateMidfielders(),
+    await generateAttackers(),
+  ]);
+
+  return players.flat();
 };
 
-export const createClub = (
+export const createClub = async (
+  ID: string,
   name: string,
   season: string,
   players?: Array<Player>,
-): Club => {
-
-  const ID: string = simpleFaker.string.numeric(4);
+): Promise<[Club, Record<string, Player>]> => {
+  
 
   const clubPlayers: Array<Player> = players
     ? players
-    : generateSquad(name, ID, season);
+    : await generateSquad(name, ID, season);
 
+  const createPlayersObject = async (
+    players: Array<Player>,
+  ): Promise<Record<string, Player>> => {
+    return Object.fromEntries(
+      players.map((player: Player) => [player.ID, player]),
+    );
+  };
 
-  const createSquadObject = (players: Array<Player>) => {
-    return Object.fromEntries(players.map((player: Player) => [player.ID, player]))
-  }
-  
-  const Squad: Record<string, Player> = createSquadObject(clubPlayers)
-  
-  return {
+  const createPlayerReferences = async (
+    players: Array<Player>,
+  ): Promise<Record<string, string>> => {
+    return Object.fromEntries(
+      players.map((player: Player) => [player.ID, player.Name]),
+    );
+  };
+
+  const [clubPlayersObject, Squad, clubStats] = await Promise.all([
+    await createPlayersObject(clubPlayers),
+    await createPlayerReferences(clubPlayers),
+    await generateClubStatisticsObject(season),
+  ]);
+
+  const club: Club = {
     ID,
     Name: name,
-    Statistics: generateClubStatisticsObject(season),
+    Statistics: clubStats,
     Squad,
     Starting11: {},
     Bench: {},
   };
+
+  return [club, clubPlayersObject];
 };

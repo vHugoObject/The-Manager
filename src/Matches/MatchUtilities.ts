@@ -33,7 +33,6 @@ export const calculateDefenseStrength = (players: Array<Player>): number => {
   const playerRating = (player: Player, categories: Set<string>): number => {
     return sum(averageByCategory(player, categories)) / categories.size;
   };
-  
 
   const outfieldPlayerDefenseRatings: Array<number> = players
     .filter((player) => player.PositionGroup != PositionGroup.Goalkeeper)
@@ -44,17 +43,14 @@ export const calculateDefenseStrength = (players: Array<Player>): number => {
   const goalkeeper: Player = players.filter(
     (player) => player.PositionGroup == PositionGroup.Goalkeeper,
   )[0];
-  
 
-  let playerRatings: Array<number> = goalkeeper ? outfieldPlayerDefenseRatings.concat(playerRating(
-    goalkeeper,
-    goalkeepingCategories,
-  )) : outfieldPlayerDefenseRatings
+  let playerRatings: Array<number> = goalkeeper
+    ? outfieldPlayerDefenseRatings.concat(
+        playerRating(goalkeeper, goalkeepingCategories),
+      )
+    : outfieldPlayerDefenseRatings;
 
-
-  return (
-    sum(playerRatings) / players.length
-  );
+  return sum(playerRatings) / players.length;
 };
 
 export const calculateAttackStrength = (players: Array<Player>): number => {

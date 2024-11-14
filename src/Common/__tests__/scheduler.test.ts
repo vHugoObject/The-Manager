@@ -1,353 +1,195 @@
-import { pickBy } from 'lodash/fp'
-import { addDays, eachDayOfInterval, isSunday } from 'date-fns'
-import type { EachDayOfIntervalResult, Interval } from "date-fns";
 import { describe, expect, test } from "vitest";
+import { pickBy, reduce } from "lodash/fp";
+import { isSunday, addWeeks, isBefore } from "date-fns";
+import type { Interval } from "date-fns";
+import { simpleFaker } from "@faker-js/faker";
+import { MatchValues } from "tournament-organizer/interfaces";
 import {
   Manager as TournamentManager,
   Player as TournamentPlayer,
-    Match as TournamentMatch,
-    Tournament
-} from 'tournament-organizer/components';
-
+  Tournament,
+} from "tournament-organizer/components";
+import { CalendarEntry, Calendar, MatchEntry } from "../CommonTypes";
+import { createCountry } from '../../Countries/CountryUtilities'
+import { createCalendar } from "../simulationUtilities";
 import {
-  StatisticsObject,
-  StatisticsType,
-} from "../../Common/CommonTypes";
-import {
-  Player,
-  PositionGroup,
-  Midfielder,
-  Defender,
-  SkillSet,
-  Foot,
-  ContractType,
-} from "../../Players/PlayerTypes";
-import { Club } from "../../Clubs/ClubTypes";
-import { playerSkills } from "../../Players/PlayerSkills";
-import { Competition, AllCompetitions } from '../../Competitions/CompetitionTypes';
-import { CalendarEntry, Calendar } from '../CommonTypes'
-import { createCompetition } from '../../Competitions/CompetitionUtilities';
-import { createCalendar } from '../simulationUtilities'
-import { createScheduler, scheduleTournament, scheduleMatchs,
-  createSeasonCalendar } from '../scheduler'
-import { totalDoubleRoundRobinGames } from '../simulationUtilities'
+  createScheduler,
+  scheduleTournament,
+  scheduleMatchs,
+  createSeasonCalendar,
+} from "../scheduler";
+import { totalDoubleRoundRobinGames } from "../simulationUtilities";
 
-describe("createScheduler test suite", async() => {
-  const testClubStatisticsOne: StatisticsObject = {
-    Wins: 0,
-    Draws: 0,
-    Losses: 0,
-    GoalsFor: 0,
-    GoalsAgainst: 0,
-    GoalDifference: 0,
-    Points: 0,
-    Record: "",
-    HomeRecord: "",
-    AwayRecord: "",
-    DomesticCompetition: "",
-    DomesticCups: "",
-    ContinentalCup: "",
-    MatchesPlayed: 0,
-    Minutes: 0,
-    NonPenaltyGoals: 0,
-    PenaltyKicksMade: 0,
-    PenaltyKicksAttempted: 0,
-    YellowCards: 0,
-    RedCards: 0,
-  };
+describe("createScheduler test suite", async () => {
 
-  const expectedClubStatistics: StatisticsType = {
-    BySeason: { "2024": testClubStatisticsOne },
-    GameLog: {},
-  };
+    const testCountryOne: string = "England";
 
-  const playerStatisticsArray: Array<string> = [
-    "Wins",
-    "Draws",
-    "Losses",
-    "GoalsFor",
-    "GoalsAgainst",
-    "GoalDifference",
-    "Points",
-    "MatchesPlayed",
-    "Minutes",
-    "NonPenaltyGoals",
-    "PenaltyKicksMade",
-    "PenaltyKicksAttempted",
-    "YellowCards",
-    "RedCards",
-  ];
-  const playerStatisticsObject: Record<string, number> = Object.fromEntries(
-    playerStatisticsArray.map((entry) => [entry, 0]),
-  );
-
-  const expectedPlayerStatistics: StatisticsType = {
-    BySeason: { "2024": playerStatisticsObject },
-    GameLog: {},
+  const testCompetitionsOne: Record<string, Record<string, string>> = {
+    "English Premier League": {[simpleFaker.string.numeric(6)]: "Arsenal",
+      [simpleFaker.string.numeric(6)]: "Brentford",
+      [simpleFaker.string.numeric(6)]: "Manchester United",
+      [simpleFaker.string.numeric(6)]: "Liverpool",      
+    },
+    "The Championship": {[simpleFaker.string.numeric(6)]: "Watford",
+      [simpleFaker.string.numeric(6)]: "Stoke City",
+      [simpleFaker.string.numeric(6)]: "Manchester City",
+      [simpleFaker.string.numeric(6)]: "Hull City"
+    },
+    "League One": {[simpleFaker.string.numeric(6)]: "Walsall",
+      [simpleFaker.string.numeric(6)]: "Swindon",
+      [simpleFaker.string.numeric(6)]: "Farnham",
+      [simpleFaker.string.numeric(6)]: "Cambridge"
+    },
   };
 
 
-  const expectedContract: ContractType = {
-    Wage: 1,
-    Years: 1,
-  };
+  const expectedCompetitionNames: Array<string> = Object.keys(testCompetitionsOne).toSorted();
 
-  const getRandomNumberInRange = (min: number, max: number): number => {
-    const minCeiled = Math.ceil(min);
-    const maxFloored = Math.floor(max);
-    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
-  };
+  const expectedTournaments: number = Object.keys(testCompetitionsOne).length
+  const expectedClubsPerTournaments: number = 4
+  const expectedTotalClubs: number = expectedTournaments * expectedClubsPerTournaments
+ 
+  const expectedTotalMatches: number = reduce((acc, val) => acc+val,0, expectedCompetitionNames.map((_) => {
+    return totalDoubleRoundRobinGames(expectedClubsPerTournaments)
+  }))
+
+
+  const expectedMatchesPerComp: number = expectedTotalMatches / expectedTournaments
+
+  const expectedRounds: number = expectedMatchesPerComp / 2;
+
+
+
+  const expectedMatchesPerMatchDate: number = expectedTotalMatches / expectedRounds;
+
+  const expectedMatchesPerCompPerMatchDate: number = expectedMatchesPerMatchDate/expectedTournaments
+
   
-  const testPlayerSkills = (): Record<string, SkillSet> => {
-    return Object.fromEntries(
-      Object.entries(playerSkills).map(([name, set]) => [
-        name,
-        Object.fromEntries(
-          set.map((skill: string) => [skill, getRandomNumberInRange(25, 100)]),
-        ),
-      ]),
-    );
-  };
-
-  const testPlayerOne: Player = {
-    ID: "0",
-    Name: "John Doe",
-    PositionGroup: PositionGroup.Midfielder,
-    Position: Midfielder.CDM,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "Spain",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayerTwo: Player = {
-    ID: "1",
-    Name: "John Stones",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.LCB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayerThree: Player = {
-    ID: "2",
-    Name: "Luis Enrique",
-    PositionGroup: PositionGroup.Midfielder,
-    Position: Midfielder.CDM,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "Spain",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayerFour: Player = {
-    ID: "4",
-    Name: "Bernardo Silva",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.LCB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayersOneArray: Array<Player> = [testPlayerOne, testPlayerTwo];
-  const testPlayersTwoArray: Array<Player> = [testPlayerThree, testPlayerFour];
-
-  const testClubsWithPlayers: Record<string,  Array<Player>> = {
-      Arsenal: testPlayersOneArray,
-      Brentford: testPlayersTwoArray,
-      Liverpool: testPlayersOneArray,
-      Brighton: testPlayersTwoArray,
-    };
-
-
-    const testCompetitionSeason: string = "2024"
-    const testCompetitionNameOne:  string = "English Premier League";
-    const testCompetitionNameTwo:  string = "The Championship";
-    const testCompetitionNames: Array<string> = [testCompetitionNameOne,
-      testCompetitionNameTwo];
-
-    const testClubNames: Array<string> = Object.keys(testClubsWithPlayers);
-    
-    const testCompetitionOne: Competition = createCompetition(
-      testCompetitionNameOne,
-      testCompetitionSeason,
-      testClubsWithPlayers
-    )
-
-    const testCompetitionTwo: Competition = createCompetition(
-      testCompetitionNameTwo,
-      testCompetitionSeason,
-      testClubsWithPlayers
-    )
-    
-    const expectedTotalMatches: number = 12;
-
-    
-    const testCompetitions: AllCompetitions = {
-      England : {
-	[testCompetitionNameOne]: testCompetitionOne,
-	[testCompetitionNameTwo]: testCompetitionTwo
-	
-      }
-    }
-
-  const testFirstDay: Date = new Date("08/11/24")
+  const testFirstDay: Date = new Date("08/11/24");
   const testLastDay: Date = new Date("06/14/25");
   const seasonStartDate: Date = new Date("08/18/24");
-
-  const testSeason: string = "2024"
+  const lastMatchDate: Date = addWeeks(seasonStartDate,6)
+  const testSeason: string = "2024";
 
   const testInterval: Interval = {
-      start: testFirstDay,
-      end: testLastDay
-  }
-
-      const filterCalendar = (calendar: Calendar, filterFunc: Function): Calendar => {
-      const pickFunc = (entry: CalendarEntry, day: string): boolean => filterFunc(day)
-      return pickBy(pickFunc, calendar)
-
-    }
+    start: testFirstDay,
+    end: testLastDay,
+  };
 
   
-  test("Test createScheduler", async() => {
-            
-    const actualSchedule: TournamentManager = await createScheduler(testCompetitions);
+  const [testCountry, testCompetitions, testClubs, testPlayers] =
+    await createCountry(testCountryOne, testCompetitionsOne, testSeason); 
+
+
+
+  const filterCalendar = (
+    calendar: Calendar,
+    filterFunc: Function,
+  ): Calendar => {
+    const pickFunc = (entry: CalendarEntry, day: string): boolean =>
+      filterFunc(day);
+    return pickBy(pickFunc, calendar);
+  }; 
+
+  test("Test createScheduler", async () => {
+    const actualSchedule: TournamentManager =
+      await createScheduler(testCompetitions);
     const actualTournaments: Array<Tournament> = actualSchedule.tournaments;
-    expect(actualTournaments.length).toBe(2)
-
+    expect(actualTournaments.length).toBe(Object.keys(testCompetitions).length);
+    
     actualTournaments.forEach((tournament: Tournament, index: number) => {
-      expect(tournament.name).toBe(testCompetitionNames[index]);
+      const actualTournamentName: string = tournament.name
+      expect(testCompetitionsOne.hasOwnProperty(actualTournamentName)).toBeTruthy();
       expect(tournament.standings).toBeTruthy();
-      expect(tournament.matches.length).toBe(expectedTotalMatches);   
-      const actualClubs: Array<string> = tournament.players.map((player: TournamentPlayer) => {
-	return player.name
-      })
-      
-      expect(actualClubs.toSorted()).toEqual(testClubNames.toSorted())
-      
-    })
-  })
+      expect(tournament.matches.length).toBe(totalDoubleRoundRobinGames(4));
+      const actualClubs: Array<string> = tournament.players.map(
+        (player: TournamentPlayer) => {
+          return player.name;
+        },
+      );
 
-  test("Test scheduleTournament", async() => {
+      const expectedClubs: Array<string> = Object.values(testCompetitions[tournament.id].Clubs)
+      expect(actualClubs.toSorted()).toEqual(expectedClubs.toSorted());
+    });
+  });
 
-    const expectedMatches: number = totalDoubleRoundRobinGames(testClubNames.length)
-    const expectedRounds: number = expectedMatches/2
-    const expectedMatchesPerMatchDate: number = expectedMatches/expectedRounds
-    const actualScheduler: TournamentManager = await createScheduler(testCompetitions);
+  test("Test scheduleTournament", async () => {
+      
+    const actualScheduler: TournamentManager = await createScheduler(testCompetitions);    
     const testTournament: Tournament = actualScheduler.tournaments[0];
-    
     const testCalendar: Calendar = createCalendar(testFirstDay);
+    const testAvailableDates = filterCalendar(testCalendar, isSunday);
     
-    const testAvailableDates = filterCalendar(testCalendar, isSunday)        
-    
-    const actualSchedule: Calendar = await scheduleTournament(testTournament, testAvailableDates)
+    const actualSchedule: Calendar = await scheduleTournament(
+      testTournament,
+      testAvailableDates,
+    );
 
-    const expectedMatchDates: Array<string> = Object.keys(testAvailableDates).slice(0,6)
-    
+    const expectedMatchDates: Array<string> = Object.keys(
+      testAvailableDates,
+    ).slice(0, 6);
+
     expectedMatchDates.forEach((date: string, index: number) => {
-      const actualDayOfMatches: Array<TournamentMatch> = actualSchedule[date]["matches"];
-      const actualCountOfMatches: number = actualDayOfMatches.length
-      expect(actualCountOfMatches).toBe(expectedMatchesPerMatchDate)      
-      actualDayOfMatches.forEach((match: TournamentMatch) => {
-	expect(match.round).toBe(index+1)
-      })
+      const actualDayOfMatches: Array<MatchValues> = Object.values(actualSchedule[date]["matches"]).map((entry: MatchEntry) => entry.match);
+      const actualCountOfMatches: number = actualDayOfMatches.length;
+      expect(actualCountOfMatches).toBe(expectedMatchesPerCompPerMatchDate);
+      actualDayOfMatches.forEach((match: MatchValues) => {
+        expect(match.round).toBe(index + 1);
+      });
+    });
+  });
 
-    })
+  test("Test scheduleMatchs", async () => {
+  
+    const testCalendar: Calendar = createCalendar(testFirstDay);
+    const testAvailableDates = filterCalendar(testCalendar, isSunday);
+    const expectedMatchDates: Array<string> = Object.keys(
+      testAvailableDates,
+    ).slice(0, expectedRounds);
 
-    
-  })
+    const [actualFilledCalendar, tournamentManager] = await scheduleMatchs(
+      testCalendar,
+      testCompetitions,
+    );
 
-  test("Test scheduleMatchs", async() => {
-
-    const expectedMatches: number = totalDoubleRoundRobinGames(testClubNames.length) * 2
-    const expectedRounds: number = totalDoubleRoundRobinGames(testClubNames.length)/2
-    const expectedMatchesPerMatchDate: number = expectedMatches/expectedRounds
-
-    const testCalendar: Calendar = createCalendar(testFirstDay);    
-    const testAvailableDates = filterCalendar(testCalendar, isSunday)        
-    const expectedMatchDates: Array<string> = Object.keys(testAvailableDates).slice(0,6)
-        
-    const [actualFilledCalendar, tournamentManager] = await scheduleMatchs(testCalendar, testCompetitions)    
-    
     expectedMatchDates.forEach((date: string, index: number) => {
-      const actualDayOfMatches: Array<TournamentMatch> = actualFilledCalendar[date]["matches"];
-      const actualCountOfMatches: number = actualDayOfMatches.length
-      expect(actualCountOfMatches).toBe(expectedMatchesPerMatchDate)      
-      actualDayOfMatches.forEach((match: TournamentMatch) => {
-	expect(match.round).toBe(index+1)
-      })
-    })
+      const actualDayOfMatches: Array<MatchValues> = Object.values(actualFilledCalendar[date]["matches"]).map((entry: MatchEntry) => entry.match);
+      const actualCountOfMatches: number = actualDayOfMatches.length;
+      expect(actualCountOfMatches).toBe(expectedMatchesPerMatchDate
+      );
+      
+      actualDayOfMatches.forEach((match: MatchValues) => {
+        expect(match.round).toBe(index + 1);
+      });
+    });
+  });
 
-    
-    
+  test("Test createSeasonCalendar", async () => {
+  
+    const testCalendar: Calendar = createCalendar(testFirstDay);
+    const testAvailableDates: Calendar = filterCalendar(testCalendar, isSunday);
+    const expectedMatchDates: Array<string> = Object.keys(
+      testAvailableDates,
+    ).filter((date: string) => isBefore(date, new Date(lastMatchDate))).slice(1,expectedRounds+1)
 
-  })
 
-  test("Test createSeasonCalendar", async() => {
-    const expectedMatches: number = totalDoubleRoundRobinGames(testClubNames.length) * 2
-    const expectedRounds: number = totalDoubleRoundRobinGames(testClubNames.length)/2
-    const expectedMatchesPerMatchDate: number = expectedMatches/expectedRounds
-
-    const testCalendar: Calendar = createCalendar(testFirstDay);    
-    const testAvailableDates: Calendar = filterCalendar(testCalendar, isSunday)        
-    const expectedMatchDates: Array<string> = Object.keys(testAvailableDates).slice(1,expectedRounds+1) 
-        
-    const [actualFilledCalendar, _] = await createSeasonCalendar(testCompetitions, testSeason)                          
+    const [actualFilledCalendar, _] = await createSeasonCalendar(
+      testCompetitions,
+      testSeason,
+    );
 
     let actualMatchCount: number = 0;
     expectedMatchDates.forEach((date: string, index: number) => {
-      const actualDayOfMatches: Array<TournamentMatch> = actualFilledCalendar[date]["matches"];   
-      const actualCountOfMatches: number = actualDayOfMatches.length
-      expect(actualCountOfMatches).toBe(expectedMatchesPerMatchDate)      
-      actualDayOfMatches.forEach((match: TournamentMatch) => {
-	expect(match.round).toBe(index+1)
-      })
+      const actualDayOfMatches: Array<MatchValues> = Object.values(actualFilledCalendar[date]["matches"]).map((entry: MatchEntry) => entry.match);      
+      const actualCountOfMatches: number = actualDayOfMatches.length;
+      expect(actualCountOfMatches).toBe(expectedMatchesPerMatchDate);
+      actualDayOfMatches.forEach((match: MatchValues) => {
+        expect(match.round).toBe(index + 1);
+      });
 
-      actualMatchCount += actualCountOfMatches
-    })
+      actualMatchCount += actualCountOfMatches;
+    });
 
-    expect(actualMatchCount).toBe(expectedMatches)
-
-
-    
-  })
-    
-
-        
-
-    
-
+    expect(actualMatchCount).toBe(expectedTotalMatches);
   });
-
+});

@@ -46,8 +46,8 @@ export const simulateMatch = async (match: Match): Promise<Match> => {
   };
 
   const [homeStrength, awayStrength] = calculateStrengths(
-    match.HomeSquad.onField,
-    match.AwaySquad.onField,
+    Object.values(match.HomeSquad.onField),
+    Object.values(match.AwaySquad.onField),
   );
 
   const goalMatrix: GoalMatrix = createJointProbabilitiesMatrixForGoals(

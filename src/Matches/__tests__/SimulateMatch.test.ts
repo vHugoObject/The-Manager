@@ -85,7 +85,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerOne: Player = {
-    ID: 0,
+    ID: "0",
     Name: "Rodri",
     PositionGroup: PositionGroup.Midfielder,
     Position: Midfielder.CDM,
@@ -103,7 +103,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerTwo: Player = {
-    ID: 1,
+    ID: "1",
     Name: "Luka Modric",
     PositionGroup: PositionGroup.Midfielder,
     Position: Midfielder.LM,
@@ -121,7 +121,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerThree: Player = {
-    ID: 2,
+    ID: "2",
     Name: "Toni Kroos",
     PositionGroup: PositionGroup.Midfielder,
     Position: Midfielder.RM,
@@ -139,7 +139,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerFour: Player = {
-    ID: 3,
+    ID: "3",
     Name: "Gabriel",
     PositionGroup: PositionGroup.Defender,
     Position: Defender.LCB,
@@ -157,7 +157,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerFive: Player = {
-    ID: 4,
+    ID: "4",
     Name: "William Saliba",
     PositionGroup: PositionGroup.Defender,
     Position: Defender.RCB,
@@ -175,7 +175,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerSix: Player = {
-    ID: 5,
+    ID: "5",
     Name: "Marcelo",
     PositionGroup: PositionGroup.Defender,
     Position: Defender.LB,
@@ -193,7 +193,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerSeven: Player = {
-    ID: 6,
+    ID: "6",
     Name: "Trent",
     PositionGroup: PositionGroup.Defender,
     Position: Defender.RB,
@@ -211,7 +211,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerEight: Player = {
-    ID: 7,
+    ID: "7",
     Name: "Karim Benzema",
     PositionGroup: PositionGroup.Attacker,
     Position: Attacker.ST,
@@ -229,7 +229,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerNine: Player = {
-    ID: 8,
+    ID: "8",
     Name: "Bernardo Silva",
     PositionGroup: PositionGroup.Attacker,
     Position: Attacker.LW,
@@ -247,7 +247,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerTen: Player = {
-    ID: 9,
+    ID: "9",
     Name: "Rodrygo",
     PositionGroup: PositionGroup.Attacker,
     Position: Attacker.RW,
@@ -265,7 +265,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testPlayerEleven: Player = {
-    ID: 9,
+    ID: "9",
     Name: "Ederson",
     PositionGroup: PositionGroup.Goalkeeper,
     Position: Goalkeeper.GK,
@@ -282,20 +282,15 @@ describe("simulateMatch test suite", async () => {
     Statistics: expectedPlayerStatistics,
   };
 
-  const allTestOutfieldPlayers: Array<Player> = [
-    testPlayerOne,
-    testPlayerTwo,
-    testPlayerThree,
-    testPlayerFour,
-    testPlayerFive,
-    testPlayerSix,
-    testPlayerSeven,
-    testPlayerEight,
-    testPlayerNine,
-    testPlayerTen,
-  ];
+  const createPlayersObject = (
+    players: Array<Player>,
+  ): Record<string, Player> => {
+    return Object.fromEntries(
+      players.map((player: Player) => [player.ID, player]),
+    );
+  };
 
-  const allTestPlayers: Array<Player> = [
+  const allTestPlayersArray: Array<Player> = [
     testPlayerOne,
     testPlayerTwo,
     testPlayerThree,
@@ -309,45 +304,28 @@ describe("simulateMatch test suite", async () => {
     testPlayerEleven,
   ];
 
-  const testPlayersOne: Array<Player> = [
-    testPlayerOne,
-    testPlayerTwo,
-    testPlayerThree,
-    testPlayerFour,
-  ];
-  const testStartersOne: Array<Player> = [
-    testPlayerOne,
-    testPlayerTwo,
-    testPlayerThree,
-    testPlayerFour,
-  ];
-  const testBenchOne: Array<Player> = [
+  const allTestPlayers: Record<string, Player> =
+    createPlayersObject(allTestPlayersArray);
+
+  const testBenchOneArray: Array<Player> = [
     testPlayerOne,
     testPlayerTwo,
     testPlayerThree,
     testPlayerFour,
   ];
 
-  const testPlayersTwo: Array<Player> = [
+  const testBenchOne: Record<string, Player> =
+    createPlayersObject(testBenchOneArray);
+
+  const testBenchTwoArray: Array<Player> = [
     testPlayerFive,
     testPlayerSix,
     testPlayerSeven,
     testPlayerEight,
   ];
-  const testStartersTwo: Array<Player> = [
-    testPlayerFive,
-    testPlayerSix,
-    testPlayerSeven,
-    testPlayerEight,
-    testPlayerNine,
-    testPlayerTen,
-  ];
-  const testBenchTwo: Array<Player> = [
-    testPlayerFive,
-    testPlayerSix,
-    testPlayerSeven,
-    testPlayerEight,
-  ];
+
+  const testBenchTwo: Record<string, Player> =
+    createPlayersObject(testBenchTwoArray);
 
   const testClubStatistics: StatisticsType = {
     BySeason: { "2024": testClubStatisticsOne },
@@ -355,7 +333,7 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testClubOne: Club = {
-    ID: 0,
+    ID: "0",
     Name: "Arsenal",
     Statistics: testClubStatistics,
     Squad: allTestPlayers,
@@ -364,12 +342,12 @@ describe("simulateMatch test suite", async () => {
   };
 
   const testClubTwo: Club = {
-    ID: 1,
+    ID: "1",
     Name: "Chelsea",
     Statistics: testClubStatistics,
     Squad: allTestPlayers,
     Starting11: allTestPlayers,
-    Bench: testBenchOne,
+    Bench: testBenchTwo,
   };
 
   const expectedTeamStatistics = [
@@ -414,61 +392,25 @@ describe("simulateMatch test suite", async () => {
     "Blocks",
   ];
 
-  const testEmptyPlayerGameStandardStats = (name) => {
-    const stats = Object.fromEntries(
-      expectedPlayerGameStandardStatsHeaders.map((header) => [
-        header.replace(/\s/g, ""),
-        0,
-      ]),
-    );
-    stats.Player = name;
-    return stats;
-  };
-
   const testMatchDate: Date = new Date("September 21, 2024");
 
   const testCompetition: string = "English Premier League";
 
-  const testHomeStatus: SquadStatus = {
-    onField: testClubOne.Starting11,
-    onBench: testClubOne.Bench,
-    subbedOut: [],
-    injured: [],
-    suspended: [],
-  };
+  const testCountry: string = "England";
+  const testMatchID: string = "1";
 
-  const testAwayStatus: SquadStatus = {
-    onField: testClubTwo.Starting11,
-    onBench: testClubTwo.Bench,
-    subbedOut: [],
-    injured: [],
-    suspended: [],
-  };
-
-  const testMatchScore = { Arsenal: 0, Chelsea: 0 };
-
-  const expectedMatch: Match = {
-    MatchDate: testMatchDate,
-    MatchScore: testMatchScore,
-    Competition: testCompetition,
-    Home: testClubOne,
-    Away: testClubTwo,
-    HomeSquad: testHomeStatus,
-    AwaySquad: testAwayStatus,
-    HomeOverallStatistics: testEmptyTeamStatistics,
-    AwayOverallStatistics: testEmptyTeamStatistics,
-    Simulated: true,
-  };
   test("test simulateMatch", async () => {
     const testMatch: Match = await createMatch(
+      testMatchID,
       testMatchDate,
       testClubOne,
       testClubTwo,
       testCompetition,
+      testCountry,
     );
     const actualSimulatedMatch: Match = await simulateMatch(testMatch);
     expectTypeOf(actualSimulatedMatch).toEqualTypeOf(testMatch);
-    expect(actualSimulatedMatch.Simulated).toBe(true);
+    expect(actualSimulatedMatch.Simulated).toBeTruthy();
 
     Object.values(actualSimulatedMatch.HomeOverallStatistics).forEach(
       (value) => {

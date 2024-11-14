@@ -1,44 +1,28 @@
 import { simpleFaker } from "@faker-js/faker";
-import { Manager as TournamentManager } from 'tournament-organizer/components';
-import { createCompetition } from "../Competitions/CompetitionUtilities";
+import { BaseCountries } from '../Countries/CountryTypes'
+import { Save, ClubReference } from "./SaveTypes";
+import { createCountries } from '../Countries/CountryUtilities'
 import { createSeasonCalendar } from "../Common/scheduler";
-import { Calendar } from "../Common/CommonTypes";
-import {
-  Competition,
-  BaseCompetitions,
-} from "../Competitions/CompetitionTypes";
-import { Save } from "./SaveTypes";
 
-export const createSave = async(
+
+export const createSave = async (
   Name: string,
   Country: string,
   MainCompetition: string,
   startingSeason: string,
-  firstDay: string,
-  Club: string,
-  countriesLeaguesClubs: BaseCompetitions,
+  Club: ClubReference,
+  countriesLeaguesClubs: BaseCountries,
 ): Promise<Save> => {
-  const allCompetitions: Record<
-    string,
-    Record<string, Competition>
-  > = Object.fromEntries(
-    Object.entries(countriesLeaguesClubs).map(([country, competitions]) => {
-      return [
-        country,
-        Object.fromEntries(
-          Object.entries(competitions).map(([competitionName, clubs]) => {
-            return [
-              competitionName,
-              createCompetition(competitionName, startingSeason, clubs),
-            ];
-          }),
-        ),
-      ];
-    }),
+
+  const [allCountries, allCompetitions, allClubs, allPlayers] =
+      await createCountries(countriesLeaguesClubs, startingSeason);
+
+  const [calendar, scheduleManager] = await createSeasonCalendar(
+    allCompetitions,
+    startingSeason,
   );
 
-  const [calendar, scheduleManager] = await createSeasonCalendar(allCompetitions,
-      startingSeason);
+  const CurrentDate: Date = new Date(Object.keys(calendar)[0]);
 
   return {
     Name,
@@ -47,10 +31,15 @@ export const createSave = async(
     Club,
     Seasons: 1,
     CurrentSeason: startingSeason,
-    CurrentDate: new Date(firstDay),
+    CurrentDate,
+    countriesLeaguesClubs,
+    allCountries,
     allCompetitions,
+    allClubs,
+    allPlayers,
+    allMatches: {},
     saveID: simpleFaker.string.numeric(4),
     calendar,
-    scheduleManager
+    scheduleManager,
   };
 };
