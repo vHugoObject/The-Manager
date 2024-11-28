@@ -7,7 +7,7 @@ import {
 } from "tournament-organizer/components";
 import { isSunday, addWeeks } from "date-fns";
 import { isBefore } from "date-fns/fp";
-import { SettableTournamentValues, MatchValues } from "tournament-organizer/interfaces";
+import { SettableTournamentValues } from "tournament-organizer/interfaces";
 import { Competition } from "../Competitions/CompetitionTypes";
 import { CalendarEntry, Calendar, MatchEntry, Entity } from "./CommonTypes";
 import { createCalendar } from "./simulationUtilities";
@@ -26,7 +26,6 @@ export const createScheduler = async (
       return new TournamentPlayer(clubID, clubName);
     });
   };
-
 
   const createTournament = async (
     scheduler: TournamentManager,
@@ -67,9 +66,14 @@ export const scheduleTournament = async (
   const matches: Array<TournamentMatch> = tournament.matches;
   return Object.fromEntries(
     Object.entries(availableDates).map(([date, calendarEntry], index) => {
-      const matchesForDate: Record<string, MatchEntry> = Object.fromEntries(matches.filter(
-        (match: TournamentMatch) => match.round == index + 1,
-      ).map((match: TournamentMatch) => [match.id, {"match": structuredClone(match), tournamentID: tournament.id}]))
+      const matchesForDate: Record<string, MatchEntry> = Object.fromEntries(
+        matches
+          .filter((match: TournamentMatch) => match.round == index + 1)
+          .map((match: TournamentMatch) => [
+            match.id,
+            { match: structuredClone(match), tournamentID: tournament.id },
+          ]),
+      );
       const newCalendarEntry: CalendarEntry = set(
         "matches",
         matchesForDate,
@@ -102,10 +106,12 @@ export const scheduleMatchs = async (
     value: CalendarEntry,
   ): CalendarEntry => {
     const matchesToAdd: Record<string, MatchEntry> = value.matches;
-    const updater = (accumulatedMatches: Record<string, MatchEntry>): Record<string, MatchEntry>  => {
-      return merge(accumulatedMatches, matchesToAdd)
+    const updater = (
+      accumulatedMatches: Record<string, MatchEntry>,
+    ): Record<string, MatchEntry> => {
+      return merge(accumulatedMatches, matchesToAdd);
     };
-    return update("matches", updater, accumulator);    
+    return update("matches", updater, accumulator);
   };
 
   const calendarReducer = (

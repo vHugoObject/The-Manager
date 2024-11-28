@@ -13,15 +13,15 @@ import {
 import { Club } from "../../Clubs/ClubTypes";
 import { playerSkills } from "../../Players/PlayerSkills";
 import { Competition } from "../CompetitionTypes";
+import { entityReferencesCreator } from "../../Common/simulationUtilities"
 import {
   createCompetitionClubsWithGeneratedPlayers,
-  createCompetitionClubsWithGivenPlayers,
   generateCompetitionStatisticsObject,
-  createCompetitionScheduler,
   createCompetition,
 } from "../CompetitionUtilities";
 
 describe("Competition Utilities tests", async () => {
+  const testSeason: string = "2024"
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -43,8 +43,7 @@ describe("Competition Utilities tests", async () => {
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
 
   const expectedCompetitionStatistics: StatisticsType = {
-    BySeason: { "2024": competitionStatisticsObject },
-    GameLog: {},
+    [testSeason]: competitionStatisticsObject
   };
 
   const testClubStatisticsOne: StatisticsObject = {
@@ -71,8 +70,7 @@ describe("Competition Utilities tests", async () => {
   };
 
   const expectedClubStatistics: StatisticsType = {
-    BySeason: { "2024": testClubStatisticsOne },
-    GameLog: {},
+    [testSeason]: testClubStatisticsOne
   };
 
   const playerStatisticsArray: Array<string> = [
@@ -97,9 +95,8 @@ describe("Competition Utilities tests", async () => {
   );
 
   const expectedPlayerStatistics: StatisticsType = {
-    BySeason: { "2024": playerStatisticsObject },
-    GameLog: {},
-  };
+    [testSeason]: playerStatisticsObject
+  };  
 
   const expectedContract: ContractType = {
     Wage: 1,
@@ -197,42 +194,36 @@ describe("Competition Utilities tests", async () => {
 
   const testPlayersOneArray: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwoArray: Array<Player> = [testPlayerThree, testPlayerFour];
-  
 
-  const createPlayerReferences = async (
-    players: Array<Player>,
-  ): Promise<Record<string, string>> => {
-    return Object.fromEntries(
-      players.map((player: Player) => [player.ID, player.Name]),
-    );
-  };
-  
 
   const testPlayersReferenceOne: Record<string, string> =
-    await createPlayerReferences(testPlayersOneArray);
+    await entityReferencesCreator<Player>(testPlayersOneArray);
   const testPlayersReferenceTwo: Record<string, string> =
-    await createPlayerReferences(testPlayersTwoArray);
+    await entityReferencesCreator(testPlayersTwoArray);
 
   const testCompetitionName: string = "English Premier League";
-  const testCompetitionCountry: string = "England";
-  const testSeason: string = "2024";
+  const testCompetitionCountry: string = "England";  
   const testClubsNoPlayers: Record<string, string> = {
     [simpleFaker.string.numeric(6)]: "Arsenal",
-    [simpleFaker.string.numeric(6)]: "Brentford"}
+    [simpleFaker.string.numeric(6)]: "Brentford",
+  };
 
-   interface ClubsWithPlayers {
+  interface ClubsWithPlayers {
     clubName: string;
     players: Array<Player>;
   }
   const testClubsWithPlayers: Record<string, ClubsWithPlayers> = {
-    [simpleFaker.string.numeric(6)]: {clubName: "Arsenal", players: testPlayersOneArray},
-    [simpleFaker.string.numeric(6)]: {clubName: "Brentford", players: testPlayersTwoArray}
-  }
-  
+    [simpleFaker.string.numeric(6)]: {
+      clubName: "Arsenal",
+      players: testPlayersOneArray,
+    },
+    [simpleFaker.string.numeric(6)]: {
+      clubName: "Brentford",
+      players: testPlayersTwoArray,
+    },
+  };
 
- 
   test("test generateCompetitionStatisticsObject", async () => {
-    const testSeason: string = "2024";
 
     const actualStatistics: StatisticsType =
       generateCompetitionStatisticsObject(testSeason);
@@ -240,7 +231,6 @@ describe("Competition Utilities tests", async () => {
   });
 
   test("Test createCompetitionClubsWithGeneratedPlayers", async () => {
-    
     const expectedClubOne: Club = {
       ID: expect.any(String),
       Name: "Arsenal",
@@ -259,7 +249,6 @@ describe("Competition Utilities tests", async () => {
       Bench: {},
     };
 
-
     const expectedClubs: Array<Club> = [expectedClubOne, expectedClubTwo];
 
     const actualClubPlayerTuples: Array<[Club, Record<string, Player>]> =
@@ -268,15 +257,11 @@ describe("Competition Utilities tests", async () => {
         testClubsNoPlayers,
       );
 
-
-    expect(actualClubPlayerTuples.length).toBe(expectedClubs.length)
+    expect(actualClubPlayerTuples.length).toBe(expectedClubs.length);
     actualClubPlayerTuples.forEach(([actualClub, players], index) => {
       expect(Object.values(actualClub.Squad).length).toBe(25);
     });
   });
-
-  
-
 
   test("Test createCompetition - all players are randomly generated", async () => {
     const [actualCompetition, actualClubs, actualPlayers] =
@@ -298,8 +283,8 @@ describe("Competition Utilities tests", async () => {
     );
 
     const expectedCompetitionClubNames: Array<string> = Object.values(
-      testClubsWithPlayers).flatMap((club: ClubsWithPlayers) => club.clubName)
-
+      testClubsWithPlayers,
+    ).flatMap((club: ClubsWithPlayers) => club.clubName);
 
     expect(expectedCompetitionClubNames.toSorted()).toStrictEqual(
       competitionClubNames.toSorted(),
@@ -325,6 +310,4 @@ describe("Competition Utilities tests", async () => {
       expectTypeOf(actualPlayer).toEqualTypeOf(testPlayerOne);
     });
   });
-
-  
-  });
+});

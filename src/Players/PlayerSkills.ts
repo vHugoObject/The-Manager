@@ -55,3 +55,23 @@ export const playerSkills = {
   physicalSkills,
   goalkeepingSkills,
 };
+
+export const defenseCategories = new Set([
+    "defenseSkills",
+    "mentalSkills",
+    "physicalSkills",
+  ]);
+
+export const goalkeepingCategories = new Set([
+    "defenseSkills",
+    "mentalSkills",
+    "physicalSkills",
+    "goalkeepingSkills",
+]);
+export const attackCategories = new Set([
+    "ballSkills",
+    "mentalSkills",
+    "physicalSkills",
+    "passingSkills",
+    "shootingSkills",
+      ]);

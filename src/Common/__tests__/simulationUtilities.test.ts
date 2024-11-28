@@ -29,6 +29,7 @@ import {
 } from "../simulationUtilities";
 
 describe("simulationUtilities test suite", async () => {
+  const testSeason: string = "2024"
   const playerStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -51,8 +52,7 @@ describe("simulationUtilities test suite", async () => {
   );
 
   const expectedPlayerStatistics: StatisticsType = {
-    BySeason: { "2024": playerStatisticsObject },
-    GameLog: {},
+    [testSeason]: playerStatisticsObject 
   };
 
   const expectedContract: ContractType = {
@@ -155,8 +155,7 @@ describe("simulationUtilities test suite", async () => {
   };
 
   const expectedClubStatistics: StatisticsType = {
-    BySeason: { "2024": testClubStatisticsOne },
-    GameLog: {},
+    [testSeason]: testClubStatisticsOne
   };
 
   const testClubOne: Club = {

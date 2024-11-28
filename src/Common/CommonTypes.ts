@@ -8,11 +8,8 @@ export type ComponentKeysObject = Record<string, Array<string>>;
 export type StatisticsObject = Record<string, number | string>;
 export type StatisticsEntry = Record<string, StatisticsObject>;
 
+export type StatisticsType = Record<string, StatisticsObject>;
 
-export interface StatisticsType {
-  BySeason: Record<string, StatisticsObject>;
-  GameLog: Record<string, StatisticsObject>;
-}
 
 export interface MatchEntry {
   match: MatchValues;
@@ -27,6 +24,6 @@ export interface CalendarEntry {
 }
 export type Calendar = Record<string, CalendarEntry>;
 
-export type Entity = Club | Player | Competition | Country 
+export type Entity = Club | Player | Competition | Country;
 
-export type GameObject = Club | Player | Competition | Country | Calendar
+export type GameObject = Club | Player | Competition | Country | Calendar;

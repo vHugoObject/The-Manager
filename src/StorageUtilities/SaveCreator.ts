@@ -1,9 +1,8 @@
 import { simpleFaker } from "@faker-js/faker";
-import { BaseCountries } from '../Countries/CountryTypes'
+import { BaseCountries } from "../Countries/CountryTypes";
 import { Save, ClubReference } from "./SaveTypes";
-import { createCountries } from '../Countries/CountryUtilities'
+import { createCountries } from "../Countries/CountryUtilities";
 import { createSeasonCalendar } from "../Common/scheduler";
-
 
 export const createSave = async (
   Name: string,
@@ -13,9 +12,8 @@ export const createSave = async (
   Club: ClubReference,
   countriesLeaguesClubs: BaseCountries,
 ): Promise<Save> => {
-
   const [allCountries, allCompetitions, allClubs, allPlayers] =
-      await createCountries(countriesLeaguesClubs, startingSeason);
+    await createCountries(countriesLeaguesClubs, startingSeason);
 
   const [calendar, scheduleManager] = await createSeasonCalendar(
     allCompetitions,

@@ -1,6 +1,10 @@
 import { faker } from "@faker-js/faker";
+import { flow,  mean, mapValues, isEqual, filter } from 'lodash/fp'
 import { partial } from "lodash";
-import { playerSkills } from "./PlayerSkills";
+import { promiseProps, flowAsync } from 'futil-js'
+import { playerSkills, defenseCategories,
+  attackCategories, goalkeepingCategories,
+} from "./PlayerSkills";
 import { StatisticsType, StatisticsObject } from "../Common/CommonTypes";
 import {
   Player,
@@ -76,23 +80,80 @@ export const getRandomNumberInRange = (min: number, max: number): number => {
   return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
 };
 
-export const generatePlayerSkills = (
+
+export const isGoalkeeper = isEqual(PositionGroup.Goalkeeper)
+export const isDefender = isEqual(PositionGroup.Defender)
+export const isMidfielder = isEqual(PositionGroup.Midfielder)
+export const isAttacker = isEqual(PositionGroup.Attacker)
+
+export const playerIsGoalkeeper = (player: Player): boolean => isGoalkeeper(player.PositionGroup)
+export const playerIsNotGoalkeeper = (player: Player): boolean => !isGoalkeeper(player.PositionGroup)
+export const playerIsDefender = (player: Player): boolean => isDefender(player.PositionGroup)
+export const playerIsMidfielder = (player: Player): boolean => isMidfielder(player.PositionGroup)
+export const playerIsAttacker = (player: Player): boolean => isAttacker(player.PositionGroup)
+
+export const filterGoalkeepers = filter(playerIsGoalkeeper)
+export const filterDefenders = filter(playerIsDefender)
+export const filterMidfielders = filter(playerIsMidfielder)
+export const filterAttackers = filter(playerIsAttacker)
+export const filterOutfieldPlayers = filter(playerIsNotGoalkeeper)
+
+export const getPlayerSkills = async(player: Player): Promise<Record<string, SkillSet>> => player.Skills
+
+export const getListOfPlayerSkills = async(players: Array<Player>): Promise<Array<Record<string, SkillSet>>> => {
+  return await Promise.all(
+    players.map(async(player: Player) => getPlayerSkills(player))
+  )
+}
+
+export const getAverageOfSetOfSkillCategories = async(skillCategories: Set<string>, skillSets: Record<string, SkillSet>): Promise<number> => {
+  const getSkillSetsFilterer = (skills: Record<string, SkillSet>): Record<string, SkillSet> => {
+    return Object.fromEntries(Object.entries(skills)
+      .filter(([key, _]) => skillCategories.has(key))
+    )
+  }
+
+  const getMeanOfSkillValues = (skillValues: Record<string, number>): number => {
+    return mean(Object.values(skillValues)) 
+  }
+  
+  const getMeanSkillValuesMapper = (skills: Record<string, SkillSet>): Record<string, number> => {
+    return mapValues(getMeanOfSkillValues, skills)
+  }
+
+  const getAverage = flow(getSkillSetsFilterer, getMeanSkillValuesMapper, getMeanOfSkillValues)
+
+  return getAverage(skillSets)
+}
+
+export const getListOfAveragesOfSetOfSkillCategories = async(skillCategories: Set<string>, listOfSkillSets: Array<Record<string, SkillSet>>): Promise<Array<number>> => {
+  return await Promise.all(
+    listOfSkillSets.map(async(skillSet) => await getAverageOfSetOfSkillCategories(skillCategories, skillSet))
+  )
+}
+export const goalkeepingRating = partial(getListOfAveragesOfSetOfSkillCategories, goalkeepingCategories)
+export const outfieldPlayersDefendingRatings = partial(getListOfAveragesOfSetOfSkillCategories, defenseCategories)
+
+export const attackingRatings = partial(getListOfAveragesOfSetOfSkillCategories, attackCategories)
+
+
+export const getGoalkeepingRating = flowAsync(getListOfPlayerSkills, goalkeepingRating) 
+export const getOutfieldPlayersDefendingRatings = flowAsync(filterOutfieldPlayers, getListOfPlayerSkills ,outfieldPlayersDefendingRatings)
+export const getAttackingRatings = flowAsync(getListOfPlayerSkills, attackingRatings)
+
+
+export const generatePlayerSkills = async(
   positionGroup: PositionGroup,
-): Record<string, SkillSet> => {
-  // skills will be based on positionGroup
-  return Object.fromEntries(
-    Object.entries(playerSkills).map(([name, set]) => [
-      name,
-      Object.fromEntries(
-        set.map((skill: string) => [skill, getRandomNumberInRange(0, 100)]),
-      ),
-    ]),
-  );
+): Promise<Record<string, SkillSet>> => {
+  const randomSkillValue = (skill: string) => [skill, getRandomNumberInRange(25, 100)]
+  const randomSkills = (skillSet: Array<string>) => Object.fromEntries(skillSet.map(randomSkillValue))
+  const randomSkillsMapper = mapValues(randomSkills)
+  return randomSkillsMapper(playerSkills)
 };
 
-export const generatePosition = (
+export const generatePosition = async(
   positionGroup: PositionGroup,
-): PositionType => {
+): Promise<PositionType> => {
   if (positionGroup == PositionGroup.Goalkeeper) {
     return Goalkeeper.GK;
   }
@@ -103,9 +164,9 @@ export const generatePosition = (
   return playerPositionGroup[getRandomNumberInRange(0, groupLength)];
 };
 
-export const generateBiographicalDetails = (
+export const generateBiographicalDetails = async(
   positionGroup: PositionGroup,
-): BiographicalDetails => {
+): Promise<BiographicalDetails> => {
   // height, weight and age will be based off position group
   const randomFoot: number = getRandomNumberInRange(0, 2);
   const heightRange: [number, number] = [160, 200];
@@ -121,12 +182,20 @@ export const generateBiographicalDetails = (
   };
 };
 
-export const generateContract = (): ContractType => {
+export const generateContract = async(): Promise<ContractType> => {
   const contractLengthRange: [number, number] = [1, 5];
   return {
     Wage: 1,
     Years: getRandomNumberInRange(...contractLengthRange),
   };
+};
+
+export const calculatePlayerRating = async(skills: Record<string, SkillSet>, positionGroup: PositionGroup): Promise<number> => {
+  // positionRange will be used to calculate rating
+  const skillAverage = (skillSet: Record<string,number>): number => mean(Object.values(skillSet))
+  const skillAverageMapper = mapValues(skillAverage)
+  const calculateRating = flow(skillAverageMapper, skillAverage)
+  return calculateRating(skills)
 };
 
 export const calculateValue = (
@@ -137,17 +206,13 @@ export const calculateValue = (
   return 1;
 };
 
-export const calculateRating = (positionGroup: PositionGroup): number => {
-  // positionRange will be used to calculate rating
-  return 1;
-};
 
-export const generatePlayerStatisticsObject = (
+
+export const generatePlayerStatisticsObject = async(
   season: string,
-): StatisticsType => {
+): Promise<StatisticsType> => {
   return {
-    BySeason: { [season]: emptySeasonStatisticsObject },
-    GameLog: {},
+    [season]: emptySeasonStatisticsObject
   };
 };
 
@@ -156,25 +221,26 @@ export const createPlayer = async (
   season: string,
   club?: string,
 ): Promise<Player> => {
-  const bio = generateBiographicalDetails(positionGroup);
-  return {
+  const [bio, Skills] = await Promise.all([await generateBiographicalDetails(positionGroup),
+    await generatePlayerSkills(positionGroup)]);
+  return promiseProps({
     ID: faker.string.numeric(6),
     Name: bio.Name,
     PositionGroup: positionGroup,
-    Position: generatePosition(positionGroup),
+    Position: await generatePosition(positionGroup),
     PreferredFoot: bio.PreferredFoot,
     Weight: bio.Weight,
     Height: bio.Height,
     Age: bio.Age,
     NationalTeam: bio.NationalTeam,
     Club: club ? club : null,
-    Contract: generateContract(),
+    Contract: await generateContract(),
     Value: 20_000_000,
-    Rating: 80,
-    Skills: generatePlayerSkills(positionGroup),
-    Statistics: generatePlayerStatisticsObject(season),
-  };
+    Rating: await calculatePlayerRating(Skills, positionGroup),
+    Skills
+  });
 };
+
 
 export const createGoalkeeper = partial(createPlayer, PositionGroup.Goalkeeper);
 export const createDefender = partial(createPlayer, PositionGroup.Defender);

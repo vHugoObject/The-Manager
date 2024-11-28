@@ -14,18 +14,15 @@ export type GoalMatrix = Array<[[number, number], number]>;
 export type MatchScore = Record<string, number>;
 
 export interface Match {
-  MatchID: string;
+  ID: string;
+  Name: string;
   MatchDate: Date;
   MatchScore: MatchScore;
-  Country: string;
-  Competition: string;
+  CompetitionID: string;
   Home: Club;
   Away: Club;
   HomeSquad: SquadStatus;
   AwaySquad: SquadStatus;
   HomeOverallStatistics: StatisticsObject;
   AwayOverallStatistics: StatisticsObject;
-  Simulated: boolean;
 }
-
-

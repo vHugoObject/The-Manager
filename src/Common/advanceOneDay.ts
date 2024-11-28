@@ -13,10 +13,7 @@ import {
 } from "../Players/PlayerTypes";
 import { Club } from "../Clubs/ClubTypes";
 import { playerSkills } from "../Players/PlayerSkills";
-import {
-  Competition,
-  BaseCompetitions,
-} from "../Competitions/CompetitionTypes";
+import { Competition } from "../Competitions/CompetitionTypes";
 import { createSave } from "../StorageUtilities/SaveCreator";
 import {
   addSaveToDB,
@@ -33,8 +30,6 @@ export const advanceOneDay = async (saveID: SaveID): Promise<void> => {
     const currentDate: string = save.CurrentDate.toDateString();
     return save.calendar[currentDate];
   };
-
-  const setupMatches = async () => {};
 
   const save: Save = await getSaveValue(saveID);
 

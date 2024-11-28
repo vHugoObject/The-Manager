@@ -1,15 +1,42 @@
 import { simpleFaker } from "@faker-js/faker";
-import { mapValues } from 'lodash/fp'
+import { mapValues } from "lodash/fp";
 import { Competition } from "../Competitions/CompetitionTypes";
 import { Player } from "../Players/PlayerTypes";
 import { Club } from "../Clubs/ClubTypes";
-import { Country, BaseCountries,  } from "./CountryTypes";
+import { StatisticsType, StatisticsObject } from '../Common/CommonTypes'
+import { Country, BaseCountries } from "./CountryTypes";
 import { createCompetition } from "../Competitions/CompetitionUtilities";
 import {
   entityObjectsReducer,
   entityObjectsCreator,
   entityReferencesCreator,
 } from "../Common/simulationUtilities";
+
+
+const countryStatistics: StatisticsObject = {
+  Wins: 0,
+  Draws: 0,
+  Losses: 0,
+  GoalsFor: 0,
+  GoalsAgainst: 0,
+  GoalDifference: 0,
+  Points: 0,
+  MatchesPlayed: 0,
+  Minutes: 0,
+  NonPenaltyGoals: 0,
+  PenaltyKicksMade: 0,
+  PenaltyKicksAttempted: 0,
+  YellowCards: 0,
+  RedCards: 0,
+};
+
+export const generateCountryStatisticsObject = (
+  season: string,
+): StatisticsType => {
+  return {
+    [season]: countryStatistics,
+  };
+};
 
 export const createCountry = async (
   countryName: string,
@@ -39,7 +66,7 @@ export const createCountry = async (
   );
 
   const countryCompetitions: Array<Competition> = createdCompetitions.map(
-    ([competition,...rest]) => competition,
+    ([competition, ...rest]) => competition,
   );
   const clubs: Array<Record<string, Club>> = createdCompetitions.map(
     ([_, club, __]) => club,
@@ -63,6 +90,7 @@ export const createCountry = async (
   const countryObject: Country = {
     ID: simpleFaker.string.numeric(4),
     Name: countryName,
+    Statistics: generateCountryStatisticsObject(season),
     Competitions: competitionsReference,
     CurrentSeason: season,
   };
@@ -117,19 +145,25 @@ export const createCountries = async (
   return [countriesObject, competitionsObject, clubsObject, playersObject];
 };
 
+export const createIDsForClubs = (
+  countriesLeaguesClubs: Record<string, Record<string, Array<string>>>,
+): BaseCountries => {
+  const arrayOFClubsIDMapper = (
+    clubNames: Array<string>,
+  ): Record<string, string> => {
+    return Object.fromEntries(
+      clubNames.map((clubName: string) => [
+        simpleFaker.string.numeric(6),
+        clubName,
+      ]),
+    );
+  };
 
+  const countryClubsIDMapper = (
+    country: Record<string, Array<string>>,
+  ): Record<string, Record<string, string>> => {
+    return mapValues(arrayOFClubsIDMapper, country);
+  };
 
-export const createIDsForClubs = (countriesLeaguesClubs: Record<string, Record<string, Array<string>>>): BaseCountries => {
-
-
-  const arrayOFClubsIDMapper = (clubNames: Array<string>): Record<string, string> => {
-    return Object.fromEntries(clubNames.map((clubName: string) => [simpleFaker.string.numeric(6), clubName]))
-    
-  }
-  
-  const countryClubsIDMapper = (country: Record<string, Array<string>>): Record<string, Record<string, string>> => {
-    return mapValues(arrayOFClubsIDMapper, country)
-  }
-  
-  return mapValues(countryClubsIDMapper, countriesLeaguesClubs)
-}
+  return mapValues(countryClubsIDMapper, countriesLeaguesClubs);
+};

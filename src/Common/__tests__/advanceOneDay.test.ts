@@ -1,360 +1,156 @@
-import "fake-indexeddb/auto";
 import { describe, expect, test, expectTypeOf } from "vitest";
+import "fake-indexeddb/auto";
+import { simpleFaker } from "@faker-js/faker";
+import { pickBy } from "lodash/fp";
+import { isSunday, addWeeks, isBefore } from "date-fns";
 import {
   Manager as TournamentManager,
   Tournament,
   Match as TournamentMatch,
 } from "tournament-organizer/components";
+import { MatchValues } from "tournament-organizer/interfaces";
 import { deleteDB } from "idb";
-import { range } from "lodash";
+import { range, flow, sum } from "lodash";
 import { StatisticsObject, StatisticsType } from "../../Common/CommonTypes";
-import {
-  Player,
-  PositionGroup,
-  Midfielder,
-  Defender,
-  SkillSet,
-  Foot,
-  ContractType,
-} from "../../Players/PlayerTypes";
+import { Entity } from '../../Common/CommonTypes'
+import { Player } from "../../Players/PlayerTypes";
+import { BaseCountries } from "../../Countries/CountryTypes";
 import { Club } from "../../Clubs/ClubTypes";
-import { playerSkills } from "../../Players/PlayerSkills";
-import {
-  Competition,
-  BaseCompetitions,
-  AllCompetitions,
-} from "../../Competitions/CompetitionTypes";
-import { createSave } from "../../StorageUtilities/SaveCreator";
-import {
-  addSaveToDB,
-  getSaveValue,
-} from "../../StorageUtilities/SaveUtilities";
-import { createSeasonCalendar } from "../../Common/scheduler";
-import { Calendar } from "../../Common/CommonTypes";
+import { Competition } from "../../Competitions/CompetitionTypes";
+import { Match } from "../../Matches/MatchTypes";
 import { Save, SaveID } from "../../StorageUtilities/SaveTypes";
+import { createSave } from "../../StorageUtilities/SaveCreator";
+import { addSaveToDB, getSaveValue} from "../../StorageUtilities/SaveUtilities";
+import { Calendar, CalendarEntry, MatchEntry } from "../../Common/CommonTypes";
+import { totalDoubleRoundRobinGames } from "../simulationUtilities";
 import { advanceOneDay } from "../advanceOneDay";
 
 describe("advanceOneDay  tests", async () => {
-  const playerStatisticsArray: Array<string> = [
-    "Wins",
-    "Draws",
-    "Losses",
-    "GoalsFor",
-    "GoalsAgainst",
-    "GoalDifference",
-    "Points",
-    "MatchesPlayed",
-    "Minutes",
-    "NonPenaltyGoals",
-    "PenaltyKicksMade",
-    "PenaltyKicksAttempted",
-    "YellowCards",
-    "RedCards",
-  ];
 
-  const playerStatisticsObject: Record<string, number> = Object.fromEntries(
-    playerStatisticsArray.map((entry) => [entry, 0]),
-  );
+  const testDBName: string = "the-manager";
+  const testPlayerCountry: string = "England";
+  const testSeason: string = "2024"
+  const testPlayerCompetitionName: string = "English Premier League";
+  const testPlayerClub: string = "Arsenal";
+  const testPlayerName: string = "Mikel Arteta";  
+  const testCountryOne: string = "England";
 
-  const expectedPlayerStatistics: StatisticsType = {
-    BySeason: { "2024": playerStatisticsObject },
-    GameLog: {},
-  };
-
-  const expectedContract: ContractType = {
-    Wage: 1,
-    Years: 1,
-  };
-
-  const getRandomNumberInRange = (min: number, max: number): number => {
-    const minCeiled = Math.ceil(min);
-    const maxFloored = Math.floor(max);
-    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
-  };
-
-  const testPlayerSkills = (): Record<string, SkillSet> => {
-    return Object.fromEntries(
-      Object.entries(playerSkills).map(([name, set]) => [
-        name,
-        Object.fromEntries(
-          set.map((skill: string) => [skill, getRandomNumberInRange(25, 100)]),
-        ),
-      ]),
-    );
-  };
-
-  const testPlayerOne: Player = {
-    ID: "1",
-    Name: "John Doe",
-    PositionGroup: PositionGroup.Midfielder,
-    Position: Midfielder.CDM,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "Spain",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayerTwo: Player = {
-    ID: "1",
-    Name: "John Stones",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.LCB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayerThree: Player = {
-    ID: "2",
-    Name: "Luis Enrique",
-    PositionGroup: PositionGroup.Midfielder,
-    Position: Midfielder.CDM,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "Spain",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayerFour: Player = {
-    ID: "3",
-    Name: "Bernardo Silva",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.LCB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Manchester City",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayersOneArray: Array<Player> = [testPlayerOne, testPlayerTwo];
-  const testPlayersTwoArray: Array<Player> = [testPlayerThree, testPlayerFour];
-
-  const createSquadObject = (players: Array<Player>) => {
-    return Object.fromEntries(
-      players.map((player: Player) => [player.ID, player]),
-    );
-  };
-
-  const testPlayersOne: Record<string, Player> =
-    createSquadObject(testPlayersOneArray);
-  const testPlayersTwo: Record<string, Player> =
-    createSquadObject(testPlayersTwoArray);
-
-  const testClubStatisticsOne: StatisticsObject = {
-    Wins: 0,
-    Draws: 0,
-    Losses: 0,
-    GoalsFor: 0,
-    GoalsAgainst: 0,
-    GoalDifference: 0,
-    Points: 0,
-    Record: "",
-    HomeRecord: "",
-    AwayRecord: "",
-    DomesticCompetition: "",
-    DomesticCups: "",
-    ContinentalCup: "",
-    MatchesPlayed: 0,
-    Minutes: 0,
-    NonPenaltyGoals: 0,
-    PenaltyKicksMade: 0,
-    PenaltyKicksAttempted: 0,
-    YellowCards: 0,
-    RedCards: 0,
-  };
-
-  const testClubStatistics: StatisticsType = {
-    BySeason: { "2024": testClubStatisticsOne },
-    GameLog: {},
-  };
-  const testClubOne: Club = {
-    ID: "0",
-    Name: "Arsenal",
-    Statistics: testClubStatistics,
-    Squad: testPlayersOne,
-    Starting11: {},
-    Bench: {},
-  };
-
-  const testClubTwo: Club = {
-    ID: "1",
-    Name: "Chelsea",
-    Statistics: testClubStatistics,
-    Squad: testPlayersTwo,
-    Starting11: {},
-    Bench: {},
-  };
-
-  const testClubThree: Club = {
-    ID: "2",
-    Name: "Everton",
-    Statistics: testClubStatistics,
-    Squad: testPlayersOne,
-    Starting11: {},
-    Bench: {},
-  };
-
-  const testClubFour: Club = {
-    ID: "3",
-    Name: "Ashton Villa",
-    Statistics: testClubStatistics,
-    Squad: testPlayersOne,
-    Starting11: {},
-    Bench: {},
-  };
-
-  const testClubsOneArray: Array<Club> = [
-    testClubOne,
-    testClubTwo,
-    testClubThree,
-    testClubFour,
-  ];
-
-  const expectedClubNames: Array<string> = testClubsOneArray.map(
-    (club: Club) => club.Name,
-  );
-
-  const clubsObjectCreator = (clubs: Array<Club>): Record<string, Club> => {
-    return Object.fromEntries(clubs.map((club: Club) => [club.ID, club]));
-  };
-
-  const testClubsOne: Record<string, Club> =
-    clubsObjectCreator(testClubsOneArray);
-
-  const competitionStatisticsArray: Array<string> = [
-    "Wins",
-    "Draws",
-    "Losses",
-    "GoalsFor",
-    "GoalsAgainst",
-    "GoalDifference",
-    "Points",
-    "MatchesPlayed",
-    "Minutes",
-    "NonPenaltyGoals",
-    "PenaltyKicksMade",
-    "PenaltyKicksAttempted",
-    "YellowCards",
-    "RedCards",
-  ];
-
-  const competitionStatisticsObject: Record<string, number> =
-    Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
-
-  const testCompetitionStatistics: StatisticsType = {
-    BySeason: { "2024": competitionStatisticsObject },
-    GameLog: {},
-  };
-
-  const testCompetitionOne: Competition = {
-    ID: "0",
-    Name: "English Premier League",
-    Country: "England",
-    Clubs: testClubsOne,
-    Statistics: testCompetitionStatistics,
-  };
-
-  const testAllCompetitionsOne: AllCompetitions = {
-    England: {
-      "English Premier League": testCompetitionOne,
+  const testCompetitionsOne: Record<string, Record<string, string>> = {
+    "English Premier League": {
+      [simpleFaker.string.numeric(6)]: "Arsenal",
+      [simpleFaker.string.numeric(6)]: "Brentford",
+      [simpleFaker.string.numeric(6)]: "Manchester United",
+      [simpleFaker.string.numeric(6)]: "Liverpool",
+    },
+    "The Championship": {
+      [simpleFaker.string.numeric(6)]: "Watford",
+      [simpleFaker.string.numeric(6)]: "Stoke City",
+      [simpleFaker.string.numeric(6)]: "Manchester City",
+      [simpleFaker.string.numeric(6)]: "Hull City",
+    },
+    "League One": {
+      [simpleFaker.string.numeric(6)]: "Walsall",
+      [simpleFaker.string.numeric(6)]: "Swindon",
+      [simpleFaker.string.numeric(6)]: "Farnham",
+      [simpleFaker.string.numeric(6)]: "Cambridge",
     },
   };
 
-  const testCountry: string = "England";
-  const testCompetitionName: string = "English Premier League";
-  const testSeason: string = "2024";
-  const testClub: string = "Arsenal";
-  const testClubs: Array<string> = [
-    "Arsenal",
-    "Chelsea",
-    "Ashton Villa",
-    "Everton",
-  ];
-  const testPlayerName: string = "Mikel Arteta";
-  const testCompetitions: BaseCompetitions = {
-    England: { "English Premier League": testClubs },
-  };
+  const testCountryTwo: string = "Spain";
 
-  const testFirstDay: string = "08/11/24";
-  const expectedFirstDay: Date = new Date(testFirstDay);
+  // add more teams
+  const testCompetitionsTwo: Record<string, Record<string, string>> = {
+    "Primera Division": {
+      [simpleFaker.string.numeric(6)]: "Real Madrid CF",
+      [simpleFaker.string.numeric(6)]: "FC Barcelona",
+    },
+    "Segunda Division": {
+      [simpleFaker.string.numeric(6)]: "Almeria",
+      [simpleFaker.string.numeric(6)]: "Granada",
+    },
+    "Primera Federacion": {
+      [simpleFaker.string.numeric(6)]: "Andorra",
+      [simpleFaker.string.numeric(6)]: "Atzeneta",
+    },
+  }
 
-  const expectedClub: Club = {
-    ID: expect.any(String),
-    Name: expect.any(String),
-    Statistics: testClubStatistics,
-    Squad: expect.anything(),
-    Starting11: {},
-    Bench: {},
-  };
-
-  const expectedCompetition: Competition = {
-    ID: expect.any(String),
-    Name: "English Premier League",
-    Country: "England",
-    Clubs: expect.anything(),
-    Statistics: testCompetitionStatistics,
-  };
-
-  const [testCalendar, testScheduleManager] = await createSeasonCalendar(
-    testAllCompetitionsOne,
-    testSeason,
-  );
-
-  const expectedSave: Save = {
-    Name: testPlayerName,
-    Country: testCountry,
-    MainCompetition: testCompetitionName,
-    Club: testClub,
-    Seasons: 1,
-    CurrentSeason: "2024",
-    CurrentDate: expectedFirstDay,
-    allCompetitions: expect.anything(),
-    saveID: expect.any(String),
-    calendar: testCalendar,
-    scheduleManager: testScheduleManager,
-  };
+  const testCountriesLeaguesClubs: BaseCountries = {
+    [testCountryOne]: testCompetitionsOne,
+    [testCountryTwo]: testCompetitionsTwo,
+  }
 
   const testSave: Save = await createSave(
-    testPlayerName,
-    testCountry,
-    testCompetitionName,
-    testSeason,
-    testClub,
-    testCompetitions,
-  );
+      testPlayerName,
+      testPlayerCountry,
+      testPlayerCompetitionName,
+      testSeason,
+      { clubID: simpleFaker.string.numeric(6), clubName: testPlayerClub },
+      testCountriesLeaguesClubs,
+    );
+   
+  
+  const expectedClubNames: Array<string> = Object.values(
+    testCountriesLeaguesClubs,
+  )
+    .flatMap((competition: Record<string, Record<string, string>>) =>
+      Object.values(competition),
+    )
+    .flatMap((clubs: Record<string, string>) => Object.values(clubs));
 
-  const testDBName: string = "the-manager";
+  const expectedCompetitonNames: Array<string> = Object.values(
+    testCountriesLeaguesClubs,
+  )
+    .map((competitions) => Object.keys(competitions))
+    .flat();
 
+  const expectedPlayerNames: Array<string> = Object.values(testSave.allPlayers)
+    .map((player: Player) => player.Name)
+
+  const getEntityNames = (entities: Record<string,Entity>): Array<string> => Object.values(entities).map((entity: Entity) => entity.Name)
+  const getStatsOfEntities = (entities: Record<string,Entity>): Array<StatisticsObject> => Object.values(entities).map((entity: Entity) => entity.Statistics[testSeason])
+  const getStatValuesArray = (arrayOfStats: Array<StatisticsObject>): Array<string | number> => arrayOfStats.flatMap((statObj: StatisticsObject) => Object.values(statObj))
+    .filter((statValue) => Number.isInteger(statValue))
+  const getAllStats = flow(getStatsOfEntities,getStatValuesArray)
+
+  const filterCalendar = (
+    calendar: Calendar,
+    filterFunc: Function,
+  ): Calendar => {
+    const pickFunc = (entry: CalendarEntry, day: string): boolean =>
+      filterFunc(day);
+    return pickBy(pickFunc, calendar);
+  };
+
+  const expectedCompetitionNames: Array<string> =
+    Object.keys(testCompetitionsOne).toSorted();
+
+  const expectedTournaments: number = Object.keys(testCompetitionsOne).length;
+  const expectedClubsPerTournaments: number = 4;
+  const expectedTotalClubs: number =
+    expectedTournaments * expectedClubsPerTournaments;
+
+  const expectedTotalMatches: number = sum(
+    expectedCompetitionNames.map((_) => {
+      return totalDoubleRoundRobinGames(expectedClubsPerTournaments)
+    }))
+
+  const expectedMatchesPerComp: number =
+    expectedTotalMatches / expectedTournaments;
+
+  const expectedRounds: number = expectedMatchesPerComp / 2;
+
+  const expectedMatchesPerMatchDate: number =
+    expectedTotalMatches / expectedRounds;
+
+  const expectedMatchesPerCompPerMatchDate: number =
+    expectedMatchesPerMatchDate / expectedTournaments;
+  const seasonStartDate: Date = new Date("08/18/24");
+  const lastMatchDate: Date = addWeeks(seasonStartDate, 6);  
+  
+
+  
   test("Test advanceSaveOneDay once, to a day with no games", async () => {
+    
     const expectedNextDay: Date = new Date("08/12/24");
     const saveID: SaveID = await addSaveToDB(testSave);
     await advanceOneDay(saveID);
@@ -362,41 +158,46 @@ describe("advanceOneDay  tests", async () => {
 
     expect(actualSave.CurrentDate).toStrictEqual(expectedNextDay);
 
-    expectTypeOf(actualSave).toEqualTypeOf(expectedSave);
-    expectTypeOf(actualSave.calendar).toEqualTypeOf(testCalendar);
-    expectTypeOf(actualSave.scheduleManager).toEqualTypeOf(testScheduleManager);
+    expectTypeOf(actualSave).toEqualTypeOf(testSave);
 
-    const actualCompetitions: Array<Competition> = Object.values(
-      actualSave.allCompetitions,
-    ).flatMap((actualComp) => Object.values(actualComp));
+    const actualCompetitions: Record<string, Competition> =
+      actualSave.allCompetitions;
 
-    actualCompetitions.forEach((actualCompetition) => {
-      expect(actualCompetition).toStrictEqual(expectedCompetition);
-      expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition);
-      expect(actualCompetition.Name).toStrictEqual(expectedCompetition.Name);
+ 
+    const actualCompetitionNames: Array<string> = getEntityNames(actualCompetitions)
 
-      const actualClubs: Array<Club> = Object.values(actualCompetition.Clubs);
-      const actualClubNames: Array<string> = actualClubs.map(
-        (club: Club) => club.Name,
-      );
-      expect(actualClubNames.toSorted()).toStrictEqual(
-        expectedClubNames.toSorted(),
-      );
+    
+    expect(actualCompetitionNames.toSorted()).toStrictEqual(
+      expectedCompetitonNames.toSorted(),
+    );
+   
+    const actualCompetitonStatValues: Array<string | number> = getAllStats(actualCompetitions)
+    actualCompetitonStatValues.forEach((value) => expect(value).toBe(0))
+    
+    
+    const actualClubs: Record<string, Club> = actualSave.allClubs;
+    const actualClubNames: Array<string> = getEntityNames(actualClubs)
 
-      actualClubs.forEach((actualClub: Club) => {
-        expect(actualClub).toStrictEqual(expectedClub);
-        expectTypeOf(actualClub).toEqualTypeOf(expectedClub);
+    expect(actualClubNames.toSorted()).toStrictEqual(
+      expectedClubNames.toSorted(),
+    );
+    
+    Object.values(actualClubs).forEach((actualClub: Club) => {
+      expect(Object.values(actualClub.Squad).length).toBe(25);
+    })
 
-        const actualPlayers: Array<Player> = Object.values(actualClub.Squad);
-        console.assert(actualPlayers.length == 25, actualClub.Squad);
-        expect(actualPlayers.length).toBe(25);
-        expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOneArray);
-        actualPlayers.forEach((testPlayer) => {
-          expectTypeOf(testPlayer).toEqualTypeOf(testPlayerOne);
-        });
-      });
-    });
+    const actualClubsStatValues: Array<string | number> = getAllStats(actualClubs)
+    actualClubsStatValues.forEach((value) => expect(value).toBe(0))
+    
+    const actualPlayers: Record<string, Player> = actualSave.allPlayers;
+    const actualPlayerNames: Array<string> = getEntityNames(actualPlayers)
+    
+    expect(actualPlayerNames).toStrictEqual(expectedPlayerNames);
+    const actualPlayersStatValues: Array<string | number> = getAllStats(actualPlayers)
+    actualPlayersStatValues.forEach((value) => expect(value).toBe(0))
 
+    const actualMatches: Record<string, Match> = actualSave.allMatches;
+    expect(Object.values(actualMatches).length).toBe(0)    
     await deleteDB(testDBName);
   });
 
@@ -412,41 +213,47 @@ describe("advanceOneDay  tests", async () => {
 
     expect(actualSave.CurrentDate).toStrictEqual(expectedNextDay);
 
-    expectTypeOf(actualSave).toEqualTypeOf(expectedSave);
-    expectTypeOf(actualSave.calendar).toEqualTypeOf(testCalendar);
-    expectTypeOf(actualSave.scheduleManager).toEqualTypeOf(testScheduleManager);
+    expectTypeOf(actualSave).toEqualTypeOf(testSave);
 
-    const actualCompetitions: Array<Competition> = Object.values(
-      actualSave.allCompetitions,
-    ).flatMap((actualComp) => Object.values(actualComp));
+    const actualCompetitions: Record<string, Competition> =
+      actualSave.allCompetitions;
 
-    actualCompetitions.forEach((actualCompetition) => {
-      expect(actualCompetition).toStrictEqual(expectedCompetition);
-      expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition);
-      expect(actualCompetition.Name).toStrictEqual(expectedCompetition.Name);
+ 
+    const actualCompetitionNames: Array<string> = getEntityNames(actualCompetitions)
 
-      const actualClubs: Array<Club> = Object.values(actualCompetition.Clubs);
-      const actualClubNames: Array<string> = actualClubs.map(
-        (club: Club) => club.Name,
-      );
-      expect(actualClubNames.toSorted()).toStrictEqual(
-        expectedClubNames.toSorted(),
-      );
+    
+    expect(actualCompetitionNames.toSorted()).toStrictEqual(
+      expectedCompetitonNames.toSorted(),
+    );
+   
+    const actualCompetitonStatValues: Array<string | number> = getAllStats(actualCompetitions)
+    actualCompetitonStatValues.forEach((value) => expect(value).toBe(0))
+    
+    
+    const actualClubs: Record<string, Club> = actualSave.allClubs;
+    const actualClubNames: Array<string> = getEntityNames(actualClubs)
 
-      actualClubs.forEach((actualClub: Club) => {
-        expect(actualClub).toStrictEqual(expectedClub);
-        expectTypeOf(actualClub).toEqualTypeOf(expectedClub);
+    expect(actualClubNames.toSorted()).toStrictEqual(
+      expectedClubNames.toSorted(),
+    );
+    
+    Object.values(actualClubs).forEach((actualClub: Club) => {
+      expect(Object.values(actualClub.Squad).length).toBe(25);
+    })
 
-        const actualPlayers: Array<Player> = Object.values(actualClub.Squad);
-        console.assert(actualPlayers.length == 25, actualClub.Squad);
-        expect(actualPlayers.length).toBe(25);
-        expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOneArray);
-        actualPlayers.forEach((testPlayer) => {
-          expectTypeOf(testPlayer).toEqualTypeOf(testPlayerOne);
-        });
-      });
-    });
+    const actualClubsStatValues: Array<string | number> = getAllStats(actualClubs)
+    actualClubsStatValues.forEach((value) => expect(value).toBe(0))
+    
+    const actualPlayers: Record<string, Player> = actualSave.allPlayers;
+    const actualPlayerNames: Array<string> = getEntityNames(actualPlayers)
+    
+    expect(actualPlayerNames).toStrictEqual(expectedPlayerNames);
+    const actualPlayersStatValues: Array<string | number> = getAllStats(actualPlayers)
+    actualPlayersStatValues.forEach((value) => expect(value).toBe(0))
 
+    const actualMatches: Record<string, Match> = actualSave.allMatches;
+    expect(Object.values(actualMatches).length).toBe(0)    
+    
     await deleteDB(testDBName);
   });
 
@@ -456,62 +263,90 @@ describe("advanceOneDay  tests", async () => {
     const days: number = 8;
     for (const _ of range(days)) {
       await advanceOneDay(saveID);
-    }
+    }    
 
     const actualSave: Save = await getSaveValue(saveID);
 
     expect(actualSave.CurrentDate).toStrictEqual(expectedNextDay);
 
-    expectTypeOf(actualSave).toEqualTypeOf(expectedSave);
-    expectTypeOf(actualSave.calendar).toEqualTypeOf(testCalendar);
-    expectTypeOf(actualSave.scheduleManager).toEqualTypeOf(testScheduleManager);
+    expectTypeOf(actualSave).toEqualTypeOf(testSave);
 
+    const actualCompetitions: Record<string, Competition> =
+      actualSave.allCompetitions;
+
+ 
+    const actualCompetitionNames: Array<string> = getEntityNames(actualCompetitions)
+
+    
+    expect(actualCompetitionNames.toSorted()).toStrictEqual(
+      expectedCompetitonNames.toSorted(),
+    );
+   
+    const actualCompetitonStatValues: Array<string | number> = getAllStats(actualCompetitions)
+    actualCompetitonStatValues.forEach((value) => expect(value).toBe(0))
+    
+    
+    const actualClubs: Record<string, Club> = actualSave.allClubs;
+    const actualClubNames: Array<string> = getEntityNames(actualClubs)
+
+    expect(actualClubNames.toSorted()).toStrictEqual(
+      expectedClubNames.toSorted(),
+    );
+    
+    Object.values(actualClubs).forEach((actualClub: Club) => {
+      expect(Object.values(actualClub.Squad).length).toBe(25);
+    })
+
+    const actualClubsStatValues: Array<string | number> = getAllStats(actualClubs)
+    actualClubsStatValues.forEach((value) => expect(value).toBe(0))
+    
+    const actualPlayers: Record<string, Player> = actualSave.allPlayers;
+    const actualPlayerNames: Array<string> = getEntityNames(actualPlayers)
+    
+    expect(actualPlayerNames).toStrictEqual(expectedPlayerNames);
+    const actualPlayersStatValues: Array<string | number> = getAllStats(actualPlayers)
+    actualPlayersStatValues.forEach((value) => expect(value).toBe(0))
+    
+
+    const actualCalendar: Calendar = actualSave.calendar
+    const simulatedMatchDay: string = new Date("08/18/24").toDateString();
+    const expectedSimulatedMatches: Record<string, MatchEntry> = actualCalendar[simulatedMatchDay].matches
+
+    
+    const actualMatches: Record<string, Match> = actualSave.allMatches;
+    Object.entries(expectedSimulatedMatches).forEach(([matchId, matchEntry]) => {
+      const {match: actualMatchValues, tournamentID: actualTournamentID, country: actualCountry} = matchEntry
+      const actualMatch: Match = actualMatches[matchId]
+      expect(actualMatch[competitionID]).toBe(tournamentID)
+    })
+    
+    const testScheduleManager = testSave.scheduleManager
     const testTournamentRounds: number =
-      testScheduleManager.tournaments[0].stageOne.rounds;
+      testScheduleManager?.tournaments[0].stageOne.rounds;
 
     const testTournament: Tournament = testScheduleManager.tournaments[0];
     const expectedRound: number = 2;
+    
     expect(testTournament.round).toBe(expectedRound);
     const simulatedRound: number = 1;
-    const expectedSimulatedMatches: Array<TournamentMatch> =
-      testTournament.matches.filter(
-        (match: TournamentMatch) => match.round == simulatedRound,
-      );
-    expectedSimulatedMatches.forEach((match: TournamentMatch) => {
+    testTournament.matches.filter(
+      (match: TournamentMatch) => match.round == simulatedRound)
+    .forEach((match: TournamentMatch) => {
       expect(match.active).toBeFalsy();
     });
-
-    const actualCompetitions: Array<Competition> = Object.values(
-      actualSave.allCompetitions,
-    ).flatMap((actualComp) => Object.values(actualComp));
-
-    actualCompetitions.forEach((actualCompetition) => {
-      expect(actualCompetition).toStrictEqual(expectedCompetition);
-      expectTypeOf(actualCompetition).toEqualTypeOf(expectedCompetition);
-      expect(actualCompetition.Name).toStrictEqual(expectedCompetition.Name);
-
-      const actualClubs: Array<Club> = Object.values(actualCompetition.Clubs);
-      const actualClubNames: Array<string> = actualClubs.map(
-        (club: Club) => club.Name,
-      );
-      expect(actualClubNames.toSorted()).toStrictEqual(
-        expectedClubNames.toSorted(),
-      );
-
-      actualClubs.forEach((actualClub: Club) => {
-        expect(actualClub).toStrictEqual(expectedClub);
-        expectTypeOf(actualClub).toEqualTypeOf(expectedClub);
-
-        const actualPlayers: Array<Player> = Object.values(actualClub.Squad);
-        console.assert(actualPlayers.length == 25, actualClub.Squad);
-        expect(actualPlayers.length).toBe(25);
-        expectTypeOf(actualPlayers).toEqualTypeOf(testPlayersOneArray);
-        actualPlayers.forEach((testPlayer) => {
-          expectTypeOf(testPlayer).toEqualTypeOf(testPlayerOne);
-        });
-      });
-    });
-
+        
+    
     await deleteDB(testDBName);
   });
+
+  test("Test advanceOneDay for the whole season", async () => {
+
+    const saveID: SaveID = await addSaveToDB(testSave);
+    const actualSave: Save = await getSaveValue(saveID);
+    const actualCalendar: Calendar = actualSave.calendar
+  const testAvailableMatchDates: Calendar = filterCalendar(actualCalendar, isSunday);
+    const simulatedMatchDay: string = Object.keys(testAvailableMatchDates)
+      .filter((date: string) => isBefore(date, new Date(lastMatchDate)))[0]
+
+  })
 });

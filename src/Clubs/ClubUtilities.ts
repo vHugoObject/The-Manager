@@ -1,14 +1,41 @@
 import { simpleFaker } from "@faker-js/faker";
+import { filter, isEqual, sortBy, take, flow } from "lodash/fp";
 import { range } from "lodash";
 import { StatisticsObject, StatisticsType } from "../Common/CommonTypes";
-import { Player } from "../Players/PlayerTypes";
+import { Player, PositionGroup } from "../Players/PlayerTypes";
+import { Club } from "./ClubTypes";
+import { entityObjectsCreator,entityReferencesCreator } from "../Common/simulationUtilities";
 import {
   createGoalkeeper,
   createDefender,
   createMidfielder,
   createAttacker,
+  filterGoalkeepers,
+  filterDefenders,
+  filterMidfielders,
+  filterAttackers
 } from "../Players/PlayerUtilities";
-import { Club } from "./ClubTypes";
+
+
+export const sortByPlayerRating = sortBy((player: Player) => player.Rating)
+
+export const getBestStarting11 = async(clubPlayers: Record<string, Player>): Promise<[Record<string,string>, Array<Player>]> => {
+
+  const playerObjects: Array<Player> = Object.values(clubPlayers)
+  const playerFuncs: Array<[(arg1: Array<Player>) => Array<Player>, number]> = [[filterGoalkeepers, 1], [filterDefenders, 4], [filterMidfielders, 3], [filterAttackers, 3]];
+  
+  const players: Array<Player> = await Promise.all(
+    playerFuncs.flatMap(([filterFunc, playerCount]) => {
+      const playerTaker = take(playerCount)
+      const getBest = flow(filterFunc,sortByPlayerRating, playerTaker)
+      return getBest(playerObjects)
+    }
+    )
+  )
+  const playerReferences: Record<string, string> = await entityReferencesCreator<Player>(players)
+  
+  return [playerReferences, players]
+}
 
 const clubStatistics: StatisticsObject = {
   Wins: 0,
@@ -37,11 +64,11 @@ export const generateClubStatisticsObject = async (
   season: string,
 ): Promise<StatisticsType> => {
   return {
-    BySeason: { [season]: clubStatistics },
-    GameLog: {},
+    [season]: clubStatistics 
   };
 };
 
+// try out mergeAll here
 export const generateSquad = async (
   club: string,
   teamID: string,
@@ -89,40 +116,26 @@ export const generateSquad = async (
   return players.flat();
 };
 
+
+
 export const createClub = async (
   ID: string,
   name: string,
   season: string,
   players?: Array<Player>,
 ): Promise<[Club, Record<string, Player>]> => {
-  
-
   const clubPlayers: Array<Player> = players
     ? players
     : await generateSquad(name, ID, season);
 
-  const createPlayersObject = async (
-    players: Array<Player>,
-  ): Promise<Record<string, Player>> => {
-    return Object.fromEntries(
-      players.map((player: Player) => [player.ID, player]),
-    );
-  };
-
-  const createPlayerReferences = async (
-    players: Array<Player>,
-  ): Promise<Record<string, string>> => {
-    return Object.fromEntries(
-      players.map((player: Player) => [player.ID, player.Name]),
-    );
-  };
-
+  
   const [clubPlayersObject, Squad, clubStats] = await Promise.all([
-    await createPlayersObject(clubPlayers),
-    await createPlayerReferences(clubPlayers),
-    await generateClubStatisticsObject(season),
+    await entityObjectsCreator(clubPlayers),
+    await entityReferencesCreator<Player>(clubPlayers),
+    await generateClubStatisticsObject(season),  
   ]);
 
+  
   const club: Club = {
     ID,
     Name: name,

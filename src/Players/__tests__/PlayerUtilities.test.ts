@@ -1,4 +1,5 @@
 import { describe, expect, expectTypeOf, test } from "vitest";
+import { range } from 'lodash'
 import { playerSkills } from "../PlayerSkills";
 import { StatisticsObject, StatisticsType } from "../../Common/CommonTypes";
 import {
@@ -15,6 +16,7 @@ import {
   ContractType,
 } from "../PlayerTypes";
 import {
+  calculatePlayerRating,
   generatePlayerSkills,
   generatePlayerStatisticsObject,
   generatePosition,
@@ -25,40 +27,28 @@ import {
   createDefender,
   createMidfielder,
   createAttacker,
+    playerIsGoalkeeper,
+  playerIsNotGoalkeeper,
+  playerIsDefender,
+  playerIsMidfielder,
+  playerIsAttacker,
+  filterGoalkeepers,
+  filterDefenders,
+  filterMidfielders,
+  filterAttackers,
+  filterOutfieldPlayers,
+  getAverageOfSetOfSkillCategories,
+  getListOfAveragesOfSetOfSkillCategories,
+  getPlayerSkills,
+  getListOfPlayerSkills,
+  getOutfieldPlayersDefendingRatings,
+  getGoalkeepingRating,
+  getAttackingRatings
 } from "../PlayerUtilities";
 
 describe("Player utilities tests", async () => {
-  const expectedPlayerStandardStatsHeaders: Array<string> = [
-    "Season",
-    "Matches Played",
-    "Starts",
-    "Minutes",
-    "Full 90s",
-    "Goals",
-    "Assists",
-    "Goals Plus Assists",
-    "Non Penalty Goals",
-    "Penalty Kicks Made",
-    "Penalty Kicks Attempted",
-    "Yellow Cards",
-    "Red Cards",
-  ];
+      const testSeason: string = "2024";
 
-  const expectedBioParagraphs: Array<string> = [
-    "Position",
-    "Footed",
-    "Height",
-    "Weight",
-    "Age",
-    "National Team",
-    "Club",
-    "Wages",
-  ];
-
-  const testComponentKeys = {
-    standardStatsHeaders: expectedPlayerStandardStatsHeaders,
-    bioParagraphs: expectedBioParagraphs,
-  };
 
   const emptyStatistics: StatisticsObject = {
     MatchesPlayed: 0,
@@ -76,8 +66,7 @@ describe("Player utilities tests", async () => {
   };
 
   const expectedStatistics: StatisticsType = {
-    BySeason: { "2024": emptyStatistics },
-    GameLog: {},
+     [testSeason]: emptyStatistics
   };
 
   const expectedContract: ContractType = {
@@ -91,14 +80,17 @@ describe("Player utilities tests", async () => {
     return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
   };
 
-  const testPlayerSkills: Record<string, SkillSet> = Object.fromEntries(
-    Object.entries(playerSkills).map(([name, set]) => [
-      name,
-      Object.fromEntries(
-        set.map((skill: string) => [skill, getRandomNumberInRange(0, 100)]),
-      ),
-    ]),
-  );
+  const testPlayerSkills = (): Record<string, SkillSet> => {
+    return Object.fromEntries(
+      Object.entries(playerSkills).map(([name, set]) => [
+        name,
+        Object.fromEntries(
+          set.map((skill: string) => [skill, getRandomNumberInRange(25, 100)]),
+        ),
+      ]),
+    );
+  };
+
 
   const expectedPlayer: Player = {
     ID: expect.any(String),
@@ -114,8 +106,8 @@ describe("Player utilities tests", async () => {
     Contract: expectedContract,
     Value: 1,
     Rating: 80,
-    Skills: testPlayerSkills,
-    Statistics: expectedStatistics,
+    Skills: testPlayerSkills(),
+
   };
 
   const testPositionGroups: Array<PositionGroup> = [
@@ -132,6 +124,111 @@ describe("Player utilities tests", async () => {
     Goalkeeper,
   };
 
+  const testMidfielderOne: Player = {
+    ID: "0",
+    Name: "John Doe",
+    PositionGroup: PositionGroup.Midfielder,
+    Position: Midfielder.CDM,
+    PreferredFoot: Foot.Right,
+    Weight: 76,
+    Height: 183,
+    Age: 25,
+    NationalTeam: "Spain",
+    Club: "Arsenal",
+    Contract: expectedContract,
+    Value: 1,
+    Rating: 80,
+    Skills: testPlayerSkills(),
+
+  };
+
+  const testDefenderOne: Player = {
+    ID: "1",
+    Name: "John Stones",
+    PositionGroup: PositionGroup.Defender,
+    Position: Defender.LCB,
+    PreferredFoot: Foot.Right,
+    Weight: 76,
+    Height: 183,
+    Age: 25,
+    NationalTeam: "England",
+    Club: "Manchester City",
+    Contract: expectedContract,
+    Value: 1,
+    Rating: 80,
+    Skills: testPlayerSkills(),
+
+  };
+
+  const testAttackerOne: Player = {
+    ID: "2",
+    Name: "Pepe",
+    PositionGroup: PositionGroup.Attacker,
+    Position: Attacker.RW,
+    PreferredFoot: Foot.Right,
+    Weight: 76,
+    Height: 183,
+    Age: 25,
+    NationalTeam: "Spain",
+    Club: "Arsenal",
+    Contract: expectedContract,
+    Value: 1,
+    Rating: 80,
+    Skills: testPlayerSkills(),
+
+  };
+
+  const testGoalkeeperOne: Player = {
+    ID: "3",
+    Name: "Ederson",
+    PositionGroup: PositionGroup.Goalkeeper,
+    Position: Goalkeeper.GK,
+    PreferredFoot: Foot.Right,
+    Weight: 76,
+    Height: 183,
+    Age: 25,
+    NationalTeam: "England",
+    Club: "Manchester City",
+    Contract: expectedContract,
+    Value: 1,
+    Rating: 80,
+    Skills: testPlayerSkills(),
+
+  };
+
+  const testPlayersArray: Array<Player> = [testMidfielderOne, testDefenderOne,
+    testAttackerOne, testGoalkeeperOne];
+
+  const testOutfieldPlayersArray: Array<Player> = [testMidfielderOne, testDefenderOne,
+    testAttackerOne];
+
+
+
+        const defenseCategories = new Set([
+    "defenseSkills",
+    "mentalSkills",
+    "physicalSkills",
+  ]);
+
+  const goalkeepingCategories = new Set([
+    "defenseSkills",
+    "mentalSkills",
+    "physicalSkills",
+    "goalkeepingSkills",
+  ]);
+      const attackCategories = new Set([
+    "ballSkills",
+    "mentalSkills",
+    "physicalSkills",
+    "passingSkills",
+    "shootingSkills",
+      ]);
+
+      const testCategories: Array<Set<string>> = [defenseCategories, goalkeepingCategories, attackCategories]
+
+
+
+
   test("test getRandomNumberInRange", () => {
     const testRanges = [
       [1, 10],
@@ -146,22 +243,159 @@ describe("Player utilities tests", async () => {
     });
   });
 
-  test("test generatePlayerSkills", () => {
-    testPositionGroups.forEach((position) => {
-      const actualPlayerSkills = generatePlayerSkills(position);
-      expectTypeOf(actualPlayerSkills).toEqualTypeOf(testPlayerSkills);
-    });
+  test("Test playerIs predicates", async () => {
+    
+    expect(playerIsGoalkeeper(testGoalkeeperOne)).toBeTruthy()
+    expect(playerIsGoalkeeper(testDefenderOne)).toBeFalsy()
+
+    expect(playerIsNotGoalkeeper(testGoalkeeperOne)).toBeFalsy()
+    expect(playerIsNotGoalkeeper(testDefenderOne)).toBeTruthy()
+        
+    expect(playerIsDefender(testDefenderOne)).toBeTruthy()
+    expect(playerIsDefender(testMidfielderOne)).toBeFalsy()
+    
+    expect(playerIsMidfielder(testMidfielderOne)).toBeTruthy()
+    expect(playerIsMidfielder(testAttackerOne)).toBeFalsy()
+    
+    expect(playerIsAttacker(testAttackerOne)).toBeTruthy()
+    expect(playerIsAttacker(testMidfielderOne)).toBeFalsy()
+    
   });
 
-  test("test generatePosition", () => {
-    testPositionGroups.forEach((testPosition) => {
-      const actualPosition = generatePosition(testPosition);
+  
+
+  
+  test("Test position group filters", async () => {
+    
+    expect(filterGoalkeepers(testPlayersArray)).toStrictEqual([testGoalkeeperOne])
+    expect(filterDefenders(testPlayersArray)).toStrictEqual([testDefenderOne])
+    expect(filterMidfielders(testPlayersArray)).toStrictEqual([testMidfielderOne])
+    expect(filterAttackers(testPlayersArray)).toStrictEqual([testAttackerOne])
+
+    expect(filterOutfieldPlayers(testPlayersArray).toSorted()).toStrictEqual([testMidfielderOne, testDefenderOne
+      ,testAttackerOne])
+    
+  });
+
+  test("Test getPlayerSkills", async () => {
+    await Promise.all(
+      testPlayersArray.map(async(testPlayer: Player) => {
+	const actualPlayerSkills: Record<string, SkillSet> = await getPlayerSkills(testPlayer)
+	expect(actualPlayerSkills).toBeTruthy()
+      })
+    )
+    
+  })
+
+  test("Test getListOfPlayerSkills ", async () => {
+
+    const actualPlayerSkills: Array<Record<string, SkillSet>> = await getListOfPlayerSkills(testPlayersArray);
+    expect(actualPlayerSkills.length).toBe(testPlayersArray.length)    
+    
+  })
+  
+
+  test("Test getAverageOfSetOfSkillCategories", async () => {
+
+    await Promise.all(
+      testCategories.map(async(testCategory: Set<string>) => {
+	const testSkills: Record<string, SkillSet> = testPlayerSkills()
+	const actualAverage: number = await getAverageOfSetOfSkillCategories(testCategory, testSkills)
+	expect(actualAverage).toBeGreaterThanOrEqual(25)
+	expect(actualAverage).toBeLessThan(100)
+      })
+    )
+    
+
+  });
+
+  test("Test getListOfAveragesOfSetOfSkillCategories", async () => {
+
+    await Promise.all(
+      testCategories.map(async(testCategory: Set<string>) => {
+	const testSkills: Array<Record<string, SkillSet>> = range(0,10).map(() => testPlayerSkills())
+	const actualAverages: Array<number> = await getListOfAveragesOfSetOfSkillCategories(testCategory, testSkills)
+	await Promise.all(
+	  actualAverages.map((actualAverage: number) => {
+	    expect(actualAverage).toBeGreaterThanOrEqual(25)
+	    expect(actualAverage).toBeLessThan(100)
+	  })
+	)	
+      })
+    )
+    
+  })
+
+  
+
+  test("Test getGoalkeepingRating", async () => {
+
+    const actualGoalkeepingRating: Array<number> = await getGoalkeepingRating([testGoalkeeperOne])
+    
+
+    expect(actualGoalkeepingRating.length).toBe(1)
+    
+    actualGoalkeepingRating.forEach((actualRating: number) => {
+      console.log(actualRating)
+      expect(actualRating).toBeGreaterThanOrEqual(25)
+
+      expect(actualRating).toBeLessThanOrEqual(100)
+      
+    })
+
+
+    
+    
+  })
+  
+   test("Test getOutfieldPlayersDefendingRatings", async () => {
+
+    const actualOutfieldPlayersRatings: Array<number> = await getOutfieldPlayersDefendingRatings(testPlayersArray)
+    expect(actualOutfieldPlayersRatings.length).toBe(testOutfieldPlayersArray.length)
+    actualOutfieldPlayersRatings.forEach((actualRating: number) => {
+      expect(actualRating).toBeGreaterThanOrEqual(25)
+
+      expect(actualRating).toBeLessThanOrEqual(100)
+      
+    })
+    
+
+  })
+
+  test("Test getAttackingRatings", async () => {
+
+        const actualPlayersRatings: Array<number> = await getAttackingRatings(testPlayersArray)
+    expect(actualPlayersRatings.length).toBe(testPlayersArray.length)
+    actualPlayersRatings.forEach((actualRating: number) => {
+      expect(actualRating).toBeGreaterThanOrEqual(25)
+
+      expect(actualRating).toBeLessThanOrEqual(100)
+    })
+
+
+  })
+  
+  test("test generatePlayerSkills", async() => {
+    await Promise.all(testPositionGroups.map(async(position) => {
+      const actualPlayerSkills: Record<string, SkillSet> = await generatePlayerSkills(position);
+      Object.values(actualPlayerSkills).forEach((skillSet: SkillSet) => {
+	Object.values(skillSet).forEach((skill: number) => {
+	  expect(skill).toBeGreaterThanOrEqual(25);
+	  expect(skill).toBeLessThan(100);	  
+	})
+      })
+    }))
+  });
+
+  test("test generatePosition", async() => {
+    await Promise.all(testPositionGroups.map(async(testPosition) => {
+      const actualPosition = await generatePosition(testPosition);
       const expectedPositionGroup = positions[testPosition];
       expect(expectedPositionGroup.hasOwnProperty(actualPosition)).toBeTruthy();
-    });
+    }));
   });
 
-  test("test generateBiographicalDetails", () => {
+  test("test generateBiographicalDetails", async() => {
     const expectedBiographicalDetails: BiographicalDetails = {
       Name: "",
       PreferredFoot: Foot.Right,
@@ -171,46 +405,57 @@ describe("Player utilities tests", async () => {
       NationalTeam: "",
     };
 
-    testPositionGroups.forEach((testPosition) => {
+    await Promise.all(testPositionGroups.map(async(testPosition) => {
       const actualBiographicalDetail: BiographicalDetails =
-        generateBiographicalDetails(testPosition);
+        await generateBiographicalDetails(testPosition);
       expectTypeOf(expectedBiographicalDetails).toEqualTypeOf(
         actualBiographicalDetail,
       );
-    });
+    }))
   });
 
-  test("test generateContract", () => {
-    testPositionGroups.forEach((testPosition) => {
-      const actualContract: ContractType = generateContract();
-      expectTypeOf(actualContract).toEqualTypeOf(expectedContract);
-    });
+  test("test generateContract", async() => {
+    await Promise.all(testPositionGroups.map(async(testPosition) => {
+      const actualContract: ContractType = await generateContract();
+      expect(actualContract.Years).toBeGreaterThanOrEqual(1)
+      expect(actualContract.Years).toBeLessThanOrEqual(5)
+    }))
   });
 
   test("test calculateValue", () => {});
 
-  test("test calculateRating", () => {});
+  test("test calculatePlayerRating", async() => {
+    
+    await Promise.all(testPositionGroups.map(async(testPosition) => {
+      const testSkills: Record<string, SkillSet> = testPlayerSkills()
+      const actualRating: number = await calculatePlayerRating(testSkills,testPosition)
+      expect(actualRating).toBeGreaterThanOrEqual(25)
+      expect(actualRating).toBeLessThan(100)
+    }))
 
-  test("test generatePlayerStatisticsObject", () => {
-    const testSeason: string = "2024";
+    
+  });
+
+  test("test generatePlayerStatisticsObject", async() => {
+
     const actualStatistics: StatisticsType =
-      generatePlayerStatisticsObject(testSeason);
+      await generatePlayerStatisticsObject(testSeason);
     expect(actualStatistics).toMatchObject(expectedStatistics);
   });
 
   test("test createPlayer", async () => {
-    testPositionGroups.forEach(async (testPosition: PositionGroup) => {
+    await Promise.all(testPositionGroups.map(async (testPosition: PositionGroup) => {
       const actualPlayer: Player = await createPlayer(
         testPosition,
         "2024",
         "Arsenal",
-      );
+      )
       const expectedPositionGroup = positions[testPosition];
       expect(
         expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
       ).toBeTruthy();
       expectTypeOf(actualPlayer).toEqualTypeOf(expectedPlayer);
-    });
+    }))
   });
 
   test("test createGoalkeeper", async () => {

@@ -8,7 +8,7 @@ import { LoadableTournamentValues } from "tournament-organizer/interfaces";
 import { deleteDB, IDBPDatabase } from "idb";
 import { describe, expect, test } from "vitest";
 import { Save, SaveID } from "../SaveTypes";
-import { BaseCountries } from '../../Countries/CountryTypes'
+import { BaseCountries } from "../../Countries/CountryTypes";
 import {
   openSaveDB,
   addSaveToDB,
@@ -21,14 +21,11 @@ import {
   deserializeTournamentManager,
 } from "../SaveUtilities";
 import { createSave } from "../SaveCreator";
-import { createCountry } from '../../Countries/CountryUtilities'
-import { createScheduler } from '../../Common/scheduler'
+import { createCountry } from "../../Countries/CountryUtilities";
+import { createScheduler } from "../../Common/scheduler";
 
 describe("SaveUtilities tests", async () => {
-
-  
-  
-const testCountry: string = "England";
+  const testCountry: string = "England";
   const testCompetitionName: string = "English Premier League";
   const testClub: string = "Arsenal";
   const testPlayerName: string = "Mikel Arteta";
@@ -36,23 +33,35 @@ const testCountry: string = "England";
   const testCountryOne: string = "England";
 
   const testCompetitionsOne: Record<string, Record<string, string>> = {
-    "English Premier League": {[simpleFaker.string.numeric(6)]: "Arsenal",
-      [simpleFaker.string.numeric(6)]: "Brentford"},
-    "The Championship": {[simpleFaker.string.numeric(6)]: "Watford",
-      [simpleFaker.string.numeric(6)]: "Stoke City"},
-    "League One": {[simpleFaker.string.numeric(6)]: "Walsall",
-      [simpleFaker.string.numeric(6)]: "Swindon"},
+    "English Premier League": {
+      [simpleFaker.string.numeric(6)]: "Arsenal",
+      [simpleFaker.string.numeric(6)]: "Brentford",
+    },
+    "The Championship": {
+      [simpleFaker.string.numeric(6)]: "Watford",
+      [simpleFaker.string.numeric(6)]: "Stoke City",
+    },
+    "League One": {
+      [simpleFaker.string.numeric(6)]: "Walsall",
+      [simpleFaker.string.numeric(6)]: "Swindon",
+    },
   };
 
   const testCountryTwo: string = "Spain";
 
-  const testCompetitionsTwo: Record<string, Record<string,string>> = {
-    "Primera Division": {[simpleFaker.string.numeric(6)]: "Real Madrid CF",
-      [simpleFaker.string.numeric(6)]: "FC Barcelona"},
-    "Segunda Division": {[simpleFaker.string.numeric(6)]: "Almeria",
-      [simpleFaker.string.numeric(6)]: "Granada"},
-    "Primera Federacion": {[simpleFaker.string.numeric(6)]: "Andorra",
-      [simpleFaker.string.numeric(6)]: "Atzeneta"},
+  const testCompetitionsTwo: Record<string, Record<string, string>> = {
+    "Primera Division": {
+      [simpleFaker.string.numeric(6)]: "Real Madrid CF",
+      [simpleFaker.string.numeric(6)]: "FC Barcelona",
+    },
+    "Segunda Division": {
+      [simpleFaker.string.numeric(6)]: "Almeria",
+      [simpleFaker.string.numeric(6)]: "Granada",
+    },
+    "Primera Federacion": {
+      [simpleFaker.string.numeric(6)]: "Andorra",
+      [simpleFaker.string.numeric(6)]: "Atzeneta",
+    },
   };
 
   const testSeason: string = "2024";
@@ -62,23 +71,23 @@ const testCountry: string = "England";
     [testCountryTwo]: testCompetitionsTwo,
   };
   const expectedSaveOne: Save = await createSave(
-      testPlayerName,
-      testCountry,
-      testCompetitionName,
-      testSeason,
-      {clubID: simpleFaker.string.numeric(6), clubName: testClub},
-      testCountriesLeaguesClubs
+    testPlayerName,
+    testCountry,
+    testCompetitionName,
+    testSeason,
+    { clubID: simpleFaker.string.numeric(6), clubName: testClub },
+    testCountriesLeaguesClubs,
   );
 
   const expectedSaveTwo: Save = await createSave(
-      testPlayerName,
-      testCountry,
-      testCompetitionName,
-      testSeason,
-      {clubID: simpleFaker.string.numeric(6), clubName: testClub},
-      testCountriesLeaguesClubs
-    );
-  
+    testPlayerName,
+    testCountry,
+    testCompetitionName,
+    testSeason,
+    { clubID: simpleFaker.string.numeric(6), clubName: testClub },
+    testCountriesLeaguesClubs,
+  );
+
   const expectedSaves: Array<Save> = [expectedSaveOne, expectedSaveTwo];
   const testDBName: string = "the-manager";
   const testDBVersion: number = 1;
@@ -153,14 +162,12 @@ const testCountry: string = "England";
   });
 
   test("Test serializeTournamentManager", async () => {
+    const [testCountry, testCompetitions, testClubs, testPlayers] =
+      await createCountry(testCountryOne, testCompetitionsOne, testSeason);
 
-    
-      const [testCountry, testCompetitions, testClubs, testPlayers] =
-    await createCountry(testCountryOne, testCompetitionsOne, testSeason); 
+    const actualScheduler: TournamentManager =
+      await createScheduler(testCompetitions);
 
-    const actualScheduler: TournamentManager = await createScheduler(testCompetitions);
-
-    
     const expectedSerializedTournaments: Array<LoadableTournamentValues> =
       actualScheduler.tournaments.map((tournament: Tournament) => {
         return structuredClone(tournament);
@@ -175,19 +182,17 @@ const testCountry: string = "England";
   });
 
   test("Test deserializeTournamentManager", async () => {
-
     const [testCountry, testCompetitions, testClubs, testPlayers] =
-    await createCountry(testCountryOne, testCompetitionsOne, testSeason); 
+      await createCountry(testCountryOne, testCompetitionsOne, testSeason);
 
-    const actualScheduler: TournamentManager = await createScheduler(testCompetitions);
-    
+    const actualScheduler: TournamentManager =
+      await createScheduler(testCompetitions);
+
     const testSerializedTournamentManager: Array<LoadableTournamentValues> =
       serializeTournamentManager(actualScheduler);
 
     const actualDeserializedTournamentManager: TournamentManager =
       deserializeTournamentManager(testSerializedTournamentManager);
-    expect(actualDeserializedTournamentManager).toStrictEqual(
-      actualScheduler,
-    );
+    expect(actualDeserializedTournamentManager).toStrictEqual(actualScheduler);
   });
 });
