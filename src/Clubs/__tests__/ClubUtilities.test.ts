@@ -1,6 +1,8 @@
-import { simpleFaker } from "@faker-js/faker";
-import { countBy } from 'lodash'
 import { describe, expect, test, expectTypeOf } from "vitest";
+import { simpleFaker } from "@faker-js/faker";
+import { flowAsync } from "futil-js";
+import { countBy } from "lodash";
+import { mergeAll } from "lodash/fp";
 import { Club } from "../ClubTypes";
 import {
   Player,
@@ -14,15 +16,22 @@ import {
   ContractType,
 } from "../../Players/PlayerTypes";
 import { StatisticsObject, StatisticsType } from "../../Common/CommonTypes";
-import { entityObjectsCreator } from '../../Common/simulationUtilities'
+import {
+  entityObjectsCreator,
+  entityReferencesCreator,
+} from "../../Common/simulationUtilities";
 import { playerSkills } from "../../Players/PlayerSkills";
 import {
+  generateGoalkeepers,
+  generateDefenders,
+  generateMidfielders,
+  generateAttackers,
   generateSquad,
   generateClubStatisticsObject,
   createClub,
-  getBestStarting11
+  getBestStarting11,
+  getBestStarting11References,
 } from "../ClubUtilities";
-
 
 describe("Club Utilities tests", async () => {
   const testSeason: string = "2024";
@@ -55,7 +64,7 @@ describe("Club Utilities tests", async () => {
   };
 
   const expectedStatistics: StatisticsType = {
-     [testSeason]: testClubStatisticsOne
+    [testSeason]: testClubStatisticsOne,
   };
 
   const getRandomNumberInRange = (min: number, max: number): number => {
@@ -90,7 +99,6 @@ describe("Club Utilities tests", async () => {
     Value: 1,
     Rating: 80,
     Skills: testPlayerSkills(),
-    Statistics: expectedStatistics,
   };
 
   const testDefenderOne: Player = {
@@ -108,7 +116,6 @@ describe("Club Utilities tests", async () => {
     Value: 1,
     Rating: 80,
     Skills: testPlayerSkills(),
-    Statistics: expectedStatistics,
   };
 
   const testAttackerOne: Player = {
@@ -126,7 +133,6 @@ describe("Club Utilities tests", async () => {
     Value: 1,
     Rating: 80,
     Skills: testPlayerSkills(),
-    Statistics: expectedStatistics,
   };
 
   const testGoalkeeperOne: Player = {
@@ -144,45 +150,49 @@ describe("Club Utilities tests", async () => {
     Value: 1,
     Rating: 80,
     Skills: testPlayerSkills(),
-    Statistics: expectedStatistics,
   };
 
-  const testPlayersArray: Array<Player> = [testMidfielderOne, testDefenderOne, testAttackerOne, testGoalkeeperOne];
+  const testPlayersArray: Array<Player> = [
+    testMidfielderOne,
+    testDefenderOne,
+    testAttackerOne,
+    testGoalkeeperOne,
+  ];
   const testPlayersObject: Record<string, string> = Object.fromEntries(
     testPlayersArray.map((player: Player, index) => {
       return [index.toString(), player.Name];
     }),
   );
 
+  const testPlayerReferences: Record<string, string> =
+    await entityReferencesCreator<Player>(testPlayersArray);
+
   const expectedClubOne: Club = {
     ID: expect.any(String),
     Name: "Arsenal",
-    Statistics: expectedStatistics,
     Squad: testPlayersObject,
-    Starting11: {},
+    Starting11: testPlayerReferences,
     Bench: {},
-  };
-
-  const expectedClubTwo: Club = {
-    ID: expect.any(String),
-    Name: "Arsenal",
-    Statistics: expectedStatistics,
-    Squad: expect.anything(),
-    Starting11: expect.anything(),
-    Bench: expect.anything(),
   };
 
   const testTeamName: string = "Arsenal";
   const testTeamID: string = "0";
 
-  const getPositionCounts = (players: Record<string, Player> | Array<Player>) => {
-    const actualPlayerPositions: Array<PositionGroup> = Object.values(players)
-      .map((player: Player) => player.PositionGroup)
-    return countBy<PositionGroup>(actualPlayerPositions)
-  }
-  
+  const getPositionCounts = (
+    players: Record<string, Player> | Array<Player>,
+  ) => {
+    const actualPlayerPositions: Array<PositionGroup> = Object.values(
+      players,
+    ).map((player: Player) => player.PositionGroup);
+    return countBy<PositionGroup>(actualPlayerPositions);
+  };
 
-          
+  const positions = {
+    Attacker,
+    Midfielder,
+    Defender,
+    Goalkeeper,
+  };
 
   test("test generateClubStatisticsObject", async () => {
     const testSeason: string = "2024";
@@ -191,25 +201,97 @@ describe("Club Utilities tests", async () => {
     expect(actualStatistics).toMatchObject(expectedStatistics);
   });
 
+  test("test generateGoalkeepers", async () => {
+    const testPosition: PositionGroup = PositionGroup.Goalkeeper;
+    const actualPlayers: Array<Player> = await generateGoalkeepers([
+      "2024",
+      "Arsenal",
+    ]);
+    expect(actualPlayers.length).toBe(4);
+    const expectedPositionGroup = positions[testPosition];
+    await Promise.all(
+      actualPlayers.map(async (actualPlayer) => {
+        expect(
+          expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
+        ).toBeTruthy();
+      }),
+    );
+  });
+
+  test("test generateDefenders", async () => {
+    const testPosition: PositionGroup = PositionGroup.Defender;
+    const actualPlayers: Array<Player> = await generateDefenders([
+      "2024",
+      "Arsenal",
+    ]);
+    expect(actualPlayers.length).toBe(7);
+    const expectedPositionGroup = positions[testPosition];
+    await Promise.all(
+      actualPlayers.map(async (actualPlayer) => {
+        expect(
+          expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
+        ).toBeTruthy();
+      }),
+    );
+  });
+
+  test("test generateMidfielders", async () => {
+    const testPosition: PositionGroup = PositionGroup.Midfielder;
+    const actualPlayers: Array<Player> = await generateMidfielders([
+      "2024",
+      "Arsenal",
+    ]);
+    expect(actualPlayers.length).toBe(7);
+    const expectedPositionGroup = positions[testPosition];
+    await Promise.all(
+      actualPlayers.map(async (actualPlayer) => {
+        expect(
+          expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
+        ).toBeTruthy();
+      }),
+    );
+  });
+
+  test("test generateAttackers", async () => {
+    const testPosition: PositionGroup = PositionGroup.Attacker;
+    const actualPlayers: Array<Player> = await generateAttackers([
+      "2024",
+      "Arsenal",
+    ]);
+    expect(actualPlayers.length).toBe(7);
+    const expectedPositionGroup = positions[testPosition];
+    await Promise.all(
+      actualPlayers.map(async (actualPlayer) => {
+        expect(
+          expectedPositionGroup.hasOwnProperty(actualPlayer.Position),
+        ).toBeTruthy();
+      }),
+    );
+  });
+
   test("Test generateSquad", async () => {
     const actualPlayers: Array<Player> = await generateSquad(
       testTeamName,
-      testTeamID,
+      simpleFaker.string.numeric(6),
       testSeason,
     );
 
-    const actualPlayerObjects: Record<string, Player> = await entityObjectsCreator(actualPlayers)
-    
+    const actualPlayerObjects: Record<string, Player> =
+      await entityObjectsCreator(actualPlayers);
+
     const actualPlayerPositionCounts = getPositionCounts(actualPlayerObjects);
-    
-    expect(actualPlayerPositionCounts[PositionGroup.Goalkeeper]).toBe(4)
-    const outfieldPositionGroups: Array<PositionGroup> = [PositionGroup.Defender, PositionGroup.Midfielder, PositionGroup.Attacker]
+
+    expect(actualPlayerPositionCounts[PositionGroup.Goalkeeper]).toBe(4);
+    const outfieldPositionGroups: Array<PositionGroup> = [
+      PositionGroup.Defender,
+      PositionGroup.Midfielder,
+      PositionGroup.Attacker,
+    ];
     outfieldPositionGroups.forEach((positionGroup: PositionGroup) => {
-      expect(actualPlayerPositionCounts[positionGroup]).toBe(7)
-    })
+      expect(actualPlayerPositionCounts[positionGroup]).toBe(7);
+    });
 
     expect(actualPlayers.length).toBe(25);
-    
   });
 
   test("Test createClub with given players", async () => {
@@ -219,44 +301,51 @@ describe("Club Utilities tests", async () => {
       testSeason,
       testPlayersArray,
     );
-  
+
     expect(actualClub).toStrictEqual(expectedClubOne);
   });
 
-  
-
   test("Test getBestStarting11", async () => {
-    const [_,testPlayers] = await createClub(
+    const [_, testPlayers] = await createClub(
       simpleFaker.string.numeric(6),
       testTeamName,
       testSeason,
     );
-    
-    const [actualPlayerReferences, actualPlayerObjects] = await getBestStarting11(testPlayers);
-    const actualStarting11IDs: Array<string> = Object.keys(actualPlayerReferences)
 
-    
-    const actualPlayerPositionCounts = getPositionCounts(actualPlayerObjects)
-    expect(actualPlayerPositionCounts[PositionGroup.Goalkeeper]).toBe(1)
-    const outfieldPositionGroups: Array<PositionGroup> = [PositionGroup.Defender, PositionGroup.Midfielder, PositionGroup.Attacker]
+    const actualPlayerObjects = await getBestStarting11(testPlayers);
+
+    const actualPlayerPositionCounts = getPositionCounts(actualPlayerObjects);
+    expect(actualPlayerPositionCounts[PositionGroup.Goalkeeper]).toBe(1);
+    const outfieldPositionGroups: Array<PositionGroup> = [
+      PositionGroup.Defender,
+      PositionGroup.Midfielder,
+      PositionGroup.Attacker,
+    ];
     outfieldPositionGroups.forEach((positionGroup: PositionGroup) => {
-      expect(actualPlayerPositionCounts[positionGroup]).toBeGreaterThanOrEqual(3)
-    })
-    expect(actualStarting11IDs.length).toBe(11)
-   
-    
-  })
+      expect(actualPlayerPositionCounts[positionGroup]).toBeGreaterThanOrEqual(
+        3,
+      );
+    });
+  });
 
-  
-  
+  test("Test getBestStarting11References", async () => {
+    const [_, testPlayers] = await createClub(
+      simpleFaker.string.numeric(6),
+      testTeamName,
+      testSeason,
+    );
+
+    const actualPlayerReferences =
+      await getBestStarting11References(testPlayers);
+    expect(Object.keys(actualPlayerReferences).length).toBe(11);
+  });
+
   test("Test createClub with no players", async () => {
     const [actualClub, actualPlayers] = await createClub(
       simpleFaker.string.numeric(6),
       testTeamName,
       testSeason,
     );
-
-    expect(actualClub).toStrictEqual(expectedClubTwo);
 
     const actualPlayersArray: Array<Player> = Object.values(actualPlayers);
     expect(actualPlayersArray.length).toBe(25);
@@ -265,6 +354,7 @@ describe("Club Utilities tests", async () => {
     const actualClubPlayers: Array<String> = Object.values(actualClub.Squad);
     expect(actualClubPlayers.length).toBe(25);
 
+    const actualStarting11: Array<String> = Object.keys(actualClub.Starting11);
+    expect(actualStarting11.length).toBe(11);
   });
-  
 });

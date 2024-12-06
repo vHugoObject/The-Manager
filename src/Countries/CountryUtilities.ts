@@ -3,7 +3,7 @@ import { mapValues } from "lodash/fp";
 import { Competition } from "../Competitions/CompetitionTypes";
 import { Player } from "../Players/PlayerTypes";
 import { Club } from "../Clubs/ClubTypes";
-import { StatisticsType, StatisticsObject } from '../Common/CommonTypes'
+import { StatisticsType, StatisticsObject } from "../Common/CommonTypes";
 import { Country, BaseCountries } from "./CountryTypes";
 import { createCompetition } from "../Competitions/CompetitionUtilities";
 import {
@@ -11,7 +11,6 @@ import {
   entityObjectsCreator,
   entityReferencesCreator,
 } from "../Common/simulationUtilities";
-
 
 const countryStatistics: StatisticsObject = {
   Wins: 0,

@@ -10,7 +10,6 @@ export type StatisticsEntry = Record<string, StatisticsObject>;
 
 export type StatisticsType = Record<string, StatisticsObject>;
 
-
 export interface MatchEntry {
   match: MatchValues;
   tournamentID: string;

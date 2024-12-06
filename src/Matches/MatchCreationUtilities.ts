@@ -1,57 +1,120 @@
-import { Match, SquadStatus, GoalMatrix, MatchScore } from "./MatchTypes";
-import { StatisticsObject } from "../Common/CommonTypes";
-import { Player } from "../Players/PlayerTypes"
-import { Save } from "../StorageUtilities/SaveTypes"
+import { flowAsync } from "futil-js";
+import { map, mergeAll, pick, mapValues, zipObject } from "lodash/fp";
+import { StatisticsObject, MatchEntry } from "../Common/CommonTypes";
 import {
+  getEntities,
+  getEntitiesNames,
+  getCurrentDateAsObject,
+} from "../Common/simulationUtilities";
+import { Club } from "../Clubs/ClubTypes";
+import { Player } from "../Players/PlayerTypes";
+import { Save } from "../StorageUtilities/SaveTypes";
+import { generateMatchStatistics } from "./MatchSimulationUtilities";
 
-} from "./MatchSimulationUtilities";
-import { map } from "lodash/fp";
+export const getClubsPlayerObjects = async (
+  save: Save,
+  players: Array<Array<string>>,
+): Promise<Array<Array<Player>>> => {
+  return await Promise.all(
+    players.map(async (setOfPlayers: Array<string>) => {
+      return await getEntities<Player>(save, setOfPlayers);
+    }),
+  );
+};
 
+export const getClubsStarting11s = async (
+  save: Save,
+  clubs: Array<Club>,
+): Promise<Array<Array<Player>>> => {
+  const starting11s: Array<Array<string>> = map(
+    (club: Club) => Object.keys(club.Starting11),
+    clubs,
+  );
+  return await getClubsPlayerObjects(save, starting11s);
+};
 
-export const getClubPlayerObjects = async (save: Save, playerIDs: Array<string>): Promise<Record<string, Player>> => {
-  const getPlayer = (playerID: string): [string, Player] => {
-    return [playerID,save.allPlayers[playerID]]
-  }
-  return Object.fromEntries(map(getPlayer, playerIDs))
-}
+export const generateMatchResults = async (
+  save: Save,
+  clubIDs: Array<string>,
+): Promise<Record<string, StatisticsObject>> => {
+  const clubObjects: Array<Club> = await getEntities<Club>(save, clubIDs);
+  return await flowAsync(getClubsStarting11s, generateMatchStatistics, zipObject(clubIDs))
+    (save,
+    clubObjects,
+  );
+};
 
-//getMatchPlayerObjects
+export const getClubIDsFromMatchEntry = async (
+  matchEntry: MatchEntry,
+): Promise<[string, string]> => {
+  return [
+    matchEntry.match.player1.id as string,
+    matchEntry.match.player2.id as string,
+  ];
+};
 
-export const createMatch = async (
-  ID: string,
-  MatchDate: Date,
-  Home: Club,
-  Away: Club,
-  Competition: string,
-  Country: string,
-): Promise<Match> => {
-  const homeStatus: SquadStatus = {
-    onField: Home.Starting11,
-    onBench: Home.Bench,
-    subbedOut: {},
-    injured: {},
-    suspended: {},
-  };
+export const matchNameObjectCreator = async ([home, away]: [
+  string,
+  string,
+]): Promise<Record<string, string>> => {
+  return { Name: `${home} vs ${away}` };
+};
 
-  const awayStatus: SquadStatus = {
-    onField: Away.Starting11,
-    onBench: Away.Bench,
-    subbedOut: {},
-    injured: {},
-    suspended: {},
-  };
+export const createMatchNameFromIDs = flowAsync(
+  getEntitiesNames,
+  matchNameObjectCreator,
+);
 
-   const notImplemented = {
-    ID,
-    MatchDate,
-    MatchScore: { [Home.Name]: 0, [Away.Name]: 0 },
-    Competition,
-    Country,
-    Home,
-    Away,
-    HomeSquad: homeStatus,
-    AwaySquad: awayStatus,
-    Simulated: false,
+export const matchEntryConverter = async (
+  matchEntry: MatchEntry,
+): Promise<Record<string, string>> => {
+  return {
+    ID: matchEntry.match.id,
+    Home: matchEntry.match.player1.id as string,
+    Away: matchEntry.match.player2.id as string,
+    CompetitionID: matchEntry.tournamentID,
   };
 };
 
+export const getScoreFromMatchResult = (matchStatistics: 
+  Record<string, StatisticsObject>
+): Record<string, Record<string, number>> => {
+  const [homeID, awayID]: Array<string> = Object.keys(matchStatistics)
+  return {
+    Score: {
+      [homeID]: matchStatistics[homeID]["Goals"] as number,
+      [awayID]: matchStatistics[awayID]["Goals"] as number
+    } 
+  };
+};
+
+export const createMatchNameFromMatchEntry = async (
+  save: Save,
+  matchEntry: MatchEntry,
+): Promise<Record<string, string>> => {
+  const clubIDs: [string, string] = await getClubIDsFromMatchEntry(matchEntry);
+  return await createMatchNameFromIDs(save, clubIDs);
+};
+
+export const generatePartialMatchLogFromMatchEntry = async (
+  save: Save,
+  matchEntry: MatchEntry,
+): Promise<Record<string, string>> => {
+  const partialMatchParts: Array<Record<string, string>> = await Promise.all([
+    await matchEntryConverter(matchEntry),
+    await getCurrentDateAsObject(save),
+  ]);
+  return mergeAll(partialMatchParts);
+};
+
+export const generateMatchResultFromMatchEntry = async (
+  save: Save,
+  matchEntry: MatchEntry,
+): Promise<[Record<string, string>, Record<string,StatisticsObject>]> => {
+  const clubIDs: [string, string] = await getClubIDsFromMatchEntry(matchEntry);
+  return (await Promise.all(
+    [createMatchNameFromIDs, generateMatchResults].map(
+      async (func: Function) => await func(save, clubIDs),
+    ),
+  )) as [Record<string, string>, Record<string, StatisticsObject>];
+};

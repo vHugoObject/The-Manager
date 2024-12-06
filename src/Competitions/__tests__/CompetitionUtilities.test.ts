@@ -13,7 +13,7 @@ import {
 import { Club } from "../../Clubs/ClubTypes";
 import { playerSkills } from "../../Players/PlayerSkills";
 import { Competition } from "../CompetitionTypes";
-import { entityReferencesCreator } from "../../Common/simulationUtilities"
+import { entityReferencesCreator } from "../../Common/simulationUtilities";
 import {
   createCompetitionClubsWithGeneratedPlayers,
   generateCompetitionStatisticsObject,
@@ -21,7 +21,7 @@ import {
 } from "../CompetitionUtilities";
 
 describe("Competition Utilities tests", async () => {
-  const testSeason: string = "2024"
+  const testSeason: string = "2024";
   const competitionStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
@@ -43,7 +43,7 @@ describe("Competition Utilities tests", async () => {
     Object.fromEntries(competitionStatisticsArray.map((entry) => [entry, 0]));
 
   const expectedCompetitionStatistics: StatisticsType = {
-    [testSeason]: competitionStatisticsObject
+    [testSeason]: competitionStatisticsObject,
   };
 
   const testClubStatisticsOne: StatisticsObject = {
@@ -70,7 +70,7 @@ describe("Competition Utilities tests", async () => {
   };
 
   const expectedClubStatistics: StatisticsType = {
-    [testSeason]: testClubStatisticsOne
+    [testSeason]: testClubStatisticsOne,
   };
 
   const playerStatisticsArray: Array<string> = [
@@ -95,8 +95,8 @@ describe("Competition Utilities tests", async () => {
   );
 
   const expectedPlayerStatistics: StatisticsType = {
-    [testSeason]: playerStatisticsObject
-  };  
+    [testSeason]: playerStatisticsObject,
+  };
 
   const expectedContract: ContractType = {
     Wage: 1,
@@ -195,14 +195,13 @@ describe("Competition Utilities tests", async () => {
   const testPlayersOneArray: Array<Player> = [testPlayerOne, testPlayerTwo];
   const testPlayersTwoArray: Array<Player> = [testPlayerThree, testPlayerFour];
 
-
   const testPlayersReferenceOne: Record<string, string> =
     await entityReferencesCreator<Player>(testPlayersOneArray);
   const testPlayersReferenceTwo: Record<string, string> =
     await entityReferencesCreator(testPlayersTwoArray);
 
   const testCompetitionName: string = "English Premier League";
-  const testCompetitionCountry: string = "England";  
+  const testCompetitionCountry: string = "England";
   const testClubsNoPlayers: Record<string, string> = {
     [simpleFaker.string.numeric(6)]: "Arsenal",
     [simpleFaker.string.numeric(6)]: "Brentford",
@@ -224,7 +223,6 @@ describe("Competition Utilities tests", async () => {
   };
 
   test("test generateCompetitionStatisticsObject", async () => {
-
     const actualStatistics: StatisticsType =
       generateCompetitionStatisticsObject(testSeason);
     expect(actualStatistics).toMatchObject(expectedCompetitionStatistics);

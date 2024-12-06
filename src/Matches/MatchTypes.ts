@@ -13,16 +13,18 @@ export interface SquadStatus {
 export type GoalMatrix = Array<[[number, number], number]>;
 export type MatchScore = Record<string, number>;
 
-export interface Match {
+export interface MatchLog {
   ID: string;
   Name: string;
-  MatchDate: Date;
-  MatchScore: MatchScore;
+  Date: Date;
+  Score: MatchScore;
   CompetitionID: string;
-  Home: Club;
-  Away: Club;
-  HomeSquad: SquadStatus;
-  AwaySquad: SquadStatus;
-  HomeOverallStatistics: StatisticsObject;
-  AwayOverallStatistics: StatisticsObject;
+  Home: String;
+  Away: String;
+}
+
+export enum MatchResult {
+  homeWin = "homeWin",
+  draw = "draw",
+  awayWin = "awayWin",
 }

@@ -1,5 +1,6 @@
 import { describe, expect, test, expectTypeOf } from "vitest";
 import { simpleFaker } from "@faker-js/faker";
+import { map } from "lodash/fp";
 import { StatisticsType, Entity } from "../../Common/CommonTypes";
 import { Player } from "../../Players/PlayerTypes";
 import { BaseCountries } from "../../Countries/CountryTypes";
@@ -55,6 +56,8 @@ describe("Competition Utilities tests", async () => {
     [testCountryTwo]: testCompetitionsTwo,
   };
 
+  const expectedCountryNames: Array<string> = [testCountryOne, testCountryTwo];
+
   const expectedClubNames: Array<string> = Object.values(
     testCountriesLeaguesClubs,
   )
@@ -70,6 +73,11 @@ describe("Competition Utilities tests", async () => {
     .flat();
 
   const expectedPlayersCount: number = expectedClubNames.length * 25;
+  const expectedEntityCount: number =
+    expectedPlayersCount +
+    expectedClubNames.length +
+    expectedCountryNames.length +
+    expectedCompetitonNames.length;
 
   test("Test createSave", async () => {
     const actualSave: Save = await createSave(
@@ -81,31 +89,22 @@ describe("Competition Utilities tests", async () => {
       testCountriesLeaguesClubs,
     );
 
-    const actualCompetitions: Record<string, Competition> =
-      actualSave.allCompetitions;
-
-    const actualCompetitionNames: Array<string> = Object.values(
-      actualCompetitions,
-    ).map((competition: Competition) => competition.Name);
-
-    expect(actualCompetitionNames.toSorted()).toStrictEqual(
-      expectedCompetitonNames.toSorted(),
+    const actualEntities: Record<string, Entity> = actualSave.Entities;
+    const actualEntityNames: Set<string> = new Set(
+      Object.values(actualEntities).map((entity: Entity) => entity.Name),
     );
 
-    const actualClubs: Record<string, Club> = actualSave.allClubs;
-    const actualClubNames: Array<string> = Object.values(actualClubs).map(
-      (actualClub: Entity) => actualClub.Name,
+    expect(actualEntityNames.size).toBe(expectedEntityCount);
+    const nameAsserter = map(
+      (name: string) => expect(actualEntityNames.has(name)).toBeTruthy,
     );
 
-    expect(actualClubNames.toSorted()).toStrictEqual(
-      expectedClubNames.toSorted(),
+    await Promise.all(
+      [expectedCountryNames, expectedCompetitonNames, expectedClubNames].map(
+        async (setOfExpectedNames: Array<string>) => {
+          nameAsserter(setOfExpectedNames);
+        },
+      ),
     );
-    Object.values(actualClubs).forEach((actualClub: Club) => {
-      expect(Object.values(actualClub.Squad).length).toBe(25);
-    });
-
-    const actualPlayers: Record<string, Player> = actualSave.allPlayers;
-    const actualPlayersCount: number = Object.values(actualPlayers).length;
-    expect(actualPlayersCount).toBe(expectedPlayersCount);
   });
 });

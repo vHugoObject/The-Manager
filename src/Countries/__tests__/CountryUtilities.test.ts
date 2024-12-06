@@ -12,7 +12,7 @@ import {
 
 describe("Country Utilities tests", async () => {
   const testSeason: string = "2024";
-    const countryStatisticsArray: Array<string> = [
+  const countryStatisticsArray: Array<string> = [
     "Wins",
     "Draws",
     "Losses",
@@ -29,11 +29,12 @@ describe("Country Utilities tests", async () => {
     "RedCards",
   ];
 
-  const countryStatisticsObject: Record<string, number> =
-    Object.fromEntries(countryStatisticsArray.map((entry) => [entry, 0]));
+  const countryStatisticsObject: Record<string, number> = Object.fromEntries(
+    countryStatisticsArray.map((entry) => [entry, 0]),
+  );
 
   const expectedCountryStatistics: StatisticsType = {
-    [testSeason]: countryStatisticsObject ,
+    [testSeason]: countryStatisticsObject,
   };
   const testCountryOne: string = "England";
 
@@ -69,8 +70,6 @@ describe("Country Utilities tests", async () => {
     },
   };
 
-  
-
   const testCountriesLeaguesClubs: BaseCountries = {
     [testCountryOne]: testCompetitionsOne,
     [testCountryTwo]: testCompetitionsTwo,
@@ -85,9 +84,7 @@ describe("Country Utilities tests", async () => {
 
     expect(actualCountry.Name).toBe(testCountryOne);
     expect(actualCountry.CurrentSeason).toBe(testSeason);
-    expect(actualCountry.Statistics).toStrictEqual(
-      expectedCountryStatistics,
-    );
+    expect(actualCountry.Statistics).toStrictEqual(expectedCountryStatistics);
     const actualCountryCompetitionNames: Array<string> = Object.values(
       actualCountry.Competitions,
     );

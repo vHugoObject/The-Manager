@@ -1,6 +1,8 @@
 import { eachDayOfInterval, addWeeks } from "date-fns";
 import type { EachDayOfIntervalResult, Interval } from "date-fns";
-import { reduce, merge } from "lodash/fp";
+import { reduce, merge, mergeAll, map } from "lodash/fp";
+import { flowAsync } from "futil-js";
+import { Save } from "../StorageUtilities/SaveTypes";
 import { CalendarEntry, Calendar, Entity, GameObject } from "./CommonTypes";
 
 export const createCalendar = (start: Date): Calendar => {
@@ -126,9 +128,74 @@ export const entityObjectsMerger = <T extends GameObject>(
 ): Record<string, T> => {
   return merge(accumulator, value);
 };
-
+// can we mergeall
 export const entityObjectsReducer = async <T extends GameObject>(
   entities: Array<Record<string, T>>,
 ): Promise<Record<string, T>> => {
   return reduce(entityObjectsMerger, {}, entities);
+};
+
+export const getEntity = async <T extends Entity>(
+  save: Save,
+  key: string,
+): Promise<T> => {
+  return save.Entities[key] as T;
+};
+
+export const getEntities = async <T extends Entity>(
+  save: Save,
+  keys: Array<string>,
+): Promise<Array<T>> => {
+  return await Promise.all(
+    keys.map(async (key: string) => {
+      return await getEntity(save, key);
+    }),
+  );
+};
+
+export const getEntityName = async <T extends Entity>(
+  save: Save,
+  key: string,
+): Promise<string> => {
+  return save.Entities[key].Name;
+};
+
+export const getEntitiesNames = async <T extends Entity>(
+  save: Save,
+  keys: Array<string>,
+): Promise<Array<string>> => {
+  return await Promise.all(
+    keys.map(async (key: string) => {
+      return await getEntityName(save, key);
+    }),
+  );
+};
+
+export const getEntityWithID = async <T extends Entity>(
+  save: Save,
+  key: string,
+): Promise<Record<string, Entity>> => {
+  return { [key]: (await getEntity<T>(save, key)) as T };
+};
+
+export const getEntitiesWithIDs = async <T extends Entity>(
+  save: Save,
+  keys: Array<string>,
+): Promise<Record<string, Entity>> => {
+  const entityMapper = async (
+    entityKeys: Array<string>,
+  ): Promise<Array<Record<string, Entity>>> => {
+    return await Promise.all(
+      entityKeys.map(async (entityKey: string) => {
+        return await getEntityWithID(save, entityKey);
+      }),
+    );
+  };
+  return await flowAsync(entityMapper, mergeAll)(keys);
+};
+
+export const getCurrentDateAsObject = async (
+  save: Save,
+): Promise<Record<string, string>> => {
+  return { Date: save.CurrentDate.toDateString() };
 };

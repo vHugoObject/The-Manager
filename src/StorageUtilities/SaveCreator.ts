@@ -1,6 +1,8 @@
 import { simpleFaker } from "@faker-js/faker";
+import { mergeAll } from "lodash/fp";
 import { BaseCountries } from "../Countries/CountryTypes";
 import { Save, ClubReference } from "./SaveTypes";
+import { Entity } from "../Common/CommonTypes";
 import { createCountries } from "../Countries/CountryUtilities";
 import { createSeasonCalendar } from "../Common/scheduler";
 
@@ -20,7 +22,12 @@ export const createSave = async (
     startingSeason,
   );
 
-  const CurrentDate: Date = new Date(Object.keys(calendar)[0]);
+  const Entities: Record<string, Entity> = mergeAll([
+    allCountries,
+    allCompetitions,
+    allClubs,
+    allPlayers,
+  ]);
 
   return {
     Name,
@@ -29,13 +36,9 @@ export const createSave = async (
     Club,
     Seasons: 1,
     CurrentSeason: startingSeason,
-    CurrentDate,
-    countriesLeaguesClubs,
-    allCountries,
-    allCompetitions,
-    allClubs,
-    allPlayers,
-    allMatches: {},
+    CurrentDate: new Date(Object.keys(calendar)[0]),
+    Entities,
+    EntityStatistics: {},
     saveID: simpleFaker.string.numeric(4),
     calendar,
     scheduleManager,

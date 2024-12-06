@@ -1,7 +1,4 @@
-import {
-  StatisticsObject,
-  StatisticsType
-} from "../Common/CommonTypes";
+import { StatisticsObject, StatisticsType } from "../Common/CommonTypes";
 
 export enum Foot {
   Right = "Right",

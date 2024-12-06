@@ -1,24 +1,15 @@
 import { describe, expect, test } from "vitest";
 import { simpleFaker } from "@faker-js/faker";
+import { flow } from "lodash";
+import { sampleSize, flatMap, sample, mergeAll } from "lodash/fp";
 import { differenceInDays, isBefore, isAfter } from "date-fns";
-import {
-  CalendarEntry,
-  Calendar,
-  StatisticsType,
-  StatisticsObject,
-  Entity,
-} from "../CommonTypes";
+import { CalendarEntry, Calendar, Entity } from "../CommonTypes";
+import { BaseCountries } from "../../Countries/CountryTypes";
+import { createCountries } from "../../Countries/CountryUtilities";
 import { Club } from "../../Clubs/ClubTypes";
-import {
-  Player,
-  PositionGroup,
-  Midfielder,
-  Defender,
-  SkillSet,
-  Foot,
-  ContractType,
-} from "../../Players/PlayerTypes";
-import { playerSkills } from "../../Players/PlayerSkills";
+import { Player } from "../../Players/PlayerTypes";
+import { Save } from "../../StorageUtilities/SaveTypes";
+import { createSave } from "../../StorageUtilities/SaveCreator";
 import {
   createCalendar,
   totalDoubleRoundRobinGames,
@@ -26,164 +17,99 @@ import {
   entityObjectsReducer,
   entityObjectsCreator,
   entityReferencesCreator,
+  getEntity,
+  getEntityName,
+  getEntitiesNames,
+  getEntities,
+  getEntityWithID,
+  getEntitiesWithIDs,
+  getCurrentDateAsObject,
 } from "../simulationUtilities";
 
 describe("simulationUtilities test suite", async () => {
-  const testSeason: string = "2024"
-  const playerStatisticsArray: Array<string> = [
-    "Wins",
-    "Draws",
-    "Losses",
-    "GoalsFor",
-    "GoalsAgainst",
-    "GoalDifference",
-    "Points",
-    "MatchesPlayed",
-    "Minutes",
-    "NonPenaltyGoals",
-    "PenaltyKicksMade",
-    "PenaltyKicksAttempted",
-    "YellowCards",
-    "RedCards",
-  ];
+  const testCountryOne: string = "England";
 
-  const playerStatisticsObject: Record<string, number> = Object.fromEntries(
-    playerStatisticsArray.map((entry) => [entry, 0]),
+  const testCompetitionsOne: Record<string, Record<string, string>> = {
+    "English Premier League": {
+      [simpleFaker.string.numeric(6)]: "Arsenal",
+      [simpleFaker.string.numeric(6)]: "Brentford",
+    },
+    "The Championship": {
+      [simpleFaker.string.numeric(6)]: "Watford",
+      [simpleFaker.string.numeric(6)]: "Stoke City",
+    },
+    "League One": {
+      [simpleFaker.string.numeric(6)]: "Walsall",
+      [simpleFaker.string.numeric(6)]: "Swindon",
+    },
+  };
+
+  const testCountryTwo: string = "Spain";
+
+  const testCompetitionsTwo: Record<string, Record<string, string>> = {
+    "Primera Division": {
+      [simpleFaker.string.numeric(6)]: "Real Madrid CF",
+      [simpleFaker.string.numeric(6)]: "FC Barcelona",
+    },
+    "Segunda Division": {
+      [simpleFaker.string.numeric(6)]: "Almeria",
+      [simpleFaker.string.numeric(6)]: "Granada",
+    },
+    "Primera Federacion": {
+      [simpleFaker.string.numeric(6)]: "Andorra",
+      [simpleFaker.string.numeric(6)]: "Atzeneta",
+    },
+  };
+
+  const testSeason: string = "2024";
+
+  const testCountriesLeaguesClubs: BaseCountries = {
+    [testCountryOne]: testCompetitionsOne,
+    [testCountryTwo]: testCompetitionsTwo,
+  };
+
+  const [testCountries, testCompetitions, testClubs, testPlayers] =
+    await createCountries(testCountriesLeaguesClubs, testSeason);
+
+  const threeRandom = sampleSize(3);
+  const fiveRandom = sampleSize(5);
+  const threeRandomKeys = flow(Object.keys, threeRandom);
+
+  const threeRandomEntities = flow(threeRandom, Object.values);
+  const [testClubOne, testClubTwo, testClubThree] =
+    threeRandomEntities(testClubs);
+  const [testPlayerOne, testPlayerTwo, testPlayerThree] =
+    threeRandomEntities(testPlayers);
+
+  const nestedObjectsToList = flatMap(
+    (object: Record<string, any>): Array<any> => Object.values(object),
   );
+  const expectedClubs: Array<[string, string]> = flow(
+    Object.values,
+    nestedObjectsToList,
+    mergeAll,
+    Object.entries,
+  )(testCountriesLeaguesClubs);
+  const [testPlayerClubID, testPlayerClub] = sample(expectedClubs);
+  const testClubKeys: Array<string> = expectedClubs.flatMap(
+    ([id]: [string, string]) => id,
+  );
+  const expectedClubNames: Array<string> = expectedClubs.flatMap(
+    ([, name]: [string, string]) => name,
+  );
+  const setOfExpectedClubNames: Set<string> = new Set(expectedClubNames);
+  const testPlayerCountry: string = "England";
+  const testPlayerCompetitionName: string = "English Premier League";
+  const testPlayerName: string = "Mikel Arteta";
 
-  const expectedPlayerStatistics: StatisticsType = {
-    [testSeason]: playerStatisticsObject 
-  };
-
-  const expectedContract: ContractType = {
-    Wage: 1,
-    Years: 1,
-  };
-
-  const getRandomNumberInRange = (min: number, max: number): number => {
-    const minCeiled = Math.ceil(min);
-    const maxFloored = Math.floor(max);
-    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
-  };
-
-  const testPlayerSkills = (): Record<string, SkillSet> => {
-    return Object.fromEntries(
-      Object.entries(playerSkills).map(([name, set]) => [
-        name,
-        Object.fromEntries(
-          set.map((skill: string) => [skill, getRandomNumberInRange(25, 100)]),
-        ),
-      ]),
-    );
-  };
-
-  const testPlayerOne: Player = {
-    ID: simpleFaker.string.numeric(4),
-    Name: "John Doe",
-    PositionGroup: PositionGroup.Midfielder,
-    Position: Midfielder.CDM,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "Spain",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayerTwo: Player = {
-    ID: simpleFaker.string.numeric(4),
-    Name: "John Stones",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.LCB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 25,
-    NationalTeam: "England",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testPlayerThree: Player = {
-    ID: simpleFaker.string.numeric(4),
-    Name: "Gabriel",
-    PositionGroup: PositionGroup.Defender,
-    Position: Defender.RCB,
-    PreferredFoot: Foot.Right,
-    Weight: 76,
-    Height: 183,
-    Age: 27,
-    NationalTeam: "England",
-    Club: "Arsenal",
-    Contract: expectedContract,
-    Value: 1,
-    Rating: 80,
-    Skills: testPlayerSkills(),
-    Statistics: expectedPlayerStatistics,
-  };
-
-  const testClubStatisticsOne: StatisticsObject = {
-    Wins: 0,
-    Draws: 0,
-    Losses: 0,
-    GoalsFor: 0,
-    GoalsAgainst: 0,
-    GoalDifference: 0,
-    Points: 0,
-    Record: "",
-    HomeRecord: "",
-    AwayRecord: "",
-    DomesticCompetition: "",
-    DomesticCups: "",
-    ContinentalCup: "",
-    MatchesPlayed: 0,
-    Minutes: 0,
-    NonPenaltyGoals: 0,
-    PenaltyKicksMade: 0,
-    PenaltyKicksAttempted: 0,
-    YellowCards: 0,
-    RedCards: 0,
-  };
-
-  const expectedClubStatistics: StatisticsType = {
-    [testSeason]: testClubStatisticsOne
-  };
-
-  const testClubOne: Club = {
-    ID: simpleFaker.string.numeric(4),
-    Name: "Arsenal",
-    Statistics: expectedClubStatistics,
-    Squad: {},
-    Starting11: {},
-    Bench: {},
-  };
-
-  const testClubTwo: Club = {
-    ID: simpleFaker.string.numeric(4),
-    Name: "Manchester United",
-    Statistics: expectedClubStatistics,
-    Squad: {},
-    Starting11: {},
-    Bench: {},
-  };
-
-  const testClubThree: Club = {
-    ID: simpleFaker.string.numeric(4),
-    Name: "Liverpool",
-    Statistics: expectedClubStatistics,
-    Squad: {},
-    Starting11: {},
-    Bench: {},
-  };
+  const testSave: Save = await createSave(
+    testPlayerName,
+    testPlayerCountry,
+    testPlayerCompetitionName,
+    testSeason,
+    { clubID: testPlayerClubID, clubName: testPlayerClub },
+    testCountriesLeaguesClubs,
+  );
 
   test("test createCalendar", () => {
     const testFirstDay: Date = new Date("08/11/24");
@@ -384,5 +310,113 @@ describe("simulationUtilities test suite", async () => {
     expect(actualClubs).toStrictEqual(expectedClubs);
     const actualPlayers = await entityObjectsReducer(testPlayerObjects);
     expect(actualPlayers).toStrictEqual(expectedPlayers);
+  });
+
+  test("getEntity", async () => {
+    const threeRandomEntityKeys: Array<string> = threeRandomKeys(
+      testSave.Entities,
+    );
+    await Promise.all(
+      threeRandomEntityKeys.map(async (testEntityKey: string) => {
+        const actualEntity: Entity = await getEntity(testSave, testEntityKey);
+        expect(actualEntity).toBeDefined();
+      }),
+    );
+  });
+
+  test("getEntities", async () => {
+    const threeRandomEntityKeys: Array<string> = threeRandomKeys(
+      testSave.Entities,
+    );
+    const actualEntities: Array<Entity> = await getEntities(
+      testSave,
+      threeRandomEntityKeys,
+    );
+    actualEntities.forEach((actualEntity: Entity) => {
+      expect(actualEntity).toBeDefined();
+    });
+  });
+
+  test("getEntityName", async () => {
+    const fiveRandomEntityKeys: Array<string> = threeRandomKeys(
+      testSave.Entities,
+    );
+
+    await Promise.all(
+      fiveRandomEntityKeys.map(async (testEntityKey: string) => {
+        const actualEntityName: string = await getEntityName(
+          testSave,
+          testEntityKey,
+        );
+        expect(actualEntityName).toBeDefined();
+      }),
+    );
+
+    await Promise.all(
+      expectedClubs.flatMap(
+        async ([testClubKey, expectedClubName]: [string, string]) => {
+          const actualClubName: string = await getEntityName(
+            testSave,
+            testClubKey,
+          );
+          expect(actualClubName).toBe(expectedClubName);
+        },
+      ),
+    );
+  });
+
+  test("getEntitiesNames", async () => {
+    const threeRandomEntityKeys: Array<string> = threeRandomKeys(
+      testSave.Entities,
+    );
+
+    const actualEntitiesNames: Array<string> = await getEntitiesNames(
+      testSave,
+      threeRandomEntityKeys,
+    );
+
+    actualEntitiesNames.forEach((actualEntityName: string) => {
+      expect(actualEntityName).toBeDefined();
+    });
+
+    const actualClubNames: Array<string> = await getEntitiesNames(
+      testSave,
+      testClubKeys,
+    );
+    const setOfActualClubNames: Set<string> = new Set(actualClubNames);
+    expect(setOfActualClubNames).toStrictEqual(setOfExpectedClubNames);
+  });
+
+  test("getEntityWithID", async () => {
+    const threeRandomEntityKeys: Array<string> = threeRandomKeys(
+      testSave.Entities,
+    );
+    await Promise.all(
+      threeRandomEntityKeys.map(async (testEntityKey: string) => {
+        const actualEntityWithID: Record<string, Entity> =
+          await getEntityWithID(testSave, testEntityKey);
+        expect(actualEntityWithID[testEntityKey]).toBeDefined();
+      }),
+    );
+  });
+
+  test("getEntitiesWithIDs", async () => {
+    const threeRandomEntityKeys: Array<string> = threeRandomKeys(
+      testSave.Entities,
+    );
+
+    const actualEntities: Record<string, Entity> = await getEntitiesWithIDs(
+      testSave,
+      threeRandomEntityKeys,
+    );
+
+    threeRandomEntityKeys.forEach((expectedEntityKey: string) => {
+      expect(actualEntities[expectedEntityKey]).toBeDefined();
+    });
+  });
+
+  test("test getCurrentDateAsObject", async () => {
+    const { Date: actualCurrentDate } = await getCurrentDateAsObject(testSave);
+    expect(actualCurrentDate).toBe(testSave.CurrentDate.toDateString());
   });
 });

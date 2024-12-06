@@ -1,41 +1,26 @@
 import { simpleFaker } from "@faker-js/faker";
-import { filter, isEqual, sortBy, take, flow } from "lodash/fp";
-import { range } from "lodash";
+import { sortBy, take, flow, map } from "lodash/fp";
+import { partial } from "lodash";
+import { flowAsync } from "futil-js";
 import { StatisticsObject, StatisticsType } from "../Common/CommonTypes";
 import { Player, PositionGroup } from "../Players/PlayerTypes";
 import { Club } from "./ClubTypes";
-import { entityObjectsCreator,entityReferencesCreator } from "../Common/simulationUtilities";
 import {
-  createGoalkeeper,
-  createDefender,
-  createMidfielder,
-  createAttacker,
+  entityObjectsCreator,
+  entityReferencesCreator,
+  getEntities,
+} from "../Common/simulationUtilities";
+import { Save } from "../StorageUtilities/SaveTypes";
+import {
+  createGoalkeepers,
+  createDefenders,
+  createMidfielders,
+  createAttackers,
   filterGoalkeepers,
   filterDefenders,
   filterMidfielders,
-  filterAttackers
+  filterAttackers,
 } from "../Players/PlayerUtilities";
-
-
-export const sortByPlayerRating = sortBy((player: Player) => player.Rating)
-
-export const getBestStarting11 = async(clubPlayers: Record<string, Player>): Promise<[Record<string,string>, Array<Player>]> => {
-
-  const playerObjects: Array<Player> = Object.values(clubPlayers)
-  const playerFuncs: Array<[(arg1: Array<Player>) => Array<Player>, number]> = [[filterGoalkeepers, 1], [filterDefenders, 4], [filterMidfielders, 3], [filterAttackers, 3]];
-  
-  const players: Array<Player> = await Promise.all(
-    playerFuncs.flatMap(([filterFunc, playerCount]) => {
-      const playerTaker = take(playerCount)
-      const getBest = flow(filterFunc,sortByPlayerRating, playerTaker)
-      return getBest(playerObjects)
-    }
-    )
-  )
-  const playerReferences: Record<string, string> = await entityReferencesCreator<Player>(players)
-  
-  return [playerReferences, players]
-}
 
 const clubStatistics: StatisticsObject = {
   Wins: 0,
@@ -64,59 +49,56 @@ export const generateClubStatisticsObject = async (
   season: string,
 ): Promise<StatisticsType> => {
   return {
-    [season]: clubStatistics 
+    [season]: clubStatistics,
   };
 };
 
-// try out mergeAll here
+export const sortByPlayerRating = sortBy((player: Player) => player.Rating);
+
+export const getBestStarting11 = async (
+  clubPlayers: Record<string, Player>,
+): Promise<Array<Player>> => {
+  const playerObjects: Array<Player> = Object.values(clubPlayers);
+  const playerFuncs: Array<[(arg1: Array<Player>) => Array<Player>, number]> = [
+    [filterGoalkeepers, 1],
+    [filterDefenders, 4],
+    [filterMidfielders, 3],
+    [filterAttackers, 3],
+  ];
+
+  return await Promise.all(
+    playerFuncs.flatMap(([filterFunc, playerCount]) => {
+      const playerTaker = take(playerCount);
+      const getBest = flow(filterFunc, sortByPlayerRating, playerTaker);
+      return getBest(playerObjects);
+    }),
+  );
+};
+
+export const getBestStarting11References = flowAsync(
+  getBestStarting11,
+  entityReferencesCreator<Player>,
+);
+
+export const generateGoalkeepers = partial(createGoalkeepers, 4);
+export const generateDefenders = partial(createDefenders, 7);
+export const generateMidfielders = partial(createMidfielders, 7);
+export const generateAttackers = partial(createAttackers, 7);
+
 export const generateSquad = async (
   club: string,
   teamID: string,
   season: string,
 ): Promise<Array<Player>> => {
-  const generateGoalies = async (): Promise<Array<Player>> => {
-    return await Promise.all(
-      range(0, 4).map(async (_) => {
-        return await createGoalkeeper(season, club);
-      }),
-    );
-  };
-
-  const generateDefenders = async (): Promise<Array<Player>> => {
-    return await Promise.all(
-      range(0, 7).map(async (_) => {
-        return await createDefender(season, club);
-      }),
-    );
-  };
-
-  const generateMidfielders = async (): Promise<Array<Player>> => {
-    return await Promise.all(
-      range(0, 7).map(async (_) => {
-        return await createMidfielder(season, club);
-      }),
-    );
-  };
-
-  const generateAttackers = async (): Promise<Array<Player>> => {
-    return await Promise.all(
-      range(0, 7).map(async (_) => {
-        return await createAttacker(season, club);
-      }),
-    );
-  };
-
   const players: Array<Array<Player>> = await Promise.all([
-    await generateGoalies(),
-    await generateDefenders(),
-    await generateMidfielders(),
-    await generateAttackers(),
+    await generateGoalkeepers([season, club]),
+    await generateDefenders([season, club]),
+    await generateMidfielders([season, club]),
+    await generateAttackers([season, club]),
   ]);
 
   return players.flat();
 };
-
-
 
 export const createClub = async (
   ID: string,
@@ -128,20 +110,23 @@ export const createClub = async (
     ? players
     : await generateSquad(name, ID, season);
 
-  
-  const [clubPlayersObject, Squad, clubStats] = await Promise.all([
-    await entityObjectsCreator(clubPlayers),
-    await entityReferencesCreator<Player>(clubPlayers),
-    await generateClubStatisticsObject(season),  
-  ]);
+  const [clubPlayersObject, Squad, Starting11] = await Promise.all(
+    [
+      entityObjectsCreator,
+      entityReferencesCreator<Player>,
+      getBestStarting11References,
+    ].map(async (func: Function) => {
+      return await func(clubPlayers);
+    }),
+  );
 
-  
+  // do generateClub sub function that we could run in a promise.all
+  // with entityObjectsCreator, probably do second option
   const club: Club = {
     ID,
     Name: name,
-    Statistics: clubStats,
     Squad,
-    Starting11: {},
+    Starting11,
     Bench: {},
   };
 
