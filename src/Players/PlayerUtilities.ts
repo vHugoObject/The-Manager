@@ -1,87 +1,34 @@
-import { faker } from "@faker-js/faker";
-import { flow, mean, mapValues, isEqual, filter } from "lodash/fp";
-import { partial, range } from "lodash";
+import { faker } from "@faker-js/faker/locale/en";
+import {
+  mean,
+  mapValues,
+  isEqual,
+  filter,
+  partial,
+  property,
+  sample,
+  map,
+  zipWith,
+} from "lodash/fp";
 import { promiseProps, flowAsync } from "futil-js";
 import {
-  playerSkills,
-  defenseCategories,
-  attackCategories,
-  goalkeepingCategories,
+  PLAYERSKILLS,
+  SKILLRANGESBYPOSITION,
+  DEFENDINGSKILLS,
+  GOALKEEPINGSKILLS,
+  ATTACKINGSKILLS,
 } from "./PlayerSkills";
-import { StatisticsType, StatisticsObject } from "../Common/CommonTypes";
+import { BIORANGES, POSITIONS } from "./PlayerConstants";
 import {
   Player,
   PositionType,
   PositionGroup,
-  Foot,
   Midfielder,
   Attacker,
   Defender,
   Goalkeeper,
-  BiographicalDetails,
   ContractType,
-  SkillSet,
 } from "./PlayerTypes";
-
-const expectedPlayerStandardStatsHeaders: Array<string> = [
-  "Season",
-  "Matches Played",
-  "Starts",
-  "Minutes",
-  "Full 90s",
-  "Goals",
-  "Assists",
-  "Goals Plus Assists",
-  "Non Penalty Goals",
-  "Penalty Kicks Made",
-  "Penalty Kicks Attempted",
-  "Yellow Cards",
-  "Red Cards",
-];
-
-const expectedBioParagraphs: Array<string> = [
-  "Position",
-  "Footed",
-  "Height",
-  "Weight",
-  "Age",
-  "National Team",
-  "Club",
-  "Wages",
-];
-
-const playerComponentKeys = {
-  standardStatsHeaders: expectedPlayerStandardStatsHeaders,
-  bioParagraphs: expectedBioParagraphs,
-};
-
-const emptySeasonStatisticsObject: StatisticsObject = {
-  MatchesPlayed: 0,
-  Starts: 0,
-  Minutes: 0,
-  Full90s: 0,
-  Goals: 0,
-  Assists: 0,
-  GoalsPlusAssists: 0,
-  NonPenaltyGoals: 0,
-  PenaltyKicksMade: 0,
-  PenaltyKicksAttempted: 0,
-  YellowCards: 0,
-  RedCards: 0,
-};
-
-const positions = {
-  Attacker,
-  Midfielder,
-  Defender,
-  Goalkeeper,
-};
-
-export const getRandomNumberInRange = (min: number, max: number): number => {
-  const minCeiled = Math.ceil(min);
-  const maxFloored = Math.floor(max);
-  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
-};
 
 export const isGoalkeeper = isEqual(PositionGroup.Goalkeeper);
 export const isDefender = isEqual(PositionGroup.Defender);
@@ -107,72 +54,42 @@ export const filterOutfieldPlayers = filter(playerIsNotGoalkeeper);
 
 export const getPlayerSkills = async (
   player: Player,
-): Promise<Record<string, SkillSet>> => player.Skills;
+): Promise<Record<string, number>> => property(["Skills"])(player);
 
 export const getListOfPlayerSkills = async (
   players: Array<Player>,
-): Promise<Array<Record<string, SkillSet>>> => {
+): Promise<Array<Record<string, number>>> => {
   return await Promise.all(
     players.map(async (player: Player) => getPlayerSkills(player)),
   );
 };
 
+//stubbed
 export const getAverageOfSetOfSkillCategories = async (
   skillCategories: Set<string>,
-  skillSets: Record<string, SkillSet>,
+  skills: Record<string, number>,
 ): Promise<number> => {
-  const getSkillSetsFilterer = (
-    skills: Record<string, SkillSet>,
-  ): Record<string, SkillSet> => {
-    return Object.fromEntries(
-      Object.entries(skills).filter(([key, _]) => skillCategories.has(key)),
-    );
-  };
-
-  const getMeanOfSkillValues = (
-    skillValues: Record<string, number>,
-  ): number => {
-    return mean(Object.values(skillValues));
-  };
-
-  const getMeanSkillValuesMapper = (
-    skills: Record<string, SkillSet>,
-  ): Record<string, number> => {
-    return mapValues(getMeanOfSkillValues, skills);
-  };
-
-  const getAverage = flow(
-    getSkillSetsFilterer,
-    getMeanSkillValuesMapper,
-    getMeanOfSkillValues,
-  );
-
-  return getAverage(skillSets);
+  return 1;
 };
-
+//stubbed
 export const getListOfAveragesOfSetOfSkillCategories = async (
   skillCategories: Set<string>,
-  listOfSkillSets: Array<Record<string, SkillSet>>,
+  listOfSkillSets: Array<Record<string, number>>,
 ): Promise<Array<number>> => {
-  return await Promise.all(
-    listOfSkillSets.map(
-      async (skillSet) =>
-        await getAverageOfSetOfSkillCategories(skillCategories, skillSet),
-    ),
-  );
+  return [];
 };
 export const goalkeepingRating = partial(
   getListOfAveragesOfSetOfSkillCategories,
-  goalkeepingCategories,
+  [GOALKEEPINGSKILLS],
 );
 export const outfieldPlayersDefendingRatings = partial(
   getListOfAveragesOfSetOfSkillCategories,
-  defenseCategories,
+  [DEFENDINGSKILLS],
 );
 
 export const attackingRatings = partial(
   getListOfAveragesOfSetOfSkillCategories,
-  attackCategories,
+  [ATTACKINGSKILLS],
 );
 
 export const getGoalkeepingRating = flowAsync(
@@ -189,17 +106,29 @@ export const getAttackingRatings = flowAsync(
   attackingRatings,
 );
 
+//everything above here needs to be retested and likely even rewritten
+
+export const getRandomNumberInRange = async ([min, max]: [
+  number,
+  number,
+]): Promise<number> => {
+  const minCeiled = Math.ceil(min),
+    maxFloored = Math.floor(max);
+  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+};
+
+export const getRandomNumberInRanges = flowAsync(map(getRandomNumberInRange));
+
 export const generatePlayerSkills = async (
   positionGroup: PositionGroup,
-): Promise<Record<string, SkillSet>> => {
-  const randomSkillValue = (skill: string) => [
-    skill,
-    getRandomNumberInRange(25, 100),
-  ];
-  const randomSkills = (skillSet: Array<string>) =>
-    Object.fromEntries(skillSet.map(randomSkillValue));
-  const randomSkillsMapper = mapValues(randomSkills);
-  return randomSkillsMapper(playerSkills);
+): Promise<Record<string, number>> => {
+  return await flowAsync(
+    property(positionGroup),
+    zipWith(async (skillName: string, skillRange: [number, number]) => {
+      return [skillName, await getRandomNumberInRange(skillRange)];
+    }, PLAYERSKILLS),
+    Object.fromEntries,
+  )(SKILLRANGESBYPOSITION);
 };
 
 export const generatePosition = async (
@@ -208,139 +137,34 @@ export const generatePosition = async (
   if (positionGroup == PositionGroup.Goalkeeper) {
     return Goalkeeper.GK;
   }
-  const playerPositionGroup: Array<PositionType> = Object.values(
-    positions[positionGroup],
-  );
-  const groupLength: number = playerPositionGroup.length;
-  return playerPositionGroup[getRandomNumberInRange(0, groupLength)];
+  return flowAsync(property([positionGroup]), sample)(POSITIONS);
 };
 
-export const generateBiographicalDetails = async (
-  positionGroup: PositionGroup,
-): Promise<BiographicalDetails> => {
-  // height, weight and age will be based off position group
-  const randomFoot: number = getRandomNumberInRange(0, 2);
-  const heightRange: [number, number] = [160, 200];
-  const weightRange: [number, number] = [60, 100];
-  const ageRange: [number, number] = [18, 40];
-  return {
+export const createPlayer = async ([ID, PositionGroup]: [
+  string,
+  PositionGroup,
+]): Promise<Player> => {
+  const [Height, Weight, Age, Years, Wages]: [
+    number,
+    number,
+    number,
+    number,
+    number,
+  ] = await getRandomNumberInRanges(BIORANGES);
+  return await promiseProps({
+    ID,
     Name: faker.person.fullName({ sex: "male" }),
-    PreferredFoot: [Foot.Right, Foot.Left][randomFoot],
-    Height: getRandomNumberInRange(...heightRange),
-    Weight: getRandomNumberInRange(...weightRange),
-    Age: getRandomNumberInRange(...ageRange),
+    PositionGroup,
+    Position: await generatePosition(PositionGroup),
+    Height,
+    Weight,
+    Age,
     NationalTeam: faker.location.country(),
-  };
-};
-
-export const generateContract = async (): Promise<ContractType> => {
-  const contractLengthRange: [number, number] = [1, 5];
-  return {
-    Wage: 1,
-    Years: getRandomNumberInRange(...contractLengthRange),
-  };
-};
-
-export const calculatePlayerRating = async (
-  skills: Record<string, SkillSet>,
-  positionGroup: PositionGroup,
-): Promise<number> => {
-  // positionRange will be used to calculate rating
-  const skillAverage = (skillSet: Record<string, number>): number =>
-    mean(Object.values(skillSet));
-  const skillAverageMapper = mapValues(skillAverage);
-  const calculateRating = flow(skillAverageMapper, skillAverage);
-  return calculateRating(skills);
-};
-
-export const calculateValue = (
-  playerRating: number,
-  playerAge: number,
-  positionGroup: PositionGroup,
-): number => {
-  return 1;
-};
-
-export const generatePlayerStatisticsObject = async (
-  season: string,
-): Promise<StatisticsType> => {
-  return {
-    [season]: emptySeasonStatisticsObject,
-  };
-};
-
-export const createPlayer = async (
-  positionGroup: PositionGroup,
-  season: string,
-  club?: string,
-): Promise<Player> => {
-  const [bio, Skills] = await Promise.all([
-    await generateBiographicalDetails(positionGroup),
-    await generatePlayerSkills(positionGroup),
-  ]);
-  return promiseProps({
-    ID: faker.string.numeric(6),
-    Name: bio.Name,
-    PositionGroup: positionGroup,
-    Position: await generatePosition(positionGroup),
-    PreferredFoot: bio.PreferredFoot,
-    Weight: bio.Weight,
-    Height: bio.Height,
-    Age: bio.Age,
-    NationalTeam: bio.NationalTeam,
-    Club: club ? club : null,
-    Contract: await generateContract(),
-    Value: 20_000_000,
-    Rating: await calculatePlayerRating(Skills, positionGroup),
-    Skills,
+    Contract: {
+      Wages,
+      Years,
+    },
+    Skills: await generatePlayerSkills(PositionGroup),
+    Value: 1,
   });
-};
-
-export const createGoalkeeper = partial(createPlayer, PositionGroup.Goalkeeper);
-export const createDefender = partial(createPlayer, PositionGroup.Defender);
-export const createMidfielder = partial(createPlayer, PositionGroup.Midfielder);
-export const createAttacker = partial(createPlayer, PositionGroup.Attacker);
-
-export const createGoalkeepers = async (
-  playerCount: number,
-  [season, club]: [string, string],
-): Promise<Array<Player>> => {
-  return await Promise.all(
-    range(0, playerCount).map(async (_) => {
-      return await createGoalkeeper(season, club);
-    }),
-  );
-};
-
-export const createDefenders = async (
-  playerCount: number,
-  [season, club]: [string, string],
-): Promise<Array<Player>> => {
-  return await Promise.all(
-    range(0, playerCount).map(async (_) => {
-      return await createDefender(season, club);
-    }),
-  );
-};
-
-export const createMidfielders = async (
-  playerCount: number,
-  [season, club]: [string, string],
-): Promise<Array<Player>> => {
-  return await Promise.all(
-    range(0, playerCount).map(async (_) => {
-      return await createMidfielder(season, club);
-    }),
-  );
-};
-
-export const createAttackers = async (
-  playerCount: number,
-  [season, club]: [string, string],
-): Promise<Array<Player>> => {
-  return await Promise.all(
-    range(0, playerCount).map(async (_) => {
-      return await createAttacker(season, club);
-    }),
-  );
 };

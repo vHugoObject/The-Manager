@@ -1,11 +1,8 @@
 import { flowAsync } from "futil-js";
 import { map, mergeAll, pick, mapValues, zipObject } from "lodash/fp";
 import { StatisticsObject, MatchEntry } from "../Common/CommonTypes";
-import {
-  getEntities,
-  getEntitiesNames,
-  getCurrentDateAsObject,
-} from "../Common/simulationUtilities";
+import { getEntities, getEntitiesNames } from "../Common/entityUtilities";
+import { getCurrentDateAsObject } from "../Common/Calendar";
 import { Club } from "../Clubs/ClubTypes";
 import { Player } from "../Players/PlayerTypes";
 import { Save } from "../StorageUtilities/SaveTypes";
@@ -38,10 +35,11 @@ export const generateMatchResults = async (
   clubIDs: Array<string>,
 ): Promise<Record<string, StatisticsObject>> => {
   const clubObjects: Array<Club> = await getEntities<Club>(save, clubIDs);
-  return await flowAsync(getClubsStarting11s, generateMatchStatistics, zipObject(clubIDs))
-    (save,
-    clubObjects,
-  );
+  return await flowAsync(
+    getClubsStarting11s,
+    generateMatchStatistics,
+    zipObject(clubIDs),
+  )(save, clubObjects);
 };
 
 export const getClubIDsFromMatchEntry = async (
@@ -73,18 +71,19 @@ export const matchEntryConverter = async (
     Home: matchEntry.match.player1.id as string,
     Away: matchEntry.match.player2.id as string,
     CompetitionID: matchEntry.tournamentID,
+    Season: matchEntry.season,
   };
 };
 
-export const getScoreFromMatchResult = (matchStatistics: 
-  Record<string, StatisticsObject>
+export const getScoreFromMatchResult = (
+  matchStatistics: Record<string, StatisticsObject>,
 ): Record<string, Record<string, number>> => {
-  const [homeID, awayID]: Array<string> = Object.keys(matchStatistics)
+  const [homeID, awayID]: Array<string> = Object.keys(matchStatistics);
   return {
     Score: {
       [homeID]: matchStatistics[homeID]["Goals"] as number,
-      [awayID]: matchStatistics[awayID]["Goals"] as number
-    } 
+      [awayID]: matchStatistics[awayID]["Goals"] as number,
+    },
   };
 };
 
@@ -110,7 +109,7 @@ export const generatePartialMatchLogFromMatchEntry = async (
 export const generateMatchResultFromMatchEntry = async (
   save: Save,
   matchEntry: MatchEntry,
-): Promise<[Record<string, string>, Record<string,StatisticsObject>]> => {
+): Promise<[Record<string, string>, Record<string, StatisticsObject>]> => {
   const clubIDs: [string, string] = await getClubIDsFromMatchEntry(matchEntry);
   return (await Promise.all(
     [createMatchNameFromIDs, generateMatchResults].map(

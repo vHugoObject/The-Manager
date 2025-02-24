@@ -1,13 +1,12 @@
 import { Manager as TournamentManager } from "tournament-organizer/components";
-import { LoadableTournamentValues } from "tournament-organizer/interfaces";
-import { Calendar, Entity, StatisticsType } from "../Common/CommonTypes";
+import {
+  LoadableTournamentValues,
+  SettableTournamentValues,
+  StandingsValues,
+} from "tournament-organizer/interfaces";
+import { Calendar, Entity } from "../Common/CommonTypes";
 
 export type SaveID = string | IDBValidKey;
-
-export interface ClubReference {
-  clubID: string;
-  clubName: string;
-}
 
 export interface Save {
   Name: string;
@@ -18,8 +17,13 @@ export interface Save {
   CurrentSeason: string;
   CurrentDate: Date;
   Entities: Record<string, Entity>;
-  EntityStatistics: Record<string, StatisticsType>;
-  saveID: SaveID;
-  calendar: Calendar;
-  scheduleManager: TournamentManager | LoadableTournamentValues;
+  EntitiesStatistics: Record<string, number>;
+  Skills: Record<string, Record<string, number>>;
+  SaveID: SaveID;
+  Calendar: Calendar;
+  ScheduleManager: TournamentManager | LoadableTournamentValues;
+  CompetitionStates: Record<
+    string,
+    [SettableTournamentValues, StandingsValues[]]
+  >;
 }

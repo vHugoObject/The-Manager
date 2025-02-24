@@ -27,4 +27,5 @@ export enum MatchResult {
   homeWin = "homeWin",
   draw = "draw",
   awayWin = "awayWin",
+  bye = "bye",
 }

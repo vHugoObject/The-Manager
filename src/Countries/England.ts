@@ -1,5 +1,5 @@
-import { simpleFaker } from "@faker-js/faker";
-const premierLeagueTeams: Array<string> = [
+import { BaseCountry } from "./CountryTypes";
+export const premierLeagueClubs: Array<string> = [
   "Liverpool",
   "Man United",
   "Leeds United",
@@ -18,7 +18,7 @@ const premierLeagueTeams: Array<string> = [
   "Newcastle",
 ];
 
-const championshipTeams = [
+export const championshipClubs: Array<string> = [
   "Watford",
   "Stoke City",
   "Brighton",
@@ -37,7 +37,7 @@ const championshipTeams = [
   "Huddersfield",
 ];
 
-const leagueOneTeams = [
+export const leagueOneClubs: Array<string> = [
   "Wolves",
   "Oxford",
   "Swindon",
@@ -56,7 +56,7 @@ const leagueOneTeams = [
   "Stockport",
 ];
 
-const leagueTwoTeams = [
+export const leagueTwoClubs: Array<string> = [
   "Scunthorpe",
   "York",
   "Bournemouth",
@@ -75,9 +75,8 @@ const leagueTwoTeams = [
   "Exeter",
 ];
 
-export const England = {
-  "English Premier League": premierLeagueTeams,
-  "The Championship": championshipTeams,
-  "League One": leagueOneTeams,
-  "League Two": leagueTwoTeams,
-};
+export const England: BaseCountry = [
+  "England",
+  ["English Premier League", "The Championship", "League One", "League Two"],
+  [premierLeagueClubs, championshipClubs, leagueOneClubs, leagueTwoClubs],
+];

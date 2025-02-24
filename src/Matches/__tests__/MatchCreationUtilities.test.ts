@@ -2,7 +2,7 @@ import { describe, expect, test, expectTypeOf } from "vitest";
 import { simpleFaker } from "@faker-js/faker";
 import { sampleSize, flatMap, mergeAll, set } from "lodash/fp";
 import { flow, sample, range } from "lodash";
-import { get } from 'lodash/fp'
+import { get } from "lodash/fp";
 import { Club } from "../../Clubs/ClubTypes";
 import { Player } from "../../Players/PlayerTypes";
 import { Save } from "../../StorageUtilities/SaveTypes";
@@ -164,14 +164,12 @@ describe("simulateMatch test suite", async () => {
     await Promise.all(
       range(0, testMatches).map(async () => {
         const twoRandomTestClubIDs: Array<string> = twoRandom(testClubIDs);
-        const actualMatchStatisticsObjects: Record<string, StatisticsObject> 
-        = await generateMatchResults(testSave, twoRandomTestClubIDs);
+        const actualMatchStatisticsObjects: Record<string, StatisticsObject> =
+          await generateMatchResults(testSave, twoRandomTestClubIDs);
         await Promise.all(
-          twoRandomTestClubIDs.map(
-            async (expectedClubID: string) => {
-              expect(actualMatchStatisticsObjects[expectedClubID]).toBeDefined()
-            },
-          ),
+          twoRandomTestClubIDs.map(async (expectedClubID: string) => {
+            expect(actualMatchStatisticsObjects[expectedClubID]).toBeDefined();
+          }),
         );
       }),
     );
@@ -219,6 +217,7 @@ describe("simulateMatch test suite", async () => {
       "Home",
       "Away",
       "CompetitionID",
+      "Season",
     ]);
     await Promise.all(
       Object.values(testMatches).map(async (testMatchEntry: MatchEntry) => {
@@ -244,6 +243,7 @@ describe("simulateMatch test suite", async () => {
       "Away",
       "CompetitionID",
       "Date",
+      "Season",
     ]);
 
     await Promise.all(
@@ -274,8 +274,8 @@ describe("simulateMatch test suite", async () => {
         const [actualHome, , actualAway] = actualMatchName.split(/\s/);
         const setOfActualNames: Set<string> = new Set([actualHome, actualAway]);
         expect(setOfExpectedClubNames.isSupersetOf(setOfActualNames));
-	
-        expect(actualMatchResult).toBeDefined()
+
+        expect(actualMatchResult).toBeDefined();
       }),
     );
   });
@@ -325,15 +325,20 @@ describe("simulateMatch test suite", async () => {
     await Promise.all(
       range(0, testMatches).map(async () => {
         const twoRandomTestClubIDs: Array<string> = twoRandom(testClubIDs);
-        const testMatchStatisticsObjects: Record<string,StatisticsObject> =
+        const testMatchStatisticsObjects: Record<string, StatisticsObject> =
           await generateMatchResults(testSave, twoRandomTestClubIDs);
-        const actualScores: Record<string, Record<string, number>> = getScoreFromMatchResult(testMatchStatisticsObjects);
-	twoRandomTestClubIDs.forEach((expectedClubID: string) => {
-	  const actualScore: number = get(["Score", expectedClubID], actualScores)
-	  expect(actualScore).toBeGreaterThanOrEqual(0);
+        const actualScores: Record<
+          string,
+          Record<string, number>
+        > = getScoreFromMatchResult(testMatchStatisticsObjects);
+        twoRandomTestClubIDs.forEach((expectedClubID: string) => {
+          const actualScore: number = get(
+            ["Score", expectedClubID],
+            actualScores,
+          );
+          expect(actualScore).toBeGreaterThanOrEqual(0);
           expect(actualScore).toBeLessThanOrEqual(5);
-	})        
-                
+        });
       }),
     );
   });

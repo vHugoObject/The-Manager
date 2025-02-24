@@ -1,10 +1,3 @@
-import { StatisticsObject, StatisticsType } from "../Common/CommonTypes";
-
-export enum Foot {
-  Right = "Right",
-  Left = "Left",
-}
-
 export enum PositionGroup {
   Midfielder = "Midfielder",
   Attacker = "Attacker",
@@ -39,17 +32,6 @@ export enum Goalkeeper {
 
 export type PositionType = Attacker | Midfielder | Defender | Goalkeeper;
 
-export type SkillSet = Record<string, number>;
-
-export interface BiographicalDetails {
-  Name: string;
-  PreferredFoot: Foot;
-  Height: number;
-  Weight: number;
-  Age: number;
-  NationalTeam: string;
-}
-
 export interface ContractType {
   Wage: number;
   Years: number;
@@ -60,14 +42,11 @@ export interface Player {
   Name: string;
   PositionGroup: PositionGroup;
   Position: PositionType;
-  PreferredFoot: Foot;
   Height: number;
   Weight: number;
   Age: number;
   NationalTeam: string;
-  Club: string | null;
   Contract: ContractType | null;
+  Skills: Record<string, number>;
   Value: number;
-  Rating: number;
-  Skills: Record<string, SkillSet>;
 }

@@ -1,14 +1,7 @@
-import { StatisticsType } from "../Common/CommonTypes";
-
 export interface Country {
   ID: string;
   Name: string;
-  Statistics: StatisticsType;
-  Competitions: Record<string, string>;
-  CurrentSeason: string;
+  Competitions: Array<string>;
 }
 
-export type BaseCountries = Record<
-  string,
-  Record<string, Record<string, string>>
->;
+export type BaseCountry = [string, Array<string>, Array<Array<string>>];

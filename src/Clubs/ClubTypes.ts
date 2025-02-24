@@ -1,10 +1,7 @@
-import { Player } from "../Players/PlayerTypes";
-import { StatisticsType } from "../Common/CommonTypes";
+import { PositionGroup } from "../Players/PlayerTypes";
 
 export interface Club {
   ID: string;
   Name: string;
-  Squad: Record<string, string>;
-  Starting11: Record<string, string>;
-  Bench: Record<string, string>;
+  Squad: Array<string>;
 }

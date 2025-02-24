@@ -1,4 +1,5 @@
-import { mean, sum } from "lodash";
+import { mean, sum, constant, spread, zipAll, map } from "lodash/fp";
+import { mapValuesIndexed } from "futil-js";
 
 export const normalizePercentages = async (
   percentages: Array<number>,
@@ -43,3 +44,11 @@ export const weightedRandom = async ([weights, items]: [
   );
   return items[randomIndex];
 };
+
+export const constantifyObjectValues = mapValuesIndexed(constant);
+
+export const convertToSet = (collection: Array<any>): Set<any> => {
+  return new Set(collection);
+};
+
+export const convertArrayOfArraysToArrayOfSets = map(convertToSet);

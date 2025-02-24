@@ -1,9 +1,18 @@
 import "lodash.product";
 import _ from "lodash";
 import { mean, range, partial, sum, gt, lt, eq } from "lodash";
-import { concat, sortBy, multiply, map,
-  reverse, dropWhile, mergeAll, zip, flow,
-  spread, take } from "lodash/fp";
+import {
+  concat,
+  sortBy,
+  multiply,
+  map,
+  reverse,
+  dropWhile,
+  mergeAll,
+  zipAll,
+  flow,
+  take,
+} from "lodash/fp";
 import { flowAsync } from "futil-js";
 import {
   U,
@@ -14,7 +23,7 @@ import {
   EMPTYSCOREMATRIX,
   MATCHRESULTS,
 } from "./MatchConstants";
-import { MatchResult } from "./MatchTypes"
+import { MatchResult } from "./MatchTypes";
 import { Player } from "../Players/PlayerTypes";
 import { StatisticsObject } from "../Common/CommonTypes";
 import {
@@ -245,24 +254,30 @@ export const matchActualGoals = async (
   return await getScore(goalsMatrix);
 };
 
-
-export const whoWon = ([homeGoals, awayGoals]: [number, number]): [StatisticsObject,
-StatisticsObject] => {
-  const result: Array<[MatchResult, boolean]> = [[MatchResult.homeWin, gt(homeGoals, awayGoals)],
-    [MatchResult.draw, eq(homeGoals, awayGoals)], [MatchResult.awayWin, lt(homeGoals, awayGoals)]]
-  return MATCHRESULTS[dropWhile((([, value]) => value == false), result)[0][0]]
-}
+export const whoWon = ([homeGoals, awayGoals]: [number, number]): [
+  StatisticsObject,
+  StatisticsObject,
+] => {
+  const result: Array<[MatchResult, boolean]> = [
+    [MatchResult.homeWin, gt(homeGoals, awayGoals)],
+    [MatchResult.draw, eq(homeGoals, awayGoals)],
+    [MatchResult.awayWin, lt(homeGoals, awayGoals)],
+  ];
+  return MATCHRESULTS[dropWhile(([, value]) => value == false, result)[0][0]];
+};
 
 // better, but still not correct,
 //not sure this is the correct way to calculate expected goal
+// need to use sample
 export const matchExpectedGoals = async (
   goalsMatrix: Array<[[number, number], number]>,
 ): Promise<Array<number>> => {
-  const [homeScores, awayScores, weights] =
-    await flowAsync(sortProbabilityMatrix,
-      reverse,
-      convertJointProbabilitiesMatrixToLists,
-      map(take(5)))(goalsMatrix);
+  const [homeScores, awayScores, weights] = await flowAsync(
+    sortProbabilityMatrix,
+    reverse,
+    convertJointProbabilitiesMatrixToLists,
+    map(take(5)),
+  )(goalsMatrix);
   return await Promise.all(
     [homeScores, awayScores].map(
       async (scores: Array<number>) => await weightedMean(weights, scores),
@@ -270,6 +285,7 @@ export const matchExpectedGoals = async (
   );
 };
 
+// Goals Against
 export const matchGoals = async (
   goalsMatrix: Array<[[number, number], number]>,
 ): Promise<[StatisticsObject, StatisticsObject]> => {
@@ -283,34 +299,35 @@ export const matchGoals = async (
     }),
   );
   return [
-    { "Goals": homeActualGoals,
-      "Expected Goals": homeExpectedGoals,
-    },
-    { "Goals": awayActualGoals,
-      "Expected Goals": awayExpectedGoals,
-    },
+    { Goals: homeActualGoals, "Expected Goals": homeExpectedGoals },
+    { Goals: awayActualGoals, "Expected Goals": awayExpectedGoals },
   ];
 };
 
-export const matchWinDrawLoss = async (goalStatistics: [StatisticsObject, StatisticsObject]): Promise<[StatisticsObject, StatisticsObject]> => {
-  const [{Goals: homeGoals, }, {Goals: awayGoals, }] = goalStatistics
-  return whoWon([homeGoals as number, awayGoals as number])
-}
+export const matchWinDrawLoss = async (
+  goalStatistics: [StatisticsObject, StatisticsObject],
+): Promise<[StatisticsObject, StatisticsObject]> => {
+  const [{ Goals: homeGoals }, { Goals: awayGoals }] = goalStatistics;
+  return whoWon([homeGoals as number, awayGoals as number]);
+};
 
 export const generateMatchGoals = flowAsync(
   playersToJointProbabilitiesMatrixForGoals,
-  matchGoals
-)
+  matchGoals,
+);
 
 export const generateMatchStatistics = async (
-  matchPlayers: [Array<Player>,Array<Player>]
+  matchPlayers: [Array<Player>, Array<Player>],
 ): Promise<[StatisticsObject, StatisticsObject]> => {
-  const goals: [StatisticsObject, StatisticsObject] = await generateMatchGoals(matchPlayers)
-  const stats: Array<[StatisticsObject, StatisticsObject]> = await Promise.all([matchWinDrawLoss].map
-       (async(func: Function) => {
-	 return await func(goals)
-       }))
-  return flow(spread(zip), map(mergeAll))(concat(stats, [goals])) as [StatisticsObject, StatisticsObject]
-}
-
-
+  const goals: [StatisticsObject, StatisticsObject] =
+    await generateMatchGoals(matchPlayers);
+  const stats: Array<[StatisticsObject, StatisticsObject]> = await Promise.all(
+    [matchWinDrawLoss].map(async (func: Function) => {
+      return await func(goals);
+    }),
+  );
+  return flow(zipAll, map(mergeAll))(concat(stats, [goals])) as [
+    StatisticsObject,
+    StatisticsObject,
+  ];
+};

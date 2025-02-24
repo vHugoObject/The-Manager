@@ -31,7 +31,7 @@ import {
   generateMatchStatistics,
   matchGoals,
   whoWon,
-  matchWinDrawLoss
+  matchWinDrawLoss,
 } from "../MatchSimulationUtilities";
 
 describe("MatchSimulationUtilities test suite", async () => {
@@ -382,8 +382,7 @@ describe("MatchSimulationUtilities test suite", async () => {
   });
 
   test("test matchActualGoals", async () => {
-  
-   await Promise.all(
+    await Promise.all(
       range(0, 1000).map(async (_) => {
         const testGoalsMatrix: Array<[[number, number], number]> =
           await playersToJointProbabilitiesMatrixForGoals(testStartingElevens);
@@ -394,65 +393,60 @@ describe("MatchSimulationUtilities test suite", async () => {
           expect(score).toBeGreaterThanOrEqual(0);
           expect(score).toBeLessThanOrEqual(5);
         });
-        
-      })
-   )
-  })
+      }),
+    );
+  });
 
-  
   test("test whoWon", async () => {
-
-    range(0,100).map((_) => {
-      const testScore: [number, number] = [simpleFaker.number.int({min: 0, max: 5}), simpleFaker.number.int({min: 0, max: 5})]
-      const [{Wins: actualHomeWins, Draws: actualHomeDraws, Losses: actualHomeLosses},
-	{Wins: actualAwayWins, Draws: actualAwayDraws, Losses: actualAwayLosses}] = whoWon(testScore)      
+    range(0, 100).map((_) => {
+      const testScore: [number, number] = [
+        simpleFaker.number.int({ min: 0, max: 5 }),
+        simpleFaker.number.int({ min: 0, max: 5 }),
+      ];
+      const [
+        {
+          Wins: actualHomeWins,
+          Draws: actualHomeDraws,
+          Losses: actualHomeLosses,
+        },
+        {
+          Wins: actualAwayWins,
+          Draws: actualAwayDraws,
+          Losses: actualAwayLosses,
+        },
+      ] = whoWon(testScore);
 
       if (testScore[0] > testScore[1]) {
-	
-	expect(actualHomeWins).toBe(1)
-	expect(actualHomeDraws).toBe(0)
-	expect(actualHomeLosses).toBe(0)
-	
-	
-	expect(actualAwayWins).toBe(0)
-	expect(actualAwayDraws).toBe(0)
-	expect(actualAwayLosses).toBe(1)
-	
-	
+        expect(actualHomeWins).toBe(1);
+        expect(actualHomeDraws).toBe(0);
+        expect(actualHomeLosses).toBe(0);
+
+        expect(actualAwayWins).toBe(0);
+        expect(actualAwayDraws).toBe(0);
+        expect(actualAwayLosses).toBe(1);
       }
 
       if (testScore[0] === testScore[1]) {
+        expect(actualHomeWins).toBe(0);
+        expect(actualHomeDraws).toBe(1);
+        expect(actualHomeLosses).toBe(0);
 
-	expect(actualHomeWins).toBe(0)
-	expect(actualHomeDraws).toBe(1)
-	expect(actualHomeLosses).toBe(0)
-	
-	
-	expect(actualAwayWins).toBe(0)
-	expect(actualAwayDraws).toBe(1)
-	expect(actualAwayLosses).toBe(0)
-	
+        expect(actualAwayWins).toBe(0);
+        expect(actualAwayDraws).toBe(1);
+        expect(actualAwayLosses).toBe(0);
       }
 
       if (testScore[0] < testScore[1]) {
+        expect(actualHomeWins).toBe(0);
+        expect(actualHomeDraws).toBe(0);
+        expect(actualHomeLosses).toBe(1);
 
-	expect(actualHomeWins).toBe(0)
-	expect(actualHomeDraws).toBe(0)
-	expect(actualHomeLosses).toBe(1)
-	
-	
-	expect(actualAwayWins).toBe(1)
-	expect(actualAwayDraws).toBe(0)
-	expect(actualAwayLosses).toBe(0)
-	
+        expect(actualAwayWins).toBe(1);
+        expect(actualAwayDraws).toBe(0);
+        expect(actualAwayLosses).toBe(0);
       }
-      
-    })
-    
+    });
   });
-
-
-  
 
   test("test matchGoals", async () => {
     const testGoalsMatrix: Array<[[number, number], number]> =
@@ -463,49 +457,45 @@ describe("MatchSimulationUtilities test suite", async () => {
 
     expect(actualMatchStatistics.length).toBe(2);
 
-    const expectedObjectKeys: Array<string> = [
-      "Goals",
-      "Expected Goals",      
-    ];
-
+    const expectedObjectKeys: Array<string> = ["Goals", "Expected Goals"];
 
     await Promise.all(
-      actualMatchStatistics.map(async (actualStatisticsObject: StatisticsObject) => {	
-        expectedObjectKeys.forEach((expectedKey) => {
-          expect(actualStatisticsObject[expectedKey]).toBeGreaterThanOrEqual(0);
-          expect(actualStatisticsObject[expectedKey]).toBeLessThanOrEqual(5);
-        });
-      }),
+      actualMatchStatistics.map(
+        async (actualStatisticsObject: StatisticsObject) => {
+          expectedObjectKeys.forEach((expectedKey) => {
+            expect(actualStatisticsObject[expectedKey]).toBeGreaterThanOrEqual(
+              0,
+            );
+            expect(actualStatisticsObject[expectedKey]).toBeLessThanOrEqual(5);
+          });
+        },
+      ),
     );
   });
 
   test("test matchWinDrawLoss", async () => {
-    
     const testGoalsMatrix: Array<[[number, number], number]> =
       await playersToJointProbabilitiesMatrixForGoals(testStartingElevens);
 
     const testMatchGoals: [StatisticsObject, StatisticsObject] =
       await matchGoals(testGoalsMatrix);
 
-    const expectedObjectKeys: Array<string> = [
-      "Wins",
-      "Draws",
-      "Losses",
-    ];
+    const expectedObjectKeys: Array<string> = ["Wins", "Draws", "Losses"];
 
-    const actualMatchWinDrawLoss = await matchWinDrawLoss(testMatchGoals)
+    const actualMatchWinDrawLoss = await matchWinDrawLoss(testMatchGoals);
     await Promise.all(
-      actualMatchWinDrawLoss.map(async (actualStatisticsObject: StatisticsObject) => {	
-        expectedObjectKeys.forEach((expectedKey) => {
-          expect(actualStatisticsObject[expectedKey]).toBeGreaterThanOrEqual(0);
-          expect(actualStatisticsObject[expectedKey]).toBeLessThanOrEqual(1);
-        });
-      }),
+      actualMatchWinDrawLoss.map(
+        async (actualStatisticsObject: StatisticsObject) => {
+          expectedObjectKeys.forEach((expectedKey) => {
+            expect(actualStatisticsObject[expectedKey]).toBeGreaterThanOrEqual(
+              0,
+            );
+            expect(actualStatisticsObject[expectedKey]).toBeLessThanOrEqual(1);
+          });
+        },
+      ),
     );
-          
-
-  })
-    
+  });
 
   test("test generateMatchGoals", async () => {
     const actualMatchStatisticsObjects: [StatisticsObject, StatisticsObject] =
@@ -525,13 +515,10 @@ describe("MatchSimulationUtilities test suite", async () => {
       }),
     );
   });
-  
 
   test("test generateMatchStatistics", async () => {
     const actualMatchStatistics: [StatisticsObject, StatisticsObject] =
-      await generateMatchStatistics(testStartingElevens);    
-
-    console.log(actualMatchStatistics)
+      await generateMatchStatistics(testStartingElevens);
     expect(actualMatchStatistics.length).toBe(2);
 
     const expectedObjectKeys: Array<string> = [
@@ -539,21 +526,20 @@ describe("MatchSimulationUtilities test suite", async () => {
       "Expected Goals",
       "Wins",
       "Losses",
-      "Draws"
+      "Draws",
     ];
 
-
     await Promise.all(
-      actualMatchStatistics.map(async (actualStatisticsObject: StatisticsObject) => {	
-        expectedObjectKeys.forEach((expectedKey) => {
-          expect(actualStatisticsObject[expectedKey]).toBeGreaterThanOrEqual(0);
-          expect(actualStatisticsObject[expectedKey]).toBeLessThanOrEqual(5);
-        });
-      }),
+      actualMatchStatistics.map(
+        async (actualStatisticsObject: StatisticsObject) => {
+          expectedObjectKeys.forEach((expectedKey) => {
+            expect(actualStatisticsObject[expectedKey]).toBeGreaterThanOrEqual(
+              0,
+            );
+            expect(actualStatisticsObject[expectedKey]).toBeLessThanOrEqual(5);
+          });
+        },
+      ),
     );
   });
-
-  
-
-  
 });
