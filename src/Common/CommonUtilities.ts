@@ -1,5 +1,16 @@
-import { mean, sum, constant, spread, zipAll, map } from "lodash/fp";
-import { mapValuesIndexed } from "futil-js";
+import { mean, sum, constant, spread, zipAll, map, sortBy, first, last } from "lodash/fp";
+import { flowAsync, mapIndexed, mapValuesIndexed } from "futil-js";
+
+export const arrayRotator = ([array, rotations]: Array<any>): Array<any> => {
+  const arrayLength: number = array.length
+  const effectiveRotations: number = rotations % arrayLength
+  return flowAsync(
+    mapIndexed((item: any, index: number) => [(index + effectiveRotations) % arrayLength, item]),
+    sortBy(first),
+    map(last)
+  )(array)
+  
+}
 
 export const normalizePercentages = async (
   percentages: Array<number>,

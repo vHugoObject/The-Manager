@@ -36,7 +36,6 @@ export const parseYear = parse(new Date(1, 1), "y");
 
 // how does date--fns do week numbers
 export const getThirdSundayOfAugust = flowAsync(
-  parseYear,
   addMonths(AUGUST),
   eachWeekendOfMonth,
   filter(
@@ -64,13 +63,14 @@ export const getFirstMondayOfFebruaryOfNextYear = flowAsync(
   nextMonday,
 );
 
-const augustInterval = {
-  start: new Date(year, AUGUST, 1),
-  end: new Date(year, AUGUST, 31),
-};
+export const getJuneFifteenOfNextYear = flowAsync(
+  addOneYear,
+  addMonths(JUNE),
+  addDays(15)
+)
 
-export const createCalendar = (start: Date): Calendar => {};
+// const augustInterval = {
+//   start: new Date(year, AUGUST, 1),
+//   end: new Date(year, AUGUST, 31),
+// };
 
-export const totalDoubleRoundRobinGames = (clubs: number): number => {
-  return clubs * (clubs - 1);
-};

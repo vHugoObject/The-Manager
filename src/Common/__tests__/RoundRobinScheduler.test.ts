@@ -1,161 +1,129 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import { flowAsync } from "futil-js";
-import { range, map, flatMap, flatten, first, last, over, size, property, sum, curry, add } from "lodash/fp"
-import { convertToSet, convertArrayOfArraysToArrayOfSets } from "../CommonUtilities"
-import { roundRobinScheduler, arrayRotator, totalRoundRobinMatches, totalRoundRobinRounds, matchesPerRoundOfRoundRobin, rotate2DMatrix } from "../RoundRobinScheduler"
+import { range, rangeStep, map, flatten, size, sum, add } from "lodash/fp"
+import { convertToSet } from "../CommonUtilities"
+import { roundRobinScheduler, totalRoundRobinMatches, totalRoundRobinRounds, matchesPerRoundOfRoundRobin, minusOne, addOne, multiplyByTwo, modularArithmetic,
+  firstWeekOfRoundRobinWithEvenNumberClubs, everyWeekAfterFirstWeekofRoundRobin,
+  doubleRoundRobinScheduler, totalDoubleRoundRobinRounds, totalDoubleRoundRobinMatches
+} from "../RoundRobinScheduler"
 
 
 
 describe("RoundRobinScheduler tests", async () => {
 
-  const getIndexAfterForwardRotation = curry(([effectiveRotations, arrayLength]: [number, number], oldIndex: number): number => (oldIndex + effectiveRotations) % arrayLength)
 
   test.prop(
     [
-      fc.integer({min: 2, max: 50})
-	.chain((minLength: number) => {
-	  return fc.tuple(fc.array(fc.integer(), {minLength}), fc.constant(minLength))
-	})
+      fc.constantFrom(...rangeStep(2,18,100))
+    ],
+  )("matchesPerRoundOfRoundRobin", async (testClubsCount) => {
+
+    const actualMatchesPerRound: number = matchesPerRoundOfRoundRobin(testClubsCount)
+    expect(actualMatchesPerRound).toEqual(testClubsCount/2)
+    
+    
+  });
+  
+  test.prop(
+    [
+      fc.integer({min: 5, max: 100}).chain(
+	(rangeMax: number) => {
+	  return fc.tuple(fc.integer({min: 1, max: rangeMax}), fc.constant(rangeMax))
+	}
+      ), 
     ]
-  )("arrayRotator", async (testArrayAndRotations) => {
+  )("modularArithmetic", async (testNumAndRangeMax) => {
 
-    const [testArray, testRotations]: [Array<number>, number] = testArrayAndRotations
-    const actualRotatedArray: Array<string> = arrayRotator(testArrayAndRotations)
-
-    const [actualSet, expectedSet] = convertArrayOfArraysToArrayOfSets([actualRotatedArray, testArray])
-    expect(actualSet).toStrictEqual(expectedSet)
+    const [testNum, rangeMax]: [number, number] = testNumAndRangeMax
+    const testRangeMax = flowAsync(multiplyByTwo, minusOne)(rangeMax)
+    const testModularAddition = modularArithmetic(addOne)
+    const testModularSubtraction = modularArithmetic(minusOne)
+    const actualNumberAfterSutraction = testModularSubtraction(testRangeMax, testNum)
+    const actualNumberAfterAddition = testModularAddition(testRangeMax, testNum)
     
-    const testArrayLength: number = testArray.length
-    const expectedEffectiveRotations: number = testRotations % testArrayLength
-    const getExpectedNewIndex = getIndexAfterForwardRotation([expectedEffectiveRotations, testArrayLength])
-    
-    
-    const expectedIndexOfFirstItem = getExpectedNewIndex(0)
-    expect(actualRotatedArray[expectedIndexOfFirstItem]).toBe(first(testArray))
-
-    const testArrayLastIndex: number = testArrayLength - 1
-    const expectedIndexOfLastItem = getExpectedNewIndex(testArrayLastIndex)
-    expect(actualRotatedArray[expectedIndexOfLastItem]).toBe(last(testArray))
-
-    
-    
-    
-    
-    
-
+    map((actualNumber) => {
+      expect(actualNumber).toBeGreaterThanOrEqual(0)
+      expect(actualNumber).toBeLessThanOrEqual(testRangeMax)
+      expect(actualNumber).not.toEqual(testNum)
+    })([actualNumberAfterAddition, actualNumberAfterSutraction])
     
     
     
   });
 
-
   test.prop(
     [
-      fc.tuple(fc.integer({min: 2, max: 50}), fc.integer({min: 2, max: 5}))
-	.chain(([dimensionSize, dimensions]: [number, number]) => {	  
-	  return fc.tuple(fc.array(fc.array(fc.integer(), {minLength: dimensionSize}), {minLength: dimensions, maxLength: dimensions}),
-	    fc.constant(dimensionSize))
-	})
-    ],
-    {numRuns: 0}
-  )("rotate2DMatrix", async (testMatrixAndRotations) => {
 
-    const [testMatrix, testRotations]: [Array<Array<number>>, number] = testMatrixAndRotations
-    const actualRotatedMatrix: Array<Array<number>> = rotate2DMatrix(testMatrixAndRotations)
-
-    const [actualMatrixSet, expectedMatrixSet] = flowAsync(map(flatten), convertArrayOfArraysToArrayOfSets)([actualRotatedMatrix, testMatrix])
-    expect(actualMatrixSet).toStrictEqual(expectedMatrixSet)
-
-    const testMatrixArraySizes: [number, number] = map(size)(testMatrix) as [number, number]
-    const totalMatrixSize: number = sum(testMatrixArraySizes)
-    
-
-    
-    const getIndexAfterBackwardsRotation = curry(([effectiveRotations, arrayLength]: [number, number], oldIndex: number): number => (oldIndex - effectiveRotations) % arrayLength)
-    // not right, need effectiveRowChange and effectiveColumnChanges?
-    const getExpectedRowAfter2DForwardRotation = curry((effectiveRotations: number, originalRow: number): number => (originalRow + effectiveRotations) % 1)
-    const expectedEffectiveRotations: number = testRotations % totalMatrixSize
-    
-    const getExpectedColumnAfter2DRotation = curry(([effectiveRotations, [firstRowLength, secondRowLength]]: [number, [number, number]], [originalRow, originalColumn, newRow]: [number, number, number]): number => {
-
-      if (originalRow == 0 && newRow == 0) {
-	return getIndexAfterForwardRotation([effectiveRotations, firstRowLength], originalColumn)
-      }
-
-      if (originalRow == 1 && newRow == 1) {
-	return getIndexAfterBackwardsRotation([effectiveRotations, secondRowLength], originalColumn)
-      }
+      fc.constantFrom(...rangeStep(2,18,100))
       
-      if (originalRow == 0 && newRow == 1) {
-	const expectedEffectiveRotations = effectiveRotations - firstRowLength
-	return getIndexAfterBackwardsRotation([expectedEffectiveRotations, secondRowLength], secondRowLength - 1)
-      }
-            
+    ],
+  )("firstWeekOfRoundRobinWithEvenNumberClubs", async (testClubsCount) => {
 
-      const expectedEffectiveRotations: number = effectiveRotations - secondRowLength
-      return getIndexAfterForwardRotation([expectedEffectiveRotations, firstRowLength], 0)      
-
-
-    })
-
-
-    const getExpectedColumn = getExpectedColumnAfter2DRotation([expectedEffectiveRotations, testMatrixArraySizes])
-    const getExpectedRow = getExpectedRowAfter2DForwardRotation(expectedEffectiveRotations)
-    const originalLastItemIndex: number = flowAsync(last, size, add(-1))(testMatrix)
-    
-    const [expectedRowOfOriginalFirstItem, expectedRowOfOriginalLastItem]: [number, number] = map(getExpectedRow)([0, originalLastItemIndex])
-    const [expectedColumnOfOriginalFirstItem, expectedColumnOfOriginalLastItem]: [number, number] = map(getExpectedColumn)([[0,0, expectedRowOfOriginalFirstItem], [1, originalLastItemIndex, expectedColumnOfOriginalLastItem]])
-    expect(property([expectedRowOfOriginalFirstItem, expectedColumnOfOriginalFirstItem], actualRotatedMatrix)).toStrictEqual(property([0,0], testMatrix))
-    expect(property([expectedRowOfOriginalLastItem, expectedColumnOfOriginalLastItem], actualRotatedMatrix)).toStrictEqual(property([1,originalLastItemIndex], testMatrix))
-
-    
-
-    
-    
-    
-    
-    
-    
-
-    
-    
+    const [actualClubsCount, actualMatches]: [number, Array<[number, number]>] = firstWeekOfRoundRobinWithEvenNumberClubs(testClubsCount)
+    expect(actualClubsCount).toEqual(testClubsCount)
+    const actualSum: number = flowAsync(flatten, sum)(actualMatches)
+    const expectedSum: number = flowAsync(range(0), sum)(testClubsCount)
+    expect(actualSum).toEqual(expectedSum)
     
   });
 
-  // even numbers only
   test.prop(
     [
-      fc.integer({min: 20, max: 20})
+
+      fc.constantFrom(...rangeStep(2,18,100))
+      
     ],
-    {numRuns: 0}
+  )("everyWeekAfterFirstWeekofRoundRobin", async (testClubsCount) => {
+
+    const testClubsCountAndFirstRound: [number, Array<[number, number]>] = firstWeekOfRoundRobinWithEvenNumberClubs(testClubsCount)
+    const actualFullSchedule: Array<Array<[number, number]>> = everyWeekAfterFirstWeekofRoundRobin(testClubsCountAndFirstRound)
+ 
+
+    const actualRoundsSet = new Set(actualFullSchedule)
+    const expectedRounds = totalRoundRobinRounds(testClubsCount)
+    expect(actualRoundsSet.size).toEqual(expectedRounds)
+
+    const actualMatchupsSet = flowAsync(flatten, convertToSet)(actualFullSchedule)
+    const expectedTotalMatches = totalRoundRobinMatches(testClubsCount)
+    expect(actualMatchupsSet.size).toEqual(expectedTotalMatches)
+    
+    map((actualMatches) => {
+      const actualSum: number = flowAsync(flatten, sum)(actualMatches)
+      const expectedSum: number = flowAsync(range(0), sum)(testClubsCount)
+      expect(actualSum).toEqual(expectedSum)
+    })(actualFullSchedule)
+    
+  });
+
+  test.prop(
+    [
+      fc.constantFrom(...rangeStep(2,18,100))
+    ]
   )("roundRobinScheduler", async (testClubsCount) => {
-   
-    
-    const generateTestClubs = (testClubsCount: number): Array<string> => Array.from({length: testClubsCount},(_ , index: number) => `Club_${index}`)
 
-    const testClubs: Array<string> = generateTestClubs(testClubsCount)
-    const expectedClubsSet: Set<string> = new Set(testClubs)
+    const actualSchedule: Array<Array<[number, number]>> = roundRobinScheduler(testClubsCount)
+    const expectedRounds: number = totalRoundRobinRounds(testClubsCount)
+    expect(actualSchedule.length).toEqual(expectedRounds)
+    const expectedMatchesCount: number = totalRoundRobinMatches(testClubsCount)
+    const actualMatchesCount: number = flowAsync(flatten, size)(actualSchedule)
+    expect(actualMatchesCount).toEqual(expectedMatchesCount)
     
-    const actualMatches: Array<Array<[string, string]>> = await roundRobinScheduler(testClubs)
-    console.log(actualMatches)
+  });
 
-    const actualWeeks: number = actualMatches.length
-    const expectedWeeks: number = totalRoundRobinRounds(testClubsCount)
-    expect(actualWeeks).toEqual(expectedWeeks)
-    
-    const actualMatchesPerWeek: number = flowAsync(map(size), convertToSet)(actualMatches)
-    const expectedMatchesPerWeek: number = matchesPerRoundOfRoundRobin(testClubsCount)    
-    expect(actualMatchesPerWeek).toEqual(expectedMatchesPerWeek)
-            
-    const actualSetOfClubSets: Set<Set<string>> = flowAsync(
-      flatMap((actualMatches: Array<[string, string]>) => flowAsync(flatten, convertToSet)(actualMatches)),
-      convertToSet,
-    )(actualMatches)
+  test.prop(
+    [
+      fc.constantFrom(...rangeStep(2,18,100))
+    ]
+  )("doubleRoundRobinScheduler", async (testClubsCount) => {
 
+    const actualSchedule: Array<Array<[number, number]>> = doubleRoundRobinScheduler(testClubsCount)
+    const expectedRounds: number = totalDoubleRoundRobinRounds(testClubsCount)
+    expect(actualSchedule.length).toEqual(expectedRounds)
     
-    expect(actualSetOfClubSets).toStrictEqual(new Set(expectedClubsSet))
-    
+    const expectedMatchesCount: number = totalDoubleRoundRobinMatches(testClubsCount)
+    const actualMatchesSet: Set<[number, number]> = flowAsync(flatten, convertToSet)(actualSchedule)    
+    expect(actualMatchesSet.size).toEqual(expectedMatchesCount)
     
   });
 
