@@ -1,7 +1,7 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import { flowAsync } from "futil-js";
-import { range, rangeStep, map, flatten, size, sum, add } from "lodash/fp"
+import { range, rangeStep, map, flatten, size, sum } from "lodash/fp"
 import { convertToSet } from "../CommonUtilities"
 import { roundRobinScheduler, totalRoundRobinMatches, totalRoundRobinRounds, matchesPerRoundOfRoundRobin, minusOne, addOne, multiplyByTwo, modularArithmetic,
   firstWeekOfRoundRobinWithEvenNumberClubs, everyWeekAfterFirstWeekofRoundRobin,
@@ -124,6 +124,7 @@ describe("RoundRobinScheduler tests", async () => {
     const expectedMatchesCount: number = totalDoubleRoundRobinMatches(testClubsCount)
     const actualMatchesSet: Set<[number, number]> = flowAsync(flatten, convertToSet)(actualSchedule)    
     expect(actualMatchesSet.size).toEqual(expectedMatchesCount)
+
     
   });
 

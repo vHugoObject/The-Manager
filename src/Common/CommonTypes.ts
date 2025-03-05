@@ -1,4 +1,3 @@
-import { MatchValues } from "tournament-organizer/interfaces";
 import { Club } from "../Clubs/ClubTypes";
 import { Player } from "../Players/PlayerTypes";
 import { Competition } from "../Competitions/CompetitionTypes";
@@ -23,20 +22,6 @@ export interface SaveArguments {
   BaseEntities: BaseEntities;
 }
 
-// tournamentID should be change to competitionID
-export interface MatchEntry {
-  match: MatchValues;
-  competitionID: string;
-  season: string;
-}
-
-export interface CalendarEntry {
-  matches: Record<string, MatchEntry>;
-  seasonEndDate: boolean;
-  transferWindowOpen: boolean;
-}
-export type Calendar = Record<string, CalendarEntry>;
 
 export type Entity = Club | Player | Competition | Country | MatchLog;
 
-export type GameObject = Club | Player | Competition | Country | Calendar;

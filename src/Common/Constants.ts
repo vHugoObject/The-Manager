@@ -9,6 +9,9 @@ export const AUGUST: number = 7;
 export const SEPTEMBER: number = 8;
 export const DECEMBER: number = 11;
 
+
+
+
 export const MATCHDAYFUNCTIONS: Record<string, Function> = {
   domesticLeague: isSunday,
 };
@@ -21,17 +24,4 @@ export const BASECLUBCOMPOSITION: Array<[PositionGroup, number]> = [
 ];
 
 export const DEFAULTSQUADSIZE: number = 25;
-
-export const TRANSFERWINDOWOPEN: CalendarEntry = {
-  matches: {},
-  seasonEndDate: false,
-  transferWindowOpen: true,
-};
-
-export const TRANSFERWINDOWCLOSED: CalendarEntry = {
-  matches: {},
-  seasonEndDate: false,
-  transferWindowOpen: false,
-};
-
 

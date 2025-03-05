@@ -35,9 +35,6 @@ importers:
       react-router-dom:
         specifier: ^6.26.2
         version: 6.26.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      tournament-organizer:
-        specifier: ^3.7.1
-        version: 3.7.1
     devDependencies:
       '@eslint/js':
         specifier: ^9.9.0
@@ -901,9 +898,6 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
-  edmonds-blossom-fixed@1.0.1:
-    resolution: {integrity: sha512-wtpraSt4yJeUpNU8RGC4q2JBxsJbHFxI7/htm/mS4FgxSN90WBwmgE7QZwpcY70KJRqmfLCNxU49UIc+DfzLKQ==}
-
   electron-to-chromium@1.5.25:
     resolution: {integrity: sha512-kMb204zvK3PsSlgvvwzI3wBIcAw15tRkYk+NQdsjdDtcQWTp2RABbMQ9rUBy8KNEOM+/E6ep+XC3AykiWZld4g==}
 
@@ -1454,13 +1448,6 @@ packages:
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
-  randombytes@2.0.3:
-    resolution: {integrity: sha512-lDVjxQQFoCG1jcrP06LNo2lbWp4QTShEXnhActFBwYuHprllQV6VUpwreApsYqCgD+N1mHoqJ/BI/4eV4R2GYg==}
-
-  randomstring@1.3.0:
-    resolution: {integrity: sha512-gY7aQ4i1BgwZ8I1Op4YseITAyiDiajeZOPQUbIq9TPGPhUm5FX59izIaOpmKbME1nmnEiABf28d9K2VSii6BBg==}
-    hasBin: true
-
   react-dom@18.3.1:
     resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
     peerDependencies:
@@ -1665,13 +1652,6 @@ packages:
   tough-cookie@4.1.4:
     resolution: {integrity: sha512-Loo5UUvLD9ScZ6jh8beX1T6sO1w2/MpCRpEP7V280GKMVUQ0Jzar2U3UJPsrdbziLEMMhu3Ujnq//rhiFuIeag==}
     engines: {node: '>=6'}
-
-  tournament-organizer@3.7.1:
-    resolution: {integrity: sha512-FiLtjBhjLzd3y3QEVrzZsvLYgf3nJoIWFO9kB7csReGj8TA5WW+R+obLAcUNN+olkLRUI1/cIIkOtL6yN65NjQ==}
-    engines: {node: '>=14.16'}
-
-  tournament-pairings@1.5.3:
-    resolution: {integrity: sha512-RXPrToN6LfDuMtII/JKIxSRhER2X2PBLmd8ZQ6g2Ec7kumYs6SQdFOWfoTTJdG8II/BPUZchx74rR4U7Cwl2Hg==}
 
   tr46@5.0.0:
     resolution: {integrity: sha512-tk2G5R2KRwBd+ZN0zaEXpmzdKyOYksXwywulIX95MBODjSzMIuQnQ3m8JxgbhnL1LeVo7lqQKsYa1O3Htl7K5g==}
@@ -2619,8 +2599,6 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
-  edmonds-blossom-fixed@1.0.1: {}
-
   electron-to-chromium@1.5.25: {}
 
   emoji-regex@8.0.0: {}
@@ -3153,12 +3131,6 @@ snapshots:
 
   queue-microtask@1.2.3: {}
 
-  randombytes@2.0.3: {}
-
-  randomstring@1.3.0:
-    dependencies:
-      randombytes: 2.0.3
-
   react-dom@18.3.1(react@18.3.1):
     dependencies:
       loose-envify: 1.4.0
@@ -3379,15 +3351,6 @@ snapshots:
       punycode: 2.3.1
       universalify: 0.2.0
       url-parse: 1.5.10
-
-  tournament-organizer@3.7.1:
-    dependencies:
-      randomstring: 1.3.0
-      tournament-pairings: 1.5.3
-
-  tournament-pairings@1.5.3:
-    dependencies:
-      edmonds-blossom-fixed: 1.0.1
 
   tr46@5.0.0:
     dependencies:

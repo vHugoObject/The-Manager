@@ -1,4 +1,4 @@
-import { add, map, last, first, curry, reduce, range, concat, multiply, spread, reverse, over, head, tail, take, takeRight } from "lodash/fp"
+import { add, map, last, curry, reduce, range, concat, multiply, spread, reverse, over, head, tail, take, takeRight } from "lodash/fp"
 import { flowAsync } from "futil-js";
 
 export const addOne = add(1)
@@ -28,6 +28,7 @@ export const firstWeekOfRoundRobinWithEvenNumberClubs = (clubs: number): [number
     half,
     range(1),
     map((currentNum: number): [number, number] => {
+      // check 2n+1
       const matchup = [modularArithmetic(add(-currentNum), adjustedRangeMax, clubs), modularAddition(adjustedRangeMax, currentNum)]
       return currentNum % 2 == 0 ? reverse(matchup) : matchup
     }),
@@ -36,6 +37,7 @@ export const firstWeekOfRoundRobinWithEvenNumberClubs = (clubs: number): [number
 }
 	     
 export const everyWeekAfterFirstWeekofRoundRobin = ([clubs, firstRound]: [number, Array<[number, number]>]): Array<Array<[number, number]>> => {
+
 
   const adjustedClubsCount: number = multiplyByTwo(clubs)
   const modularAdditionMapper = map(map((club: number): number => modularAddition((adjustedClubsCount - addOne(club) - 1), club)))
@@ -48,7 +50,7 @@ export const everyWeekAfterFirstWeekofRoundRobin = ([clubs, firstRound]: [number
       )]) 
     },
       [firstRound],
-    )
+    ),
   )(totalRoundRobinRounds(clubs))
 }
 
@@ -65,7 +67,7 @@ export const doubleRoundRobinScheduler = flowAsync(roundRobinScheduler,
       )),
     concat(take(firstHalf.length - 2, firstHalf)))(firstHalf),
   (matches: Array<Array<[number, number]>>): Array<Array<[number, number]>> => flowAsync(map(map(reverse)),
-    concat(matches),
+    concat(matches)
   )(matches))
 
 	     
