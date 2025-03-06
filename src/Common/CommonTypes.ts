@@ -8,7 +8,7 @@ export type BaseEntity = [string, string];
 
 export interface BaseEntities {
   countries: Array<BaseEntity>;
-  competitions: Array<Array<BaseEntity>>;
+  domesticLeagues: Array<Array<BaseEntity>>;
   clubs: Array<Array<Array<BaseEntity>>>;
   players?: Array<Array<Array<Array<BaseEntity>>>>;
 }

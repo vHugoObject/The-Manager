@@ -164,7 +164,6 @@ export const createPlayer = async ([ID, PositionGroup]: [
       Wages,
       Years,
     },
-    Skills: await generatePlayerSkills(PositionGroup),
     Value: 1,
   });
 };

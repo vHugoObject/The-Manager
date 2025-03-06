@@ -47,6 +47,5 @@ export interface Player {
   Age: number;
   NationalTeam: string;
   Contract: ContractType | null;
-  Skills: Record<string, number>;
   Value: number;
 }
