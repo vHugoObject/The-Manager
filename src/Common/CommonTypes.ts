@@ -22,6 +22,4 @@ export interface SaveArguments {
   BaseEntities: BaseEntities;
 }
 
-
 export type Entity = Club | Player | Competition | Country | MatchLog;
-

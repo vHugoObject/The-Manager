@@ -10,22 +10,18 @@ import {
 import { Competition } from "../../Competitions/CompetitionTypes";
 import {
   createCompetition,
-  currentCompetitionTable
+  currentCompetitionTable,
 } from "../CompetitionUtilities";
 
 describe("Competition Utilities tests", async () => {
-
-
   test.prop([
     fc.uuid(),
     fc.array(fc.tuple(fc.uuid(), fc.string()), {
       minLength: 18,
       maxLength: 50,
     }),
-  ])("currentCompetitionTable", async (testCompetitionID, testClubs) => {
-    
-  });
-  
+  ])("currentCompetitionTable", async (testCompetitionID, testClubs) => {});
+
   test.prop([
     fc.tuple(
       fc.uuid(),
@@ -37,7 +33,6 @@ describe("Competition Utilities tests", async () => {
       maxLength: 50,
     }),
   ])("createCompetition", async (testCompetitionIDNameTuple, testClubs) => {
-
     const actualCompetition: Competition = await createCompetition(
       testCompetitionIDNameTuple,
       testClubs,
@@ -53,6 +48,4 @@ describe("Competition Utilities tests", async () => {
     ]);
     expect(expectedIDs).toStrictEqual(actualIDs);
   });
-
-
 });

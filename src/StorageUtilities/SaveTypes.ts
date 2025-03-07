@@ -15,5 +15,4 @@ export interface Save {
   EntitiesStatistics: Record<string, number>;
   Skills: Record<string, Record<string, number>>;
   SaveID: SaveID;
-  
 }

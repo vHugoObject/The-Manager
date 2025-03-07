@@ -14,5 +14,3 @@ export const createCompetition = async (
     Clubs: clubIDs,
   };
 };
-
-

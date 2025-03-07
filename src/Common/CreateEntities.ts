@@ -6,12 +6,7 @@ import { createClub } from "../Clubs/ClubUtilities";
 import { createPlayer } from "../Players/PlayerUtilities";
 import { PositionGroup } from "../Players/PlayerTypes";
 import { BASECLUBCOMPOSITION } from "./Constants";
-import {
-  flowAsync,
-  updateAllPaths,
-  updatePaths,
-  mapIndexed
-} from "futil-js";
+import { flowAsync, updateAllPaths, updatePaths, mapIndexed } from "futil-js";
 import {
   multiply,
   map,
@@ -35,14 +30,13 @@ import {
   chunk,
   flatten,
   sum,
-  split
+  split,
 } from "lodash/fp";
 
 export const getCountries = property(["countries"]);
 export const getDomesticLeagues = property(["domesticLeagues"]);
 export const getClubs = property(["clubs"]);
 export const getPlayers = property(["players"]);
-
 
 export const accumulate = curry(
   ([func, initial]: [Function, any], array: Array<any>): Array<any> => {
@@ -57,6 +51,7 @@ export const accumulate = curry(
 );
 
 export const getRunningSumOfList = accumulate([add, 0]);
+export const multiplyAccumulate = accumulate([multiply, 1]);
 
 export const sliceUpArray = curry(
   (listOfSliceLengths: Array<number>, array: Array<any>): Array<any> => {
@@ -129,18 +124,30 @@ const transformClubs = transformNestedAsFlat([
   unflatten,
 ]);
 
-
-export const getIDNumber = flowAsync(split("_"), last, parseInt)
-export const getLastEntityIDNumber = flowAsync(last, getIDNumber)
+export const getIDNumber = flowAsync(split("_"), last, parseInt);
+export const getLastEntityIDNumber = flowAsync(last, getIDNumber);
 
 export const convertBaseCountriesToBaseEntities = async (
-  season: number, 
+  season: number,
   baseCountries: Array<BaseCountry>,
 ): Promise<BaseEntities> => {
   const updater = {
-    countries: mapIndexed((countryName: string, index: number) => [`Country_${index+1}`,countryName]),
-    domesticLeagues: transformCompetitions(mapIndexed((competitionName: string, index: number) => [`Competition_${season}_${index+1}`, competitionName])),
-    clubs: transformClubs(mapIndexed((clubName: string, index: number) => [`Club_${season}_${index+1}`, clubName])),
+    countries: mapIndexed((countryName: string, index: number) => [
+      `Country_${index + 1}`,
+      countryName,
+    ]),
+    domesticLeagues: transformCompetitions(
+      mapIndexed((competitionName: string, index: number) => [
+        `Competition_${season}_${index + 1}`,
+        competitionName,
+      ]),
+    ),
+    clubs: transformClubs(
+      mapIndexed((clubName: string, index: number) => [
+        `Club_${season}_${index + 1}`,
+        clubName,
+      ]),
+    ),
   };
   return await flowAsync(
     zipAll,
@@ -179,12 +186,21 @@ export const createPlayerReferencesForClubs = async (
       multiply(count, totalClubs),
     ]),
     map(
-      ([positionGroup, length]: [PositionGroup, number]): Array<Array<[string, PositionGroup]>> => {
-	return chunk(
-	  length / totalClubs,
-	  Array.from({length}, (_, index: number): [string, PositionGroup] => [`${positionGroup}_${index + 1}`, positionGroup])
-	)
-      }),          
+      ([positionGroup, length]: [PositionGroup, number]): Array<
+        Array<[string, PositionGroup]>
+      > => {
+        return chunk(
+          length / totalClubs,
+          Array.from(
+            { length },
+            (_, index: number): [string, PositionGroup] => [
+              `${positionGroup}_${index + 1}`,
+              positionGroup,
+            ],
+          ),
+        );
+      },
+    ),
     zipAll,
     map(flatten),
   )(BASECLUBCOMPOSITION, clubs);

@@ -12,16 +12,16 @@ import {
   startOfYear,
   isWithinInterval,
   subDays,
-  differenceInCalendarDays
+  differenceInCalendarDays,
 } from "date-fns/fp";
 import {
   filter,
   overEvery,
-  overSome, 
+  overSome,
   isEqual,
   first,
   map,
-  curry
+  curry,
 } from "lodash/fp";
 import { flowAsync } from "futil-js";
 
@@ -34,8 +34,8 @@ export const addTwoWeeks = addWeeks(2);
 export const addOneMonth = addMonths(1);
 export const addOneYear = addYears(1);
 
-
-export const convertIntegerYearToDate = (year: number): Date => new Date(year, JANUARY , 1)
+export const convertIntegerYearToDate = (year: number): Date =>
+  new Date(year, JANUARY, 1);
 
 export const getThirdSundayOfAugust = flowAsync(
   convertIntegerYearToDate,
@@ -71,40 +71,67 @@ export const getJuneFifteenOfNextYear = flowAsync(
   convertIntegerYearToDate,
   addOneYear,
   addMonths(JUNE),
-  addTwoWeeks
-)
+  addTwoWeeks,
+);
 
 export const getStartOfNextYear = flowAsync(
   convertIntegerYearToDate,
   addOneYear,
-  startOfYear
-)
+  startOfYear,
+);
 
-const defaultTransferWindows: Array<[(season: number) => Date, (season: number) => Date]> = [
+const defaultTransferWindows: Array<
+  [(season: number) => Date, (season: number) => Date]
+> = [
   [getThirdSundayOfAugust, getLastDayOfAugust],
   [getStartOfNextYear, getFirstMondayOfFebruaryOfNextYear],
-  [getJuneFifteenOfNextYear, getLastDayOfJuneOfNextYear]
-]
+  [getJuneFifteenOfNextYear, getLastDayOfJuneOfNextYear],
+];
 
+export const createSeasonWindows = (
+  transferWindowFunctionTuples: Array<
+    [(season: number) => Date, (season: number) => Date]
+  >,
+  season: number,
+) => {
+  return map(
+    ([startFunction, endFunction]: [
+      (season: number) => Date,
+      (season: number) => Date,
+    ]) => {
+      return isWithinInterval({
+        start: startFunction(season),
+        end: endFunction(season),
+      });
+    },
+  )(transferWindowFunctionTuples);
+};
 
-export const createSeasonWindows = (transferWindowFunctionTuples: Array<[(season: number) => Date, (season: number) => Date]>, season: number) => {
-  return map(([startFunction, endFunction]: [(season: number) => Date, (season: number) => Date]) => {
-    return isWithinInterval({
-      start: startFunction(season),
-      end: endFunction(season)
-    })
-  })(transferWindowFunctionTuples)
-}
+export const isTransferWindowOpen = curry(
+  (
+    transferWindowFunctionTuples: Array<
+      [(season: number) => Date, (season: number) => Date]
+    >,
+    [currentSeason, currentDate]: [number, Date],
+  ): boolean => {
+    return overSome(
+      createSeasonWindows(transferWindowFunctionTuples, currentSeason),
+    )(currentDate);
+  },
+);
 
-export const isTransferWindowOpen = curry((transferWindowFunctionTuples: Array<[(season: number) => Date, (season: number) => Date]>, [currentSeason, currentDate]: [number, Date]): boolean => {
-  return overSome(createSeasonWindows(transferWindowFunctionTuples, currentSeason))(currentDate)
-}
-)
+export const defaultIsTransferWindowOpen = isTransferWindowOpen(
+  defaultTransferWindows,
+);
 
-export const defaultIsTransferWindowOpen = isTransferWindowOpen(defaultTransferWindows)
+export const getNextDomesticMatchDayDate = nextSunday;
 
-export const getNextDomesticMatchDayDate = nextSunday
-
-export const getDaysLeftInCurrentSeason = (currentSeason: number, currentDate: Date): number => {
-  return flowAsync(getLastDayOfJuneOfNextYear, differenceInCalendarDays(currentDate))(currentSeason)
-}
+export const getDaysLeftInCurrentSeason = (
+  currentSeason: number,
+  currentDate: Date,
+): number => {
+  return flowAsync(
+    getLastDayOfJuneOfNextYear,
+    differenceInCalendarDays(currentDate),
+  )(currentSeason);
+};
