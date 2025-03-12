@@ -1,8 +1,3 @@
-import { Tournament } from "tournament-organizer/components";
-import {
-  TournamentValues,
-  StandingsValues,
-} from "tournament-organizer/interfaces";
 import { constant, partial, property } from "lodash/fp";
 import {
   updatePaths,
@@ -16,8 +11,6 @@ import {
   StatisticsObject,
   StatisticsType,
 } from "../Common/CommonTypes";
-import { updateCompetitionStates } from "../Competitions/CompetitionUtilities";
-import { serializeCompetitionStates } from "../Common/scheduleManagementUtilities";
 import { updateEntitiesStatistics, getEntity } from "../Common/entityUtilities";
 
 export const constantifyObjectValues = mapValuesIndexed(constant);
@@ -94,21 +87,3 @@ export const updateSaveEntitiesStatistics = async (
   });
 };
 
-export const updateSaveCompetitionStates = async (
-  save: Save,
-  competitionStates: Record<string, [TournamentValues, StandingsValues[]]>,
-): Promise<Save> => {
-  return await addValuesToSave(save, {
-    Entities: partial(updateCompetitionStates, [competitionStates]),
-  });
-};
-
-export const getCompetitionState = async (
-  save: Save,
-  competitionID: string,
-): Promise<[TournamentValues, StandingsValues[]]> => {
-  return await flowAsync(getEntity, property(["CurrentState"]))(
-    save,
-    competitionID,
-  );
-};

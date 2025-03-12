@@ -13,13 +13,4 @@ export interface BaseEntities {
   players?: Array<Array<Array<Array<BaseEntity>>>>;
 }
 
-export interface SaveArguments {
-  Name: string;
-  Country: string;
-  MainCompetition: string;
-  CurrentSeason: string;
-  Club: string;
-  BaseEntities: BaseEntities;
-}
-
 export type Entity = Club | Player | Competition | Country | MatchLog;

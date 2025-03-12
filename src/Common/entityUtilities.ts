@@ -11,6 +11,7 @@ import { Entity } from "./CommonTypes";
 export const getID = property(["ID"]);
 export const getIDs = map(getID);
 export const getName = property(["Name"]);
+export const getEntities = property(["Entities"]);
 export const getNames = map(getName);
 
 export const getEntity = async <T extends Entity>(
@@ -19,23 +20,25 @@ export const getEntity = async <T extends Entity>(
 ): Promise<T> => {
   return save.Entities[key] as T;
 };
+// can we use something form lodash
+// export const getEntities = async <T extends Entity>(
+//   save: Save,
+//   keys: Array<string>,
+// ): Promise<Array<T>> => {
+//   return await Promise.all(
+//     keys.map(async (key: string) => {
+//       return await getEntity(save, key);
+//     }),
+//   );
+// };
 
-export const getEntities = async <T extends Entity>(
-  save: Save,
-  keys: Array<string>,
-): Promise<Array<T>> => {
-  return await Promise.all(
-    keys.map(async (key: string) => {
-      return await getEntity(save, key);
-    }),
-  );
-};
+
 
 export const getEntityName = async <T extends Entity>(
   save: Save,
   key: string,
 ): Promise<string> => {
-  return save.Entities[key].Name;
+  return property(["Entities", key], save)
 };
 
 export const getEntitiesNames = async <T extends Entity>(

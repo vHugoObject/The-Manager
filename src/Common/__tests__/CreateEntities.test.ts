@@ -21,14 +21,12 @@ import {
   range,
   toString,
 } from "lodash/fp";
-import { flowAsync, updatePaths, expandObjectBy } from "futil-js";
-import { POSITIONGROUPSLIST } from "../../Players/PlayerConstants";
-import { fakerToArb } from "../testingUtilities";
+import { flowAsync, updatePaths } from "futil-js";
 import { BASECLUBCOMPOSITION, DEFAULTSQUADSIZE } from "../Constants";
 import {
-  convertArrayOfArraysToArrayOfSets,
   convertToSet,
 } from "../CommonUtilities";
+import { fakerToArb } from "../testingUtilities"
 import {
   convertBaseCountriesToBaseEntities,
   flattenCompetitions,
@@ -46,6 +44,7 @@ import {
   getRunningSumOfListOfTuples,
   getIDNumber,
   getLastEntityIDNumber,
+  getClubs
 } from "../CreateEntities";
 
 describe("CreateEntities", async () => {
@@ -75,6 +74,7 @@ describe("CreateEntities", async () => {
   });
 
   const getExpectedPlayersCount = flowAsync(
+    getClubs,
     flattenClubs,
     size,
     multiply(DEFAULTSQUADSIZE),
@@ -460,58 +460,29 @@ describe("CreateEntities", async () => {
   });
 
   test.prop([
-    fc.constantFrom(1, 2, 3, 4, 5).chain((minMax) =>
-      fc.record({
-        countries: fc.array(
-          fc.tuple(
-            fc.noShrink(fc.constant("")).map(() => crypto.randomUUID()),
-            fc.string(),
-          ),
-          { minLength: minMax, maxLength: minMax },
-        ),
-        domesticLeagues: fc.array(
-          fc.array(
-            fc.tuple(
-              fc.noShrink(fc.constant("")).map(() => crypto.randomUUID()),
-              fc.string(),
-            ),
-            { minLength: 4, maxLength: 4 },
-          ),
-          { minLength: minMax, maxLength: minMax },
-        ),
-        clubs: fc.array(
-          fc.array(
-            fc.array(
-              fc.tuple(
-                fc.noShrink(fc.constant("")).map(() => crypto.randomUUID()),
-                fc.string(),
-              ),
-              { minLength: 20, maxLength: 40 },
-            ),
-            { minLength: 4, maxLength: 4 },
-          ),
-          { minLength: minMax, maxLength: minMax },
-        ),
-      }),
-    ),
-  ])("createEntities", async (testBaseEntities) => {
-    const {
-      countries: expectedCountries,
-      domesticLeagues,
-      clubs,
-    } = testBaseEntities;
+    fc.integer({min: 2000, max: 2100}),
+    fc.constantFrom(1,2,3,4,5)
+      .chain((testCompetitionsCount: number) => {
+	return fc.array(
+	  fc.tuple(
+            fakerToArb((faker) => faker.location.country()),
+            fc.array(fakerToArb((faker) => faker.company.name()), { minLength: testCompetitionsCount, maxLength: testCompetitionsCount }),
+	    fc.array(fc.array(fakerToArb((faker) => faker.company.name()), { minLength: 20, maxLength: 20}), { minLength: testCompetitionsCount, maxLength: testCompetitionsCount })
+	  ),
+	  { minLength: 1, maxLength: 5 },
+	)
+      })    
+  ])("createEntities", async (testSeason, testCountriesLeaguesClubs) => {
 
-    const expectedDomesticLeagues = flattenCompetitions(domesticLeagues);
-    const expectedClubs = flattenClubs(clubs);
-    const expectedPlayersCount = getExpectedPlayersCount(clubs);
-    const expectedEntitiesCount = flowAsync(
-      flatten,
-      size,
-      add(expectedPlayersCount),
-    )([expectedCountries, expectedDomesticLeagues, expectedClubs]);
+    const testBaseEntities: BaseEntities = await convertBaseCountriesToBaseEntities(testSeason, testCountriesLeaguesClubs)
+
+    const getExpectedEntitiesSansPlayerCount: number = flowAsync(getTestBaseEntitiesCount, Object.values, flatten, sum)
+    const expectedBaseEntitiesCount: number = flowAsync(over([getExpectedPlayersCount, getExpectedEntitiesSansPlayerCount]), sum)(testBaseEntities)
     const actualEntities: Record<string, Entity> =
-      await createEntities(testBaseEntities);
+	  await createEntities(testBaseEntities);
 
-    expect(Object.keys(actualEntities).length).toEqual(expectedEntitiesCount);
+    expect(Object.keys(actualEntities).length).toEqual(expectedBaseEntitiesCount)
+
+    
   });
 });

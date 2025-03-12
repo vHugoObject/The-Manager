@@ -1,5 +1,9 @@
+import { BaseEntities } from "./CommonTypes"
+import { curry, property, flatten } from "lodash/fp";
+import { flowAsync } from "futil-js";
 import { Faker, Randomizer, en } from "@faker-js/faker";
 import { fc } from "@fast-check/vitest";
+import{ getCountries, getDomesticLeagues, getClubs } from "./CreateEntities"
 
 class FakerBuilder<TValue> extends fc.Arbitrary<TValue> {
   constructor(private readonly generator: (faker: Faker) => TValue) {
@@ -26,3 +30,21 @@ export function fakerToArb<TValue>(
 ): fc.Arbitrary<TValue> {
   return new FakerBuilder(generator);
 }
+export const fastCheckRandomFromList = curry(<TValue>(g: fc.GeneratorValue, testList: Array<TValue>): fc.Arbitrary<TValue> => {
+  return g(fc.constantFrom, ...testList)
+})
+export const randomPlayerCompetitonAndClub = (
+  g: fc.GeneratorValue,
+  testBaseEntities: BaseEntities
+): [string, string] => {
+
+  const randomCountryIndex: string = flowAsync(getCountries, Object.keys, fastCheckRandomFromList(g))(testBaseEntities)
+  const randomCompetitionIndex: string = flowAsync(getDomesticLeagues, property([randomCountryIndex]), Object.keys, fastCheckRandomFromList(g))(testBaseEntities)
+  const [randomClubID, ]: string = flowAsync(getClubs, property([randomCountryIndex, randomCompetitionIndex]), fastCheckRandomFromList(g))(testBaseEntities)
+  const [randomCompetitionID, ] = property(["domesticLeagues" ,randomCountryIndex, randomCompetitionIndex], testBaseEntities)
+  return [randomCompetitionID, randomClubID].toSorted()
+  
+  };
+
+
+

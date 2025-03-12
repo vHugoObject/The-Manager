@@ -1,40 +1,28 @@
-import {
-  TournamentValues,
-  StandingsValues,
-} from "tournament-organizer/interfaces";
-import { Manager as TournamentManager } from "tournament-organizer/components";
-import { partial, flattenDeep } from "lodash/fp";
-import { flowAsync, promiseProps } from "futil-js";
-import { Save } from "./SaveTypes";
-import { Entity, Calendar, SaveArguments } from "../Common/CommonTypes";
-import { createEntities } from "../Common/CreateEntities";
-import { createSeasonCalendar } from "../Common/scheduler";
-import { serializeCompetitionStates } from "../Common/scheduleManagementUtilities";
-import { updateCompetitionStates } from "../Competitions/CompetitionUtilities";
+import { partialRight } from "lodash/fp"
+import { promiseProps, updateAllPaths, flowAsync } from "futil-js";
+import { Save, SaveArguments } from "./SaveTypes";
+import { createEntities, getThirdSundayOfAugust } from "../Common/index";
+
 
 export const createSave = async ({
   Name,
-  Country,
   MainCompetition,
   CurrentSeason,
   Club,
   BaseEntities,
 }: SaveArguments): Promise<Save> => {
-  return await promiseProps({
+  const transformers = await createEntities(BaseEntities)
+  const Entities = await flowAsync(updateAllPaths)(transformers, {})
+  return {
     Name,
-    Country,
     MainCompetition,
     Club,
     Seasons: 1,
     CurrentSeason,
-    CurrentDate,
-    // should we wait to create an object for entities until here?
-    Entities: await flowAsync(createEntities),
+    CurrentDate: getThirdSundayOfAugust(CurrentSeason),
+    Entities,
     EntitiesStatistics: {},
-    // might be  a way we can just get the key the first time we store in idb
+    PlayerSkills: {},
     SaveID: crypto.randomUUID(),
-    Calendar,
-    ScheduleManager,
-    CompetitionStates,
-  });
+  };
 };

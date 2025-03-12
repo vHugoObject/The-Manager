@@ -38,6 +38,7 @@ export const getDomesticLeagues = property(["domesticLeagues"]);
 export const getClubs = property(["clubs"]);
 export const getPlayers = property(["players"]);
 
+
 export const accumulate = curry(
   ([func, initial]: [Function, any], array: Array<any>): Array<any> => {
     return reduce(
@@ -224,7 +225,7 @@ export const createEntities = async (
         flattenCompetitions,
         zipWith((clubs: Array<BaseEntity>, [id, name]: BaseEntity) => {
           return [id, partial(createCompetition, [[id, name], clubs])];
-        }, flowAsync(getClubs, flattenCompetitions)(baseEntities)),
+        }, getClubs(baseEntities)),
       ),
       clubs: flowAsync(
         flattenClubs,
@@ -246,6 +247,6 @@ export const createEntities = async (
     }),
     Object.values,
     flatten,
-    Object.fromEntries,
+    Object.fromEntries
   )(baseEntities);
 };

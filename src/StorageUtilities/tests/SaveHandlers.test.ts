@@ -1,23 +1,10 @@
-import {
-  Manager as TournamentManager,
-  Player as TournamentPlayer,
-  Match as TournamentMatch,
-  Tournament,
-} from "tournament-organizer/components";
-import {
-  TournamentValues,
-  StandingsValues,
-} from "tournament-organizer/interfaces";
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import { faker } from "@faker-js/faker";
 import {
-  flatMap,
   flattenDeep,
   zip,
   concat,
   map,
-  toPairs,
   pick,
   partial,
   sum,
@@ -26,28 +13,12 @@ import { range } from "lodash";
 import { updateAllPaths, flowAsync, flowMap, mapValuesIndexed } from "futil-js";
 import {
   Entity,
-  StatisticsObject,
-  StatisticsType,
-  MatchEntry,
-  SaveArguments,
 } from "../../Common/CommonTypes";
-import { Save } from "../../StorageUtilities/SaveTypes";
-import { BaseCountries } from "../../Countries/CountryTypes";
+import { SaveArguments, Save } from "../../StorageUtilities/SaveTypes";
 import { Player } from "../../Players/PlayerTypes";
 import { createSave } from "../../StorageUtilities/SaveCreator";
-import { fakerToArb } from "../../Common/testingUtilities";
-import {
-  createGoalkeeper,
-  createGoalkeepers,
-  createDefenders,
-  createMidfielders,
-  createAttackers,
-} from "../../Players/PlayerUtilities";
-import {
-  entitiesStatisticsCreator,
-  entityObjectsCreator,
-} from "../../Common/entityUtilities";
-import { serializeCompetitionStates } from "../../Common/scheduleManagementUtilities";
+import { fakerToArb, entitiesStatisticsCreator, } from "../../Common/index";
+
 import {
   makeEntityAddable,
   makeEntitiesAddable,
@@ -55,29 +26,9 @@ import {
   addEntitiesToSave,
   addEntitiesWithStatisticsToSave,
   updateSaveEntitiesStatistics,
-  updateSaveCompetitionStates,
-  getCompetitionState,
 } from "../SaveHandlers";
 
 describe("SaveHandlers test suite", async () => {
-  const testStartingSeason: string = "2024";
-  const testMatchDate: Date = new Date("August 18, 2024");
-
-  const randomPlayerClub = async (
-    testCountriesLeaguesClubs: BaseCountries,
-    g,
-  ) => {
-    const clubs: Array<[string, string]> = await flowAsync(
-      Object.values,
-      flatMap((competitions: Record<string, Record<string, string>>) =>
-        Object.values(competitions),
-      ),
-      flatMap((clubs: Record<string, string>) => toPairs(clubs)),
-    )(testCountriesLeaguesClubs);
-    const randomIndex = g(fc.nat, { max: clubs.length - 1 });
-    const [clubID, clubName] = clubs[randomIndex];
-    return { clubID, clubName };
-  };
 
   test.prop([
     fc.record({
