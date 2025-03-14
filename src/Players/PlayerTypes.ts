@@ -38,14 +38,9 @@ export interface ContractType {
 }
 
 export interface Player {
-  ID: string;
   Name: string;
   PositionGroup: PositionGroup;
-  Position: PositionType;
-  Height: number;
-  Weight: number;
-  Age: number;
   NationalTeam: string;
-  Contract: ContractType | null;
-  Value: number;
 }
+
+

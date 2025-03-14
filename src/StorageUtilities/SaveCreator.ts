@@ -1,4 +1,3 @@
-import { partialRight } from "lodash/fp"
 import { promiseProps, updateAllPaths, flowAsync } from "futil-js";
 import { Save, SaveArguments } from "./SaveTypes";
 import { createEntities, getThirdSundayOfAugust } from "../Common/index";
@@ -22,7 +21,7 @@ export const createSave = async ({
     CurrentDate: getThirdSundayOfAugust(CurrentSeason),
     Entities,
     EntitiesStatistics: {},
-    PlayerSkills: {},
-    SaveID: crypto.randomUUID(),
+    PlayerData: {},
+    SaveID: "",
   };
 };

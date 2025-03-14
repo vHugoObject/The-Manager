@@ -3,7 +3,6 @@ import { BaseCountry } from "../Countries/CountryTypes";
 import { createCountry } from "../Countries/CountryUtilities";
 import { createCompetition } from "../Competitions/CompetitionUtilities";
 import { createClub } from "../Clubs/ClubUtilities";
-import { createPlayer } from "../Players/PlayerUtilities";
 import { PositionGroup } from "../Players/PlayerTypes";
 import { BASECLUBCOMPOSITION } from "./Constants";
 import { flowAsync, updateAllPaths, updatePaths, mapIndexed } from "futil-js";

@@ -1,9 +1,10 @@
-import { BaseEntities } from "./CommonTypes"
-import { curry, property, flatten } from "lodash/fp";
-import { flowAsync } from "futil-js";
+import { curry, property, size, multiply, last, first } from "lodash/fp";
+import { flowAsync, updatePaths } from "futil-js";
 import { Faker, Randomizer, en } from "@faker-js/faker";
 import { fc } from "@fast-check/vitest";
-import{ getCountries, getDomesticLeagues, getClubs } from "./CreateEntities"
+import { BaseEntities } from "./CommonTypes"
+import { DEFAULTSQUADSIZE } from "./Constants"
+import{ getCountries, getDomesticLeagues, getClubs, getIDNumber, flattenCompetitions, flattenClubs } from "./CreateEntities"
 
 class FakerBuilder<TValue> extends fc.Arbitrary<TValue> {
   constructor(private readonly generator: (faker: Faker) => TValue) {
@@ -47,4 +48,34 @@ export const randomPlayerCompetitonAndClub = (
   };
 
 
+  export const getLastIDNumberOutOfIDNameTuple = flowAsync(last, first, getIDNumber);
+  export const getTotalActualDomesticLeagues = flowAsync(
+    flattenCompetitions,
+    getLastIDNumberOutOfIDNameTuple,
+  );
+  export const getTotalActualClubs = flowAsync(
+    flattenClubs,
+    getLastIDNumberOutOfIDNameTuple,
+  );
 
+  export const getActualBaseEntitiesCount = updatePaths({
+    countries: getLastIDNumberOutOfIDNameTuple,
+    domesticLeagues: getTotalActualDomesticLeagues,
+    clubs: getTotalActualClubs,
+  });
+
+  export const getTotalTestDomesticLeagues = flowAsync(flattenCompetitions, size);
+  export const getTotalTestClubs = flowAsync(flattenClubs, size);
+
+  export const getTestBaseEntitiesCount = updatePaths({
+    countries: size,
+    domesticLeagues: getTotalTestDomesticLeagues,
+    clubs: getTotalTestClubs,
+  });
+
+  export const getExpectedPlayersCount = flowAsync(
+    getClubs,
+    flattenClubs,
+    size,
+    multiply(DEFAULTSQUADSIZE),
+  );

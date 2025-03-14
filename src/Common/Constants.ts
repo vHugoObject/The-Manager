@@ -1,6 +1,5 @@
 import { isSunday } from "date-fns";
 import { PositionGroup } from "../Players/PlayerTypes";
-import { CalendarEntry } from "./CommonTypes";
 
 export const JANUARY: number = 0;
 export const FEBRUARY: number = 1;

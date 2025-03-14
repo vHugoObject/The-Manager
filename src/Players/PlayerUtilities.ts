@@ -1,10 +1,8 @@
-import { faker } from "@faker-js/faker/locale/en";
 import {
   isEqual,
   filter,
   partial,
   property,
-  sample,
   map,
   reduce,
   over,
@@ -18,19 +16,18 @@ import {
   multiply,
   subtract,
   flatten,
-  sum,
+  mean,
+  curry,
+  size,
+  flattenDepth
 } from "lodash/fp";
-import { promiseProps, flowAsync } from "futil-js";
-import {
-  PLAYERSKILLS,
-  SKILLRANGESBYPOSITION,
-  DEFENDINGSKILLS,
-  GOALKEEPINGSKILLS,
-  ATTACKINGSKILLS,
-} from "./PlayerSkills";
-import { BIORANGES, POSITIONS } from "./PlayerConstants";
-import { modularAddition, modularArithmetic } from "../Common/index";
+import { flowAsync } from "futil-js";
 import { Player, PositionType, PositionGroup, Goalkeeper } from "./PlayerTypes";
+import { BaseEntities } from "../Common/CommonTypes"
+import { POSITIONS, GOALKEEPINGSKILLS, DEFENDINGSKILLS, ATTACKINGSKILLS } from "./PlayerBioConstants";
+import { PLAYERSKILLSANDPHYSICALDATAKEYS, PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION, PLAYERSKILLSANDPHYSICALDATARANDOMPLUSORMINUS } from "./PlayerDataConstants";
+import { modularAddition, BASECLUBCOMPOSITION, addOne } from "../Common/index";
+
 
 export const isGoalkeeper = isEqual(PositionGroup.Goalkeeper);
 export const isDefender = isEqual(PositionGroup.Defender);
@@ -115,134 +112,119 @@ export const getRandomNumberInRange = async ([min, max]: [
   number,
 ]): Promise<number> => {
   const minCeiled = Math.ceil(min),
-    maxFloored = Math.floor(max);
+	maxFloored = Math.floor(max);
   return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
 };
 
 export const getRandomNumberInRanges = flowAsync(map(getRandomNumberInRange));
 
-export const generateGroupOfPlayerSkills = async ([
+export const getRandomPlusOrMinus = flowAsync(
+  over([multiply(-1),identity]),
+  getRandomNumberInRange
+)
+
+export const getStepForASetOfModularRanges = flowAsync(
+  map(([min, max]: [number, number]) => max - min),
+  mean,
+  Math.ceil,
+)
+
+
+export const getStepForASetOfModularRangesWithRandomPlusOrMinus = async(plusOrMinus: number, ranges: Array<[number, number]>) => {
+  const randomPlusOrMinus: number = await getRandomPlusOrMinus(plusOrMinus)
+  return flowAsync(getStepForASetOfModularRanges, add(randomPlusOrMinus))(ranges)
+}
+
+export const boundedModularAddition = curry(([[rangeMin, rangeMax], standardIncrease]:[[number, number], number], currentNumber: number): number => {
+  return add(
+    subtract(
+      add(standardIncrease, currentNumber),
+      rangeMin,
+    ) % subtract(rangeMax, rangeMin),
+    rangeMin,
+  )
+})
+
+export const mapModularIncreasers = curry(async(plusOrMinus: number, ranges: Array<[number, number]>) => {
+  const standardIncrease: number = await getStepForASetOfModularRangesWithRandomPlusOrMinus(plusOrMinus, ranges)
+  return map((range: [number, number]) => {
+    return boundedModularAddition([range, standardIncrease])
+  })(ranges)
+})
+
+
+export const generateDataForAGroupOfPlayers = curry(async ([rangeNames, ranges, plusOrMinus]:
+[Array<string>, Array<[number, number]>, number],[
   positionGroup,
   count,
   startingIndex,
 ]: [PositionGroup, number, number]): Promise<
   Array<[string, Record<string, number>]>
 > => {
-  const randomPlusOrMinus: number = await getRandomNumberInRange([-5, 5]);
-  const mapSkillIncreasers = flowAsync(
-    over([
-      flowAsync(
-        map(([min, max]) => max - min),
-        sum,
-        multiply(1 / count),
-        Math.ceil,
-        add(randomPlusOrMinus),
-      ),
-      identity,
-    ]),
-    ([rateToIncreaseSkillLevel, skillRanges]: [
-      number,
-      Array<[number, number]>,
-    ]) => {
-      return map(
-        ([skillRangeMin, skillRangeMax]: [number, number]): ((
-          currentSkillLevel: number,
-        ) => number) => {
-          return (currentSkillLevel: number) =>
-            add(
-              subtract(
-                add(rateToIncreaseSkillLevel, currentSkillLevel),
-                skillRangeMin,
-              ) % subtract(skillRangeMax, skillRangeMin),
-              skillRangeMin,
-            );
-        },
-      )(skillRanges);
-    },
-  );
-
-  const [skillIncreasers, minOfSkillRangesOnly]: [
-    Array<(currentSkillLevel: number) => number>,
-    Array<number>,
-  ] = flowAsync(
-    property(positionGroup),
-    over([mapSkillIncreasers, map(first)]),
-  )(SKILLRANGESBYPOSITION);
-  const modularAdditionForListOfSkills = modularAddition(
-    minOfSkillRangesOnly.length,
+  
+  const [modularIncreasers, minOfRangesOnly] = await flowAsync(
+    over([mapModularIncreasers(plusOrMinus), map(first)]),
+  )(ranges);
+  
+  const modularAdditionFuncForListOfRanges = modularAddition(
+    minOfRangesOnly.length,
   );
 
   return flowAsync(
     reduce(
       (
-        [playerSkills, currentSkillRange, indexOfSkillToUpdate]: [
+        [playerData, currentRange, indexToUpdate]: [
           Array<[string, Record<string, number>]>,
           Array<number>,
           number,
         ],
         playerNumber: number,
       ): [Array<[string, Record<string, number>]>, Array<number>, number] => {
-        const updatedSkillRange: Array<number> = update(
-          indexOfSkillToUpdate,
-          property(indexOfSkillToUpdate, skillIncreasers),
-          currentSkillRange,
+        const updatedSkillRange = update(
+          indexToUpdate,
+          property(indexToUpdate, modularIncreasers),
+          currentRange,
         );
         return [
-          concat(playerSkills, [
+          concat(playerData, [
             [
-              `${positionGroup}_${playerNumber + 1}`,
-              zipObject(PLAYERSKILLS, currentSkillRange),
+              `${positionGroup}_${addOne(playerNumber)}`,
+              zipObject(rangeNames, currentRange),
             ],
           ]),
           updatedSkillRange,
-          modularAdditionForListOfSkills(indexOfSkillToUpdate),
+          modularAdditionFuncForListOfRanges(indexToUpdate),
         ];
       },
-      [[], minOfSkillRangesOnly, 0],
+      [[], minOfRangesOnly, 0],
     ),
     first,
   )(range(startingIndex, startingIndex + count));
-};
+});
 
-export const generateSkillsForMultiplePositionGroups = flowAsync(
-  map(generateGroupOfPlayerSkills),
+export const generateSkillsAndPhysicalDataForMultiplePositionGroups = flowAsync(
+  map(generateDataForAGroupOfPlayers([PLAYERSKILLSANDPHYSICALDATAKEYS, PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION, PLAYERSKILLSANDPHYSICALDATARANDOMPLUSORMINUS])),
   flatten,
   Object.fromEntries,
 );
 
-export const generatePosition = async (
-  positionGroup: PositionGroup,
-): Promise<PositionType> => {
-  if (positionGroup == PositionGroup.Goalkeeper) {
-    return Goalkeeper.GK;
-  }
-  return flowAsync(property([positionGroup]), sample)(POSITIONS);
-};
 
-export const createPlayer = async ([ID, PositionGroup]: [
-  string,
-  PositionGroup,
-]): Promise<Player> => {
-  const [Height, Weight, Age, Years, Wages]: [
-    number,
-    number,
-    number,
-    number,
-    number,
-  ] = await getRandomNumberInRanges(BIORANGES);
-  return await promiseProps({
-    ID,
-    Name: faker.person.fullName({ sex: "male" }),
-    PositionGroup,
-    Position: await generatePosition(PositionGroup),
-    Height,
-    Weight,
-    Age,
-    NationalTeam: faker.location.country(),
-    Contract: {
-      Wages,
-      Years,
+// can't export getClubs and flattenClubs?
+export const generatePlayerSkillsForListOfClubs = (startingIndex: number, entities: BaseEntities) => {
+  return flowAsync(
+    property(["clubs"]),
+    flattenDepth(2),
+    size,
+    (totalClubs: number) => {
+      return map(([positionGroup, count]: [PositionGroup, number]): [PositionGroup, number, number] => [
+	positionGroup,
+	multiply(count, totalClubs),
+	startingIndex
+      ])(BASECLUBCOMPOSITION)
     },
-    Value: 1,
-  });
-};
+    generateSkillsAndPhysicalDataForMultiplePositionGroups
+  )(entities);
+
+}
+
+

@@ -1,5 +1,4 @@
-import { set, mapValues, partial, zipAll } from "lodash/fp";
-import { flowAsync, updatePaths } from "futil-js";
+import { zipAll } from "lodash/fp";
 import { Competition } from "./CompetitionTypes";
 
 export const createCompetition = async (

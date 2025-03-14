@@ -14,7 +14,6 @@ import {
   zipObject,
   add,
   last,
-  concat,
   flatten,
   countBy,
   identity,
@@ -26,7 +25,12 @@ import { BASECLUBCOMPOSITION, DEFAULTSQUADSIZE } from "../Constants";
 import {
   convertToSet,
 } from "../CommonUtilities";
-import { fakerToArb } from "../testingUtilities"
+import { fakerToArb,
+  getTotalTestDomesticLeagues,
+  getActualBaseEntitiesCount,
+  getTestBaseEntitiesCount,
+  getExpectedPlayersCount
+} from "../testingUtilities"
 import {
   convertBaseCountriesToBaseEntities,
   flattenCompetitions,
@@ -44,41 +48,9 @@ import {
   getRunningSumOfListOfTuples,
   getIDNumber,
   getLastEntityIDNumber,
-  getClubs
 } from "../CreateEntities";
 
 describe("CreateEntities", async () => {
-  const getLastIDNumberOutOfIDNameTuple = flowAsync(last, first, getIDNumber);
-  const getTotalActualDomesticLeagues = flowAsync(
-    flattenCompetitions,
-    getLastIDNumberOutOfIDNameTuple,
-  );
-  const getTotalActualClubs = flowAsync(
-    flattenClubs,
-    getLastIDNumberOutOfIDNameTuple,
-  );
-
-  const getActualBaseEntitiesCount = updatePaths({
-    countries: getLastIDNumberOutOfIDNameTuple,
-    domesticLeagues: getTotalActualDomesticLeagues,
-    clubs: getTotalActualClubs,
-  });
-
-  const getTotalTestDomesticLeagues = flowAsync(flattenCompetitions, size);
-  const getTotalTestClubs = flowAsync(flattenClubs, size);
-
-  const getTestBaseEntitiesCount = updatePaths({
-    countries: size,
-    domesticLeagues: getTotalTestDomesticLeagues,
-    clubs: getTotalTestClubs,
-  });
-
-  const getExpectedPlayersCount = flowAsync(
-    getClubs,
-    flattenClubs,
-    size,
-    multiply(DEFAULTSQUADSIZE),
-  );
 
   test.prop([
     fc

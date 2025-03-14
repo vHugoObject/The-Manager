@@ -20,6 +20,6 @@ export interface Save {
   CurrentDate: Date;
   Entities: Record<string, Entity>;
   EntitiesStatistics: Record<string, number>;
-  PlayerSkills: Record<string, Record<string, number>>;
+  PlayerData: Record<string, Record<string, number>>;
   SaveID: SaveID;
 }
