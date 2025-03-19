@@ -160,3 +160,28 @@ export const PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION: Record<
   ],
 };
 
+export const DEFENDINGSKILLS = new Set([
+  "Tackling",
+  "Positional Awareness",
+  "Marking",
+  "Sprint Speed",
+  "Agility",
+  "Defending Work Rate",
+]);
+
+export const GOALKEEPINGSKILLS = new Set([
+  "GK Positioning",
+  "GK Diving",
+  "GK Handling",
+  "GK Reflexes",
+]);
+export const ATTACKINGSKILLS = new Set([
+  "Passing",
+  "Shooting",
+  "Dribbling",
+  "Vision",
+  "Sprint Speed",
+  "Positional Awareness",
+  "Stamina",
+  "Attacking Work Rate",
+]);

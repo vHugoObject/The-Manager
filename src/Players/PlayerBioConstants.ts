@@ -14,42 +14,61 @@ export const POSITIONS = {
   Goalkeeper,
 };
 
-export const POSITIONGROUPSLIST: Array<PositionGroup> = [
-  PositionGroup.Midfielder,
-  PositionGroup.Defender,
-  PositionGroup.Attacker,
-  PositionGroup.Goalkeeper,
-];
 
 export const PLAYERBIOKEYS: Array<string> = [
-  "Name",
-  "PositionGroup",
-  "Position",
-  "NationalTeam"
+  "First Name",
+  "Last Name",
+  "National Team",
+  "Position Group",
+  "Position",  
 ]
 
-export const DEFENDINGSKILLS = new Set([
-  "Tackling",
-  "Positional Awareness",
-  "Marking",
-  "Sprint Speed",
-  "Agility",
-  "Defending Work Rate",
-]);
 
-export const GOALKEEPINGSKILLS = new Set([
-  "GK Positioning",
-  "GK Diving",
-  "GK Handling",
-  "GK Reflexes",
-]);
-export const ATTACKINGSKILLS = new Set([
-  "Passing",
-  "Shooting",
-  "Dribbling",
-  "Vision",
-  "Sprint Speed",
-  "Positional Awareness",
-  "Stamina",
-  "Attacking Work Rate",
-]);
+export const POSITIONGROUPSLIST: Array<PositionGroup> = [
+  PositionGroup.Goalkeeper,
+  PositionGroup.Defender,
+  PositionGroup.Midfielder,  
+  PositionGroup.Attacker,
+];
+
+export const ALLPOSITIONS: Array<string> = [
+  "GK",
+
+  "RCB",
+  "LCB",
+  "LB",
+  "RB",
+
+  "CDM",
+  "CM",
+  "RM",
+  "LM",
+
+  "LW",
+  "RW",
+  "ST",
+  "CF"
+]
+
+export const PLAYERBIODATABYPOSITION: Record<
+  PositionGroup,
+  Array<[number, number]>
+> = {
+  [PositionGroup.Goalkeeper]: [
+    [0,0],
+    [0,0]
+  ],
+  [PositionGroup.Defender]: [
+    [1,1],
+    [1,4]
+  ],
+  [PositionGroup.Midfielder]: [
+    [2,2],
+    [5,8]
+  ],  
+  [PositionGroup.Attacker]: [
+    [3,3],
+    [9,12]
+  ]  
+};
+

@@ -13,8 +13,8 @@ export enum Attacker {
 }
 
 export enum Midfielder {
-  CM = "CM",
   CDM = "CDM",
+  CM = "CM",
   RM = "RM",
   LM = "LM",
 }
