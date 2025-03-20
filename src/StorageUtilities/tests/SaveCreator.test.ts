@@ -11,20 +11,20 @@ describe("SaveCreator Utilities tests", async () => {
   test.prop([
     fc.string(),
      fc.integer({min: 2000, max: 2100}),
-    fc.constantFrom(1,2)
+    fc.constantFrom(1,2,3,4,5)
       .chain((testCompetitionsCount: number) => {
 	return fc.array(
 	  fc.tuple(
             fakerToArb((faker) => faker.location.country()),
             fc.array(fakerToArb((faker) => faker.company.name()), { minLength: testCompetitionsCount, maxLength: testCompetitionsCount }),
-	    fc.array(fc.array(fakerToArb((faker) => faker.company.name()), { minLength: 4, maxLength: 4}), { minLength: testCompetitionsCount, maxLength: testCompetitionsCount })
+	    fc.array(fc.array(fakerToArb((faker) => faker.company.name()), { minLength: 20, maxLength: 20}), { minLength: testCompetitionsCount, maxLength: testCompetitionsCount })
 	  ),
 	  { minLength: 1, maxLength: 5 },
 	)
       }),
     fc.gen()
   ])(
-    "test createSave with multiple countries with up to 8 clubs",
+    "test createSave",
     async (
       testPlayerName,
       testSeason,
@@ -41,9 +41,8 @@ describe("SaveCreator Utilities tests", async () => {
         "CurrentDate",
         "Entities",
         "EntitiesStatistics",
-	"PlayerData",
-        "SaveID",
-	
+	"PlayerSkillsAndPhysicalData",
+        "SaveID",	
       ]);
 
       const testBaseEntities: BaseEntities = await convertBaseCountriesToBaseEntities(testSeason, testCountriesLeaguesClubs)
@@ -67,12 +66,12 @@ describe("SaveCreator Utilities tests", async () => {
       expect(actualSave.Club).toEqual(testPlayerClub)
       expect(actualSave.CurrentSeason).toEqual(testSeason)
 
-      const actualEntitiesSet: Set<string> = flowAsync(getEntities, Object.keys, convertToSet)(actualSave)
+      const actualEntitiesKeysSet: Set<string> = flowAsync(getEntities, Object.keys, convertToSet)(actualSave)
       
       const expectedSubset: Set<string> = new Set([testPlayerClub, testPlayerMainCompetition])
-      expect(actualEntitiesSet.isSupersetOf(expectedSubset)).toBeTruthy()
-      //const actualPlayerSkills = flowAsync(property(["PlayerSkills"]), Object.keys, convertToSet)(actualSave)
-	//expect(actualEntitiesSet.isSupersetOf(actualPlayerSkills)).toBeTruthy()
+      expect(actualEntitiesKeysSet.isSupersetOf(expectedSubset)).toBeTruthy()
+      const actualPlayerSkillsAndPhysicalDataKeysSet: Set<string> = flowAsync(property(["PlayerSkillsAndPhysicalData"]), Object.keys, convertToSet)(actualSave)
+      expect(actualEntitiesKeysSet.isSupersetOf(actualPlayerSkillsAndPhysicalDataKeysSet)).toBeTruthy()
       
     },
   );
@@ -93,28 +92,14 @@ describe("SaveCreator Utilities tests", async () => {
       }),
     fc.gen()
     ], {numRuns: 1})(
-    "single run of createSave with 5 countries each with 100 clubs",
+    "single run of createSave with 5 countries each with 100 clubs as a benchmark",
     async (
       testPlayerName,
       testSeason,
       testCountriesLeaguesClubs,
       g
     ) => {
-
-      const expectedKeysSet: Set<string> = new Set([
-        "Name",   
-        "MainCompetition",
-        "Club",
-        "Seasons",
-        "CurrentSeason",
-        "CurrentDate",
-        "Entities",
-        "EntitiesStatistics",
-	"PlayerData",
-        "SaveID",
-	
-      ]);
-
+     
       const testBaseEntities: BaseEntities = await convertBaseCountriesToBaseEntities(testSeason, testCountriesLeaguesClubs)
       const [testPlayerMainCompetition, testPlayerClub]: [string, string] = randomPlayerCompetitonAndClub(g, testBaseEntities)
 
@@ -127,23 +112,7 @@ describe("SaveCreator Utilities tests", async () => {
       };
 
       const actualSave: Save = await createSave(testSaveArguments);
-
-      const actualKeysSet: Set<string> = flowAsync(Object.keys, convertToSet)(actualSave)
-
-      expect(actualKeysSet).toStrictEqual(expectedKeysSet);
-      expect(actualSave.Name).toEqual(testPlayerName)
-      expect(actualSave.MainCompetition).toEqual(testPlayerMainCompetition)
-      expect(actualSave.Club).toEqual(testPlayerClub)
-      expect(actualSave.CurrentSeason).toEqual(testSeason)
-
-      const actualEntitiesSet: Set<string> = flowAsync(getEntities, Object.keys, convertToSet)(actualSave)
-      
-      const expectedSubset: Set<string> = new Set([testPlayerClub, testPlayerMainCompetition])
-      expect(actualEntitiesSet.isSupersetOf(expectedSubset)).toBeTruthy()
-      //const actualPlayerSkills = flowAsync(property(["PlayerSkills"]), Object.keys, convertToSet)(actualSave)
-	//expect(actualEntitiesSet.isSupersetOf(actualPlayerSkills)).toBeTruthy()
-      
-    },
+    }
   );
   
 });
