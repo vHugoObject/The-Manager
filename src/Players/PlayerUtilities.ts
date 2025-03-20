@@ -16,11 +16,11 @@ import {
   multiply,
   subtract,
   flatten,
-  mean,
   curry,
   size,
   flattenDepth,
-  sum
+  sum,
+  zipWith
 } from "lodash/fp";
 import { flowAsync } from "futil-js";
 import { Player, PositionGroup } from "./PlayerTypes";
@@ -134,35 +134,31 @@ export const getRandomPlusOrMinus = flowAsync(
 )
 
 
-export const getStepForASetOfModularRanges = flowAsync(
-  map(([min, max]: [number, number]) => addOne(max - min)),
-  mean,
-  Math.ceil,
-)
-
 export const getAverageModularStepForRangeOfData = (ranges: Array<[number, number]>,
   lengthOfRangeToBeFilled: number): number => {
-    const multiplier: number = 1/lengthOfRangeToBeFilled
     return flowAsync(
       map(([min, max]: [number, number]) => addOne(max - min)),
       sum,
-      multiply(multiplier),
+      multiply(1/lengthOfRangeToBeFilled),
       Math.ceil
     )(ranges)
   }
 
 export const boundedModularAddition = curry(([[rangeMin, rangeMax], standardIncrease]:[[number, number], number], currentNumber: number): number => {
+  if (rangeMax == 0){
+    return 0
+  }
   return add(
     subtract(
       add(standardIncrease, currentNumber),
       rangeMin,
-    ) % subtract(rangeMax, rangeMin),
+    ) % subtract(addOne(rangeMax), rangeMin),
     rangeMin,
   )
 })
 
 
-export const mapModularIncreasers = curry(async([plusOrMinus, playerCount]: [number, number], ranges: Array<[number, number]>) => {
+export const mapModularIncreasersWithTheSameAverageStep = curry(async([plusOrMinus, playerCount]: [number, number], ranges: Array<[number, number]>) => {
   const randomPlusOrMinus: number = await getRandomPlusOrMinus(plusOrMinus)
   const step: number = getAverageModularStepForRangeOfData(ranges, playerCount) + randomPlusOrMinus
   return map((range: [number, number]) => {
@@ -170,7 +166,15 @@ export const mapModularIncreasers = curry(async([plusOrMinus, playerCount]: [num
   })(ranges)
 })
 
-export const runModularIncreasersForARangeOfPlayers = ([rangeNames, startingRange,
+export const mapModularIncreasersWithDifferentStepsForARange = curry((playerCount: number, ranges: Array<[number, number]>) => {
+  return map(([min, max]: [number, number]) => {
+    const step: number = Math.ceil((max - min)/playerCount)
+      return boundedModularAddition([[min, max], step])
+  })(ranges)
+})
+
+
+export const runModularIncreasersModularlyOverARangeOfPlayers = ([rangeNames, startingRange,
   modularIncreasers]:
 [Array<string>, Array<number>, Array<Function>],
   [positionGroup,
@@ -192,7 +196,7 @@ export const runModularIncreasersForARangeOfPlayers = ([rangeNames, startingRang
         playerNumber: number,
       ): [Array<[string, Record<string, number>]>, Array<number>, number] => {
 	const updater: Function = property(indexToUpdate, modularIncreasers)
-        const updatedSkillRange = update(
+        const updatedRange = update(
           indexToUpdate,
           updater,
           currentRange,
@@ -205,11 +209,48 @@ export const runModularIncreasersForARangeOfPlayers = ([rangeNames, startingRang
               zipObject(rangeNames, currentRange),
             ],
           ]),
-          updatedSkillRange,
+          updatedRange,
           modularAdditionFuncForListOfRanges(indexToUpdate),
         ];
       },
       [[], startingRange, 0],
+    ),
+      first
+  )(range(startingIndex, startingIndex + count));
+}
+
+export const runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers = ([rangeNames, startingRange,
+  modularIncreasers]:
+[Array<string>, Array<number>, Array<Function>],
+  [positionGroup,
+  count,
+  startingIndex,
+  ]: [PositionGroup, number, number]): Array<[string, Record<string, number>]> => {
+    return flowAsync(
+      reduce(
+	(
+          [playerData, currentRange]: [
+          Array<[string, Record<string, number>]>,
+          Array<number>
+        ],
+        playerNumber: number,
+      ): [Array<[string, Record<string, number>]>, Array<number>] => {
+
+        const updatedRange: Array<number> =
+	      zipWith((func: Function, currentValue: number): number => {
+	    return func(currentValue)
+	  })(modularIncreasers, currentRange)
+        return [
+          concat(playerData, [
+            [ 
+              `${positionGroup}_${addOne(playerNumber)}`,
+              zipObject(rangeNames, currentRange),
+            ],
+          ]),
+          updatedRange
+        ];
+      },
+      [[], startingRange],
     ),
       first
   )(range(startingIndex, startingIndex + count));
@@ -226,10 +267,25 @@ export const generateDataForAGroupOfPlayersByAveragingModularIncreases = curry(a
 > => {
 
   const [modularIncreasers, minOfRangesOnly] = await flowAsync(
-    over([mapModularIncreasers([plusOrMinus, count]), map(first)]),
+    over([mapModularIncreasersWithTheSameAverageStep([plusOrMinus, count]), map(first)]),
   )(ranges);
 
-  return runModularIncreasersForARangeOfPlayers([rangeNames, minOfRangesOnly, modularIncreasers],
+  return runModularIncreasersModularlyOverARangeOfPlayers([rangeNames, minOfRangesOnly, modularIncreasers],
+    [positionGroup, count, startingIndex])
+
+});
+
+export const generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers = curry(async ([rangeNames, ranges, increasers]:
+[Array<string>, Array<[number, number]>, Array<Function>],[
+  positionGroup,
+  count,
+  startingIndex,
+]: [PositionGroup, number, number]): Promise<
+  Array<[string, Record<string, number>]>
+> => {
+
+  const randomStarts: Array<number> = await getRandomNumberInRanges(ranges)
+  return runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers([rangeNames, randomStarts, increasers],
     [positionGroup, count, startingIndex])
 
 });
@@ -250,20 +306,62 @@ export const generateSkillsAndPhysicalDataForMultiplePositionGroups = flowAsync(
 );
 
 
+
+export const generatePlayerBioDataForMultiplePositionGroups = async(positionGroupCountStartingIndexTuples: Array<[PositionGroup, number, number]>): Promise<Record<string, Record<string, number>>> => {
+  const namesAndCountriesRanges: Array<[number, number]> = convertListOfListsOfStringsIntoListOfRanges([FIRSTNAMES, LASTNAMES, COUNTRYNAMES])
+  return flowAsync(
+    map(async([
+      positionGroup,
+      playerCount,
+      startingIndex,
+    ]: [PositionGroup, number, number]) => {
+      const [positionRange, positionGroupRange] = property([positionGroup], PLAYERBIODATABYPOSITION)
+      const ranges = concat(namesAndCountriesRanges, [positionRange, positionGroupRange])
+      const namesAndCountriesIncreasers = mapModularIncreasersWithDifferentStepsForARange(playerCount, namesAndCountriesRanges)
+      const increasers = concat(namesAndCountriesIncreasers, [identity,
+	boundedModularAddition([positionGroupRange, 1])])
+
+      return await generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers(
+	[PLAYERBIOKEYS, ranges, increasers],
+	[positionGroup, playerCount, startingIndex]
+      )
+    }),
+    flatten,
+    Object.fromEntries,
+  )(positionGroupCountStartingIndexTuples)
+} 
+
+export const getTotalPlayersToGenerateBasedOnGivenComposition = curry((composition: Array<[PositionGroup, number]>,
+  startingIndex: number,
+  totalClubs: number): Array<[PositionGroup, number, number]> => {
+  return map(([positionGroup, count]: [PositionGroup, number]): [PositionGroup, number, number] => [
+    positionGroup,
+    multiply(count, totalClubs),
+    startingIndex
+  ])(composition)
+  })
+
+
 // can't export getClubs and flattenClubs?
-export const generatePlayerSkillsAndPhysicalDataForListOfClubs = (startingIndex: number, entities: BaseEntities) => {
+export const generatePlayerSkillsAndPhysicalDataForListOfClubs = async(startingIndex: number, entities: BaseEntities) => {
   return flowAsync(
     property(["clubs"]),
     flattenDepth(2),
     size,
-    (totalClubs: number) => {
-      return map(([positionGroup, count]: [PositionGroup, number]): [PositionGroup, number, number] => [
-	positionGroup,
-	multiply(count, totalClubs),
-	startingIndex
-      ])(BASECLUBCOMPOSITION)
-    },
-    generateSkillsAndPhysicalDataForMultiplePositionGroups,
+    getTotalPlayersToGenerateBasedOnGivenComposition(BASECLUBCOMPOSITION, startingIndex),
+    generateSkillsAndPhysicalDataForMultiplePositionGroups
+  )(entities);
+
+}
+
+
+export const generatePlayerBioDataForListOfClubs = async(startingIndex: number, entities: BaseEntities) => {
+  return flowAsync(
+    property(["clubs"]),
+    flattenDepth(2),
+    size,
+    getTotalPlayersToGenerateBasedOnGivenComposition(BASECLUBCOMPOSITION, startingIndex),
+    generatePlayerBioDataForMultiplePositionGroups
   )(entities);
 
 }

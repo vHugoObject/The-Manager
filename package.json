@@ -12,7 +12,7 @@
     "format": "exec prettier . --write"
   },
   "dependencies": {
-    "@faker-js/faker": "^9.0.3",
+    "@faker-js/faker": "^9.6.0",
     "date-fns": "^4.1.0",
     "futil-js": "^1.76.2",
     "idb": "^8.0.0",

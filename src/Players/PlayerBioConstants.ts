@@ -19,8 +19,8 @@ export const PLAYERBIOKEYS: Array<string> = [
   "First Name",
   "Last Name",
   "National Team",
+  "Position",
   "Position Group",
-  "Position",  
 ]
 
 
