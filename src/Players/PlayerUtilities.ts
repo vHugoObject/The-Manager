@@ -25,10 +25,9 @@ import {
 import { flowAsync } from "futil-js";
 import { Player, PositionGroup } from "./PlayerTypes";
 import { BaseEntities } from "../Common/CommonTypes"
-import { FIRSTNAMES, LASTNAMES, COUNTRYNAMES } from "../Common/index";
 import { PLAYERBIODATABYPOSITION, PLAYERBIOKEYS } from "./PlayerBioConstants";
 import { PLAYERSKILLSANDPHYSICALDATAKEYS, PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION, PLAYERSKILLSANDPHYSICALDATARANDOMPLUSORMINUS, GOALKEEPINGSKILLS, DEFENDINGSKILLS, ATTACKINGSKILLS } from "./PlayerDataConstants";
-import { modularAddition, BASECLUBCOMPOSITION, addOne, minusOne } from "../Common/index";
+import { FIRSTNAMES, LASTNAMES, COUNTRYNAMES, modularAddition, BASECLUBCOMPOSITION, addOne, minusOne } from "../Common/index";
 
 
 export const isGoalkeeper = isEqual(PositionGroup.Goalkeeper);
@@ -327,7 +326,6 @@ export const generatePlayerBioDataForMultiplePositionGroups = async(positionGrou
       )
     }),
     flatten,
-    Object.fromEntries,
   )(positionGroupCountStartingIndexTuples)
 } 
 

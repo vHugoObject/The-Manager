@@ -482,13 +482,13 @@ describe("Player utilities tests", async () => {
 
       const expectedPlayerDataKeys: Set<string> = new Set(PLAYERBIOKEYS);
       const actualPlayerDataKeys: Set<string> = flowAsync(
-	Object.values,
+	map(last),
 	flatMap(Object.keys),
 	convertToSet
       )(actualPlayers)
       
       const sumOfActualPlayerDataValues: number = flowAsync(
-	Object.values,
+	map(last),
 	flatMap(Object.values),
 	sum,	
       )(actualPlayers)
@@ -583,14 +583,13 @@ describe("Player utilities tests", async () => {
       const expectedPlayersCount: number = getExpectedPlayersCount(testBaseEntities)
 
 
-      const actualPlayers: Record<
+      const actualPlayers: Array<[
         string,
-        Record<string, number>
+        Record<string, number>]
       > = await generatePlayerBioDataForListOfClubs(testStartingIndex, testBaseEntities)
 
-      const actualPlayersCount: number = flowAsync(Object.keys, size)(actualPlayers)
 
-      expect(actualPlayersCount).toEqual(expectedPlayersCount)
+      expect(actualPlayers.length).toEqual(expectedPlayersCount)
             
     
   });

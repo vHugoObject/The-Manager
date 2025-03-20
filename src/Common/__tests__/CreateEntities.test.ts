@@ -29,7 +29,8 @@ import { fakerToArb,
   getTotalTestDomesticLeagues,
   getActualBaseEntitiesCount,
   getTestBaseEntitiesCount,
-  getExpectedPlayersCount
+  getExpectedPlayersCount,
+  getTotalTestClubs
 } from "../testingUtilities"
 import {
   convertBaseCountriesToBaseEntities,
@@ -450,10 +451,10 @@ describe("CreateEntities", async () => {
 
     const getExpectedEntitiesSansPlayerCount: number = flowAsync(getTestBaseEntitiesCount, Object.values, flatten, sum)
     const expectedBaseEntitiesCount: number = flowAsync(over([getExpectedPlayersCount, getExpectedEntitiesSansPlayerCount]), sum)(testBaseEntities)
+
     const actualEntities: Record<string, Entity> =
 	  await createEntities(testBaseEntities);
-
-    expect(Object.keys(actualEntities).length).toEqual(expectedBaseEntitiesCount)
+    expect(size(actualEntities)).toEqual(expectedBaseEntitiesCount)
 
     
   });

@@ -15,14 +15,10 @@ import {
   take,
   takeRight,
 } from "lodash/fp";
+import { addOne, minusOne, multiplyByTwo, half,
+  lastTwoArrayValues, firstTwoArrayValues } from "./CommonUtilities"
 import { flowAsync } from "futil-js";
 
-export const addOne = add(1);
-export const minusOne = add(-1);
-export const multiplyByTwo = multiply(2);
-export const half = multiply(1 / 2);
-export const lastTwoArrayValues = takeRight(2);
-export const firstTwoArrayValues = take(2);
 
 export const totalRoundRobinRounds = minusOne;
 export const totalDoubleRoundRobinRounds = flowAsync(minusOne, multiplyByTwo);

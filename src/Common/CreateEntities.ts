@@ -1,8 +1,10 @@
 import { BaseEntity, BaseEntities, Entity } from "./CommonTypes";
 import { BaseCountry } from "../Countries/CountryTypes";
+import { addOne } from "./CommonUtilities"
 import { createCountry } from "../Countries/CountryUtilities";
 import { createCompetition } from "../Competitions/CompetitionUtilities";
 import { createClub } from "../Clubs/ClubUtilities";
+import { generatePlayerBioDataForListOfClubs } from "../Players/PlayerUtilities"
 import { PositionGroup } from "../Players/PlayerTypes";
 import { BASECLUBCOMPOSITION } from "./Constants";
 import { flowAsync, updateAllPaths, updatePaths, mapIndexed } from "futil-js";
@@ -30,6 +32,7 @@ import {
   flatten,
   sum,
   split,
+  mapValues
 } from "lodash/fp";
 
 export const getCountries = property(["countries"]);
@@ -194,7 +197,7 @@ export const createPlayerReferencesForClubs = async (
           Array.from(
             { length },
             (_, index: number): [string, PositionGroup] => [
-              `${positionGroup}_${index + 1}`,
+              `${positionGroup}_${addOne(index)}`,
               positionGroup,
             ],
           ),
@@ -214,38 +217,33 @@ export const createEntities = async (
 
   return await flowAsync(
     updateAllPaths({
-      countries: zipWith(
-        (competitions: Array<BaseEntity>, [id, name]: BaseEntity) => {
-          return [id, partial(createCountry, [[id, name], competitions])];
+      countries: flowAsync(zipWith(
+        async(competitions: Array<BaseEntity>, [id, name]: BaseEntity) => {
+          return [id, await createCountry([id, name], competitions)];
         },
         getDomesticLeagues(baseEntities),
-      ),
+      )),
       domesticLeagues: flowAsync(
         flattenCompetitions,
-        zipWith((clubs: Array<BaseEntity>, [id, name]: BaseEntity) => {
-          return [id, partial(createCompetition, [[id, name], clubs])];
+        zipWith(async(clubs: Array<BaseEntity>, [id, name]: BaseEntity) => {
+          return [id, await createCompetition([id, name], clubs)];
         }, getClubs(baseEntities)),
       ),
       clubs: flowAsync(
         flattenClubs,
         zipWith(
-          (players: Array<[string, PositionGroup]>, [id, name]: BaseEntity) => {
-            return [id, partial(createClub, [[id, name], players])];
+          async(players: Array<[string, PositionGroup]>, [id, name]: BaseEntity) => {
+            return [id, await createClub([id, name], players)];
           },
           baseEntitiesPlayers,
         ),
       ),
-      players: () =>
-        flowAsync(
-          flatten,
-          map(([id, position]: [string, PositionGroup]) => [
-            id,
-            partial(createPlayer, [[id, position]]),
-          ]),
-        )(baseEntitiesPlayers),
+      players: async() => {
+	return await generatePlayerBioDataForListOfClubs(0, baseEntities)
+      }
     }),
     Object.values,
     flatten,
-    Object.fromEntries
+    Object.fromEntries,
   )(baseEntities);
 };

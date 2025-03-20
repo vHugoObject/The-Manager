@@ -1,15 +1,24 @@
 import {
-  mean,
   sum,
   constant,
-  spread,
-  zipAll,
   map,
   sortBy,
   first,
   last,
+  add,
+  multiply,
+  takeRight,
+  take
 } from "lodash/fp";
 import { flowAsync, mapIndexed, mapValuesIndexed } from "futil-js";
+
+export const addOne = add(1);
+export const minusOne = add(-1);
+export const multiplyByTwo = multiply(2);
+export const half = multiply(1 / 2);
+export const lastTwoArrayValues = takeRight(2);
+export const firstTwoArrayValues = take(2);
+
 
 export const arrayRotator = ([array, rotations]: Array<any>): Array<any> => {
   const arrayLength: number = array.length;
