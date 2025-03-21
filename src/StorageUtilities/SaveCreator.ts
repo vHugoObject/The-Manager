@@ -1,7 +1,7 @@
 import { promiseProps } from "futil-js";
 import { Save, SaveArguments } from "./SaveTypes";
 import { createEntities, getThirdSundayOfAugust } from "../Common/index";
-import { generatePlayerSkillsAndPhysicalDataForListOfClubs } from "../Players/PlayerUtilities"
+import { generatePlayerSkillsAndPhysicalDataForListOfClubs } from "../Players/PlayerUtilities";
 
 export const createSave = async ({
   Name,
@@ -10,7 +10,6 @@ export const createSave = async ({
   Club,
   BaseEntities,
 }: SaveArguments): Promise<Save> => {
-
   return await promiseProps({
     Name,
     MainCompetition,
@@ -20,7 +19,8 @@ export const createSave = async ({
     CurrentDate: getThirdSundayOfAugust(CurrentSeason),
     Entities: await createEntities(BaseEntities),
     EntitiesStatistics: {},
-    PlayerSkillsAndPhysicalData: await generatePlayerSkillsAndPhysicalDataForListOfClubs(0, BaseEntities),
+    PlayerSkillsAndPhysicalData:
+      await generatePlayerSkillsAndPhysicalDataForListOfClubs(0, BaseEntities),
     SaveID: "",
   });
 };

@@ -2,7 +2,6 @@ import {
   add,
   map,
   last,
-  curry,
   reduce,
   range,
   concat,
@@ -15,10 +14,17 @@ import {
   take,
   takeRight,
 } from "lodash/fp";
-import { addOne, minusOne, multiplyByTwo, half,
-  lastTwoArrayValues, firstTwoArrayValues } from "./CommonUtilities"
+import {
+  addOne,
+  minusOne,
+  multiplyByTwo,
+  half,
+  lastTwoArrayValues,
+  firstTwoArrayValues,
+  modularArithmetic,
+  modularAddition,
+} from "./CommonUtilities";
 import { flowAsync } from "futil-js";
-
 
 export const totalRoundRobinRounds = minusOne;
 export const totalDoubleRoundRobinRounds = flowAsync(minusOne, multiplyByTwo);
@@ -31,19 +37,6 @@ export const totalDoubleRoundRobinMatches = flowAsync(
   totalRoundRobinMatches,
   multiplyByTwo,
 );
-
-export const modularArithmetic = curry(
-  (
-    arithmeticFunction: (arg: number) => number,
-    rangeMax: number,
-    num: number,
-  ): number => {
-    return arithmeticFunction(num) % rangeMax;
-  },
-);
-
-export const modularAddition = modularArithmetic(addOne);
-export const modularSubtraction = modularArithmetic(minusOne);
 
 export const firstWeekOfRoundRobinWithEvenNumberClubs = (
   clubs: number,

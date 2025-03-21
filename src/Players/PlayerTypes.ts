@@ -42,5 +42,3 @@ export interface Player {
   PositionGroup: PositionGroup;
   NationalTeam: string;
 }
-
-

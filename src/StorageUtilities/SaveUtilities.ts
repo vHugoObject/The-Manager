@@ -1,7 +1,6 @@
 import { openDB, IDBPDatabase } from "idb";
 import { SaveID, Save } from "./SaveTypes";
 
-
 export const openSaveDB = async (): Promise<IDBPDatabase> => {
   const mainDatabase: string = "the-manager";
   const saveStore: string = "save-games";
@@ -15,7 +14,6 @@ export const openSaveDB = async (): Promise<IDBPDatabase> => {
   });
   return db;
 };
-
 
 export const addSaveToDB = async (save: Save): Promise<IDBValidKey> => {
   const saveStore: string = "save-games";
@@ -33,7 +31,7 @@ export const getSaveValue = async (key: SaveID): Promise<Save> => {
   const save: Save = await db.get(saveStore, key);
   db.close();
 
-  return save
+  return save;
 };
 
 export const updateSaveValue = async (save: Save): Promise<void> => {
@@ -60,7 +58,7 @@ export const getAllSaveValues = async (): Promise<Array<Save>> => {
   const saveValues: Array<Save> = await db.getAll(saveStore);
 
   db.close();
-  return saveValues
+  return saveValues;
 };
 
 export const deleteSave = async (key: SaveID): Promise<void> => {
@@ -70,4 +68,3 @@ export const deleteSave = async (key: SaveID): Promise<void> => {
   await db.delete(saveStore, key);
   db.close();
 };
-

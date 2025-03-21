@@ -80,4 +80,3 @@ export const England: BaseCountry = [
   ["English Premier League", "The Championship", "League One", "League Two"],
   [premierLeagueClubs, championshipClubs, leagueOneClubs, leagueTwoClubs],
 ];
-

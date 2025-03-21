@@ -24,7 +24,7 @@ export const PLAYERSKILLSANDPHYSICALDATAKEYS: Array<string> = [
   "Weight",
   "Age",
   "Years Left On Contract",
-  "Wages"  
+  "Wages",
 ];
 
 const HEIGHTRANGE: [number, number] = [160, 200];
@@ -33,13 +33,12 @@ const AGERANGE: [number, number] = [18, 40];
 const YEARS: [number, number] = [1, 5];
 const WAGES: [number, number] = [5_000, 1_000_000];
 
-
 const POSITIONPRIMARYSKILLSRANGE: [number, number] = [50, 99];
 const POSITIONSECONDARYSKILLSRANGE: [number, number] = [25, 75];
 const BASICSKILLSRANGE: [number, number] = [25, 99];
 const OTHERSKILLSRANGE: [number, number] = [25, 50];
 
-export const PLAYERSKILLSANDPHYSICALDATARANDOMPLUSORMINUS: number = 5
+export const PLAYERSKILLSANDPHYSICALDATARANDOMPLUSORMINUS: number = 5;
 
 // https://gist.github.com/mstn/5f75651100556dbe30e405691471afe3
 type FixedSizeArray<N extends number, T, M extends string = "0"> = {
@@ -75,7 +74,7 @@ export const PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION: Record<
     WEIGHTRANGE,
     AGERANGE,
     YEARS,
-    WAGES
+    WAGES,
   ],
   [PositionGroup.Defender]: [
     POSITIONPRIMARYSKILLSRANGE,
@@ -102,7 +101,7 @@ export const PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION: Record<
     WEIGHTRANGE,
     AGERANGE,
     YEARS,
-    WAGES
+    WAGES,
   ],
   [PositionGroup.Attacker]: [
     BASICSKILLSRANGE,
@@ -129,7 +128,7 @@ export const PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION: Record<
     WEIGHTRANGE,
     AGERANGE,
     YEARS,
-    WAGES
+    WAGES,
   ],
   [PositionGroup.Goalkeeper]: [
     POSITIONSECONDARYSKILLSRANGE,
@@ -156,7 +155,7 @@ export const PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION: Record<
     WEIGHTRANGE,
     AGERANGE,
     YEARS,
-    WAGES
+    WAGES,
   ],
 };
 

@@ -1,23 +1,13 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import {
-  flattenDeep,
-  zip,
-  concat,
-  map,
-  pick,
-  partial,
-  sum,
-} from "lodash/fp";
+import { flattenDeep, zip, concat, map, pick, partial, sum } from "lodash/fp";
 import { range } from "lodash";
 import { updateAllPaths, flowAsync, flowMap, mapValuesIndexed } from "futil-js";
-import {
-  Entity,
-} from "../../Common/CommonTypes";
+import { Entity } from "../../Common/CommonTypes";
 import { SaveArguments, Save } from "../../StorageUtilities/SaveTypes";
 import { Player } from "../../Players/PlayerTypes";
 import { createSave } from "../../StorageUtilities/SaveCreator";
-import { fakerToArb, entitiesStatisticsCreator, } from "../../Common/index";
+import { fakerToArb, entitiesStatisticsCreator } from "../../Common/index";
 
 import {
   makeEntityAddable,
@@ -29,7 +19,6 @@ import {
 } from "../SaveHandlers";
 
 describe("SaveHandlers test suite", async () => {
-
   test.prop([
     fc.record({
       ID: fakerToArb((faker) => faker.string.uuid()),

@@ -8,7 +8,6 @@ export interface SaveArguments {
   BaseEntities: BaseEntities;
 }
 
-
 export type SaveID = string | IDBValidKey;
 
 export interface Save {

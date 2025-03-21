@@ -8,10 +8,6 @@ import {
   totalRoundRobinMatches,
   totalRoundRobinRounds,
   matchesPerRoundOfRoundRobin,
-  minusOne,
-  addOne,
-  multiplyByTwo,
-  modularArithmetic,
   firstWeekOfRoundRobinWithEvenNumberClubs,
   everyWeekAfterFirstWeekofRoundRobin,
   doubleRoundRobinScheduler,
@@ -28,34 +24,6 @@ describe("RoundRobinScheduler tests", async () => {
       expect(actualMatchesPerRound).toEqual(testClubsCount / 2);
     },
   );
-
-  test.prop([
-    fc.integer({ min: 5, max: 100 }).chain((rangeMax: number) => {
-      return fc.tuple(
-        fc.integer({ min: 1, max: rangeMax }),
-        fc.constant(rangeMax),
-      );
-    }),
-  ])("modularArithmetic", async (testNumAndRangeMax) => {
-    const [testNum, rangeMax]: [number, number] = testNumAndRangeMax;
-    const testRangeMax = flowAsync(multiplyByTwo, minusOne)(rangeMax);
-    const testModularAddition = modularArithmetic(addOne);
-    const testModularSubtraction = modularArithmetic(minusOne);
-    const actualNumberAfterSutraction = testModularSubtraction(
-      testRangeMax,
-      testNum,
-    );
-    const actualNumberAfterAddition = testModularAddition(
-      testRangeMax,
-      testNum,
-    );
-
-    map((actualNumber) => {
-      expect(actualNumber).toBeGreaterThanOrEqual(0);
-      expect(actualNumber).toBeLessThanOrEqual(testRangeMax);
-      expect(actualNumber).not.toEqual(testNum);
-    })([actualNumberAfterAddition, actualNumberAfterSutraction]);
-  });
 
   test.prop([fc.constantFrom(...rangeStep(2, 18, 100))])(
     "firstWeekOfRoundRobinWithEvenNumberClubs",
