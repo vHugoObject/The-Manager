@@ -3,7 +3,7 @@ import { test, fc } from "@fast-check/vitest";
 import {
   zipAll,
   map,
-  flatMap,
+  flatten,
   last,
   sum,
   min,
@@ -15,9 +15,8 @@ import {
 } from "lodash/fp";
 import { flowAsync } from "futil-js";
 import { PositionGroup } from "../PlayerTypes";
-import { BaseEntities } from "../../Common/CommonTypes";
-import { PLAYERBIOKEYS, POSITIONGROUPSLIST } from "../PlayerBioConstants";
-import { PLAYERSKILLSANDPHYSICALDATAKEYS } from "../PlayerDataConstants";
+import { BaseEntities, Entity } from "../../Common/CommonTypes";
+import { POSITIONGROUPSLIST } from "../PlayerBioConstants";
 import {
   convertToSet,
   convertArrayOfArraysToArrayOfSets,
@@ -45,32 +44,18 @@ describe("Player utilities tests", async () => {
       .tuple(
         fc.integer({ min: 0, max: 1000 }),
         fc.integer({ min: 1001 }),
-        fc.integer({ min: 3, max: 30 }),
       )
-      .chain(([min, max, minLength]: [number, number, number]) => {
+      .chain(([min, max]: [number, number]) => {
         return fc.tuple(
-          fc.array(
-            fakerToArb((faker) => faker.word.noun()),
-            { minLength, maxLength: minLength },
-          ),
           fc.array(fc.integer({ min, max }), {
-            minLength,
-            maxLength: minLength,
+            minLength: 3            
           }),
-          fc.array(
-            fc.integer({ min: Math.floor(max / 10), max: Math.floor(max / 5) }),
-            { minLength, maxLength: minLength },
-          ),
+          fc.integer({ min: Math.floor(max / 10), max: Math.floor(max / 5) }),            
         );
       }),
     fc.tuple(
       fc.constantFrom(
-        ...[
-          PositionGroup.Midfielder,
-          PositionGroup.Defender,
-          PositionGroup.Attacker,
-          PositionGroup.Goalkeeper,
-        ],
+        ...POSITIONGROUPSLIST
       ),
       fc.integer({ min: 100, max: 300 }),
       fc.nat(),
@@ -78,22 +63,20 @@ describe("Player utilities tests", async () => {
   ])(
     "runModularIncreasersModularlyOverARangeOfPlayers",
     async (
-      testRangeNamesStartingRangeAndIncreases,
+      testStartingRangeAndIncrease,
       testPositionCountStartingIndex,
     ) => {
-      const [testRangeNames, testStartingRange, testIncreases]: [
-        Array<string>,
+      const [testStartingRange, testIncrease]: [
         Array<number>,
-        Array<number>,
-      ] = testRangeNamesStartingRangeAndIncreases;
-      const expectedPlayerDataKeys: Set<string> = new Set(testRangeNames);
+        number
+      ] = testStartingRangeAndIncrease;
 
-      const testIncreasers = map((testIncrease: number) => add(testIncrease))(
-        testIncreases,
-      );
-      const actualPlayers: Array<[string, Record<string, number>]> =
+      const testIncreasers = map((_:number) => add(testIncrease))(testStartingRange)
+      
+      
+      const actualPlayers: Array<[string, Array<number>]> =
         runModularIncreasersModularlyOverARangeOfPlayers(
-          [testRangeNames, testStartingRange, testIncreasers],
+          [testStartingRange, testIncreasers],
           testPositionCountStartingIndex,
         );
 
@@ -106,19 +89,13 @@ describe("Player utilities tests", async () => {
       expect(actualPlayers.length).toEqual(expectedCount);
       const expectedLastID: string = `${expectedPosition}_${expectedStartingIndex + expectedCount}`;
 
-      const actualPlayerDataKeys = flowAsync(
-        flatMap(flowAsync(last, Object.keys)),
-        convertToSet,
-      )(actualPlayers);
-      expect(actualPlayerDataKeys).toStrictEqual(expectedPlayerDataKeys);
-
       const [actualPlayersIDs, actualPlayerDataValues] = zipAll(actualPlayers);
       const actualPlayersIDsSet: Set<string> = convertToSet(actualPlayersIDs);
 
       expect(actualPlayersIDsSet.has(expectedLastID)).toBeTruthy();
 
       const sumOfActualPlayerDataValues: number = flowAsync(
-        flatMap(Object.values),
+	flatten,
         sum,
       )(actualPlayerDataValues);
 
@@ -141,10 +118,6 @@ describe("Player utilities tests", async () => {
       )
       .chain(([min, max, minLength]: [number, number, number]) => {
         return fc.tuple(
-          fc.array(
-            fakerToArb((faker) => faker.word.noun()),
-            { minLength, maxLength: minLength },
-          ),
           fc.array(fc.integer({ min, max }), {
             minLength,
             maxLength: minLength,
@@ -157,12 +130,7 @@ describe("Player utilities tests", async () => {
       }),
     fc.tuple(
       fc.constantFrom(
-        ...[
-          PositionGroup.Midfielder,
-          PositionGroup.Defender,
-          PositionGroup.Attacker,
-          PositionGroup.Goalkeeper,
-        ],
+        ...POSITIONGROUPSLIST
       ),
       fc.integer({ min: 100, max: 300 }),
       fc.nat(),
@@ -170,22 +138,21 @@ describe("Player utilities tests", async () => {
   ])(
     "runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers",
     async (
-      testRangeNamesStartingRangeAndIncreases,
+      testStartingRangeAndIncreases,
       testPositionCountStartingIndex,
     ) => {
-      const [testRangeNames, testStartingRange, testIncreases]: [
-        Array<string>,
+      const [testStartingRange, testIncreases]: [
         Array<number>,
         Array<number>,
-      ] = testRangeNamesStartingRangeAndIncreases;
-      const expectedPlayerDataKeys: Set<string> = new Set(testRangeNames);
+      ] = testStartingRangeAndIncreases;
 
+      
       const testIncreasers = map((testIncrease: number) => add(testIncrease))(
         testIncreases,
       );
-      const actualPlayers: Array<[string, Record<string, number>]> =
+      const actualPlayers: Array<[string, Array<number>]> =
         runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers(
-          [testRangeNames, testStartingRange, testIncreasers],
+          [testStartingRange, testIncreasers],
           testPositionCountStartingIndex,
         );
 
@@ -198,19 +165,13 @@ describe("Player utilities tests", async () => {
       expect(actualPlayers.length).toEqual(expectedCount);
       const expectedLastID: string = `${expectedPosition}_${expectedStartingIndex + expectedCount}`;
 
-      const actualPlayerDataKeys = flowAsync(
-        flatMap(flowAsync(last, Object.keys)),
-        convertToSet,
-      )(actualPlayers);
-      expect(actualPlayerDataKeys).toStrictEqual(expectedPlayerDataKeys);
-
       const [actualPlayersIDs, actualPlayerDataValues] = zipAll(actualPlayers);
       const actualPlayersIDsSet: Set<string> = convertToSet(actualPlayersIDs);
 
       expect(actualPlayersIDsSet.has(expectedLastID)).toBeTruthy();
 
       const sumOfActualPlayerDataValues: number = flowAsync(
-        flatMap(Object.values),
+	flatten,
         sum,
       )(actualPlayerDataValues);
 
@@ -225,29 +186,16 @@ describe("Player utilities tests", async () => {
   );
 
   test.prop([
-    fc.integer({ min: 3, max: 30 }).chain((minLength: number) => {
-      return fc.tuple(
-        fc.array(
-          fakerToArb((faker) => faker.word.noun()),
-          { minLength, maxLength: minLength },
-        ),
-        fc.array(
+    fc.array(
           fc.tuple(
             fc.integer({ min: 0, max: 50 }),
             fc.integer({ min: 51, max: 100 }),
           ),
-          { minLength, maxLength: minLength },
-        ),
-      );
-    }),
+      { minLength: 3 },
+    ),
     fc.tuple(
       fc.constantFrom(
-        ...[
-          PositionGroup.Midfielder,
-          PositionGroup.Defender,
-          PositionGroup.Attacker,
-          PositionGroup.Goalkeeper,
-        ],
+        ...POSITIONGROUPSLIST
       ),
       fc.integer({ min: 100, max: 300 }),
       fc.nat(),
@@ -255,29 +203,26 @@ describe("Player utilities tests", async () => {
     fc.gen(),
   ])(
     "generateDataForAGroupOfPlayersByAveragingModularIncreases",
-    async (testRangeNamesAndRanges, testPositionCountAndStartingIndex, g) => {
+    async (testRanges, testPositionCountAndStartingIndex, g) => {
       const [, expectedCount]: [PositionGroup, number, number] =
         testPositionCountAndStartingIndex;
 
-      const [testRangeNames, testRanges]: [
-        Array<string>,
-        Array<[number, number]>,
-      ] = testRangeNamesAndRanges;
       const testRandomPlusOrMinusMax: number =
         getAverageModularStepForRangeOfData(testRanges, expectedCount);
       const testRandomPlusOrMinus: number = g(fc.integer, {
         min: 0,
         max: testRandomPlusOrMinusMax - 1,
       });
-      const actualPlayers: Array<[string, Record<string, number>]> =
+      
+      const actualPlayers: Array<[string, Array<number>]> =
         await generateDataForAGroupOfPlayersByAveragingModularIncreases(
-          [testRangeNames, testRanges, testRandomPlusOrMinus],
+          [testRanges, testRandomPlusOrMinus],
           testPositionCountAndStartingIndex,
         );
 
       const [, actualPlayerDataValues] = zipAll(actualPlayers);
       const sumOfActualPlayerDataValues: number = flowAsync(
-        flatMap(Object.values),
+	flatten,
         sum,
       )(actualPlayerDataValues);
 
@@ -297,59 +242,42 @@ describe("Player utilities tests", async () => {
     },
   );
 
-  test.prop([
-    fc.integer({ min: 3, max: 30 }).chain((minLength: number) => {
-      return fc.tuple(
-        fc.array(
-          fakerToArb((faker) => faker.word.noun()),
-          { minLength, maxLength: minLength },
-        ),
+  test.prop([    
         fc.array(
           fc.tuple(
             fc.integer({ min: 0, max: 50 }),
             fc.integer({ min: 51, max: 100 }),
           ),
-          { minLength, maxLength: minLength },
+          { minLength: 3}
         ),
-      );
-    }),
     fc.tuple(
       fc.constantFrom(
-        ...[
-          PositionGroup.Midfielder,
-          PositionGroup.Defender,
-          PositionGroup.Attacker,
-          PositionGroup.Goalkeeper,
-        ],
+        ...POSITIONGROUPSLIST
       ),
       fc.integer({ min: 100, max: 300 }),
       fc.nat(),
     ),
   ])(
     "generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers",
-    async (testRangeNamesAndRanges, testPositionCountAndStartingIndex) => {
+    async (testRanges, testPositionCountAndStartingIndex) => {
       const [, expectedCount]: [PositionGroup, number, number] =
         testPositionCountAndStartingIndex;
 
-      const [testRangeNames, testRanges]: [
-        Array<string>,
-        Array<[number, number]>,
-      ] = testRangeNamesAndRanges;
 
       const testIncreasers = map(([min, max]: [number, number]) => {
         const testIncrease: number = (max - min) / expectedCount;
         return boundedModularAddition([[min, max], testIncrease]);
       })(testRanges);
 
-      const actualPlayers: Array<[string, Record<string, number>]> =
+      const actualPlayers: Array<[string, Array<number>]> =
         await generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers(
-          [testRangeNames, testRanges, testIncreasers],
+          [testRanges, testIncreasers],
           testPositionCountAndStartingIndex,
         );
 
       const [, actualPlayerDataValues] = zipAll(actualPlayers);
       const sumOfActualPlayerDataValues: number = flowAsync(
-        flatMap(Object.values),
+	flatten,
         sum,
       )(actualPlayerDataValues);
 
@@ -403,26 +331,18 @@ describe("Player utilities tests", async () => {
 
       const actualPlayers: Record<
         string,
-        Record<string, number>
+        Entity
       > = await generateSkillsAndPhysicalDataForMultiplePositionGroups(
         testPositionCountStartingIndexTuples,
       );
-      const expectedPlayerDataKeys: Set<string> = new Set(
-        PLAYERSKILLSANDPHYSICALDATAKEYS,
-      );
-      const actualPlayerDataKeys: Set<string> = flowAsync(
-        Object.values,
-        flatMap(Object.keys),
-        convertToSet,
-      )(actualPlayers);
+
 
       const sumOfActualPlayerDataValues: number = flowAsync(
         Object.values,
-        flatMap(Object.values),
+	flatten,
         sum,
       )(actualPlayers);
 
-      expect(actualPlayerDataKeys).toStrictEqual(expectedPlayerDataKeys);
       expect(sumOfActualPlayerDataValues).toBeGreaterThan(0);
       expect(Object.keys(actualPlayers).length).toEqual(sum(expectedCounts));
     },
@@ -460,27 +380,20 @@ describe("Player utilities tests", async () => {
         Array<number>,
       ] = zipAll(testPositionCountStartingIndexTuples);
 
-      const actualPlayers: Record<
-        string,
-        Record<string, number>
+      const actualPlayers: Array<
+        [string,
+	Array<number>]
       > = await generatePlayerBioDataForMultiplePositionGroups(
         testPositionCountStartingIndexTuples,
       );
 
-      const expectedPlayerDataKeys: Set<string> = new Set(PLAYERBIOKEYS);
-      const actualPlayerDataKeys: Set<string> = flowAsync(
-        map(last),
-        flatMap(Object.keys),
-        convertToSet,
-      )(actualPlayers);
 
       const sumOfActualPlayerDataValues: number = flowAsync(
         map(last),
-        flatMap(Object.values),
+	flatten,
         sum,
       )(actualPlayers);
 
-      expect(actualPlayerDataKeys).toStrictEqual(expectedPlayerDataKeys);
       expect(sumOfActualPlayerDataValues).toBeGreaterThan(0);
       expect(Object.keys(actualPlayers).length).toEqual(sum(expectedCounts));
     },
@@ -571,7 +484,7 @@ describe("Player utilities tests", async () => {
 
       const actualPlayers: Record<
         string,
-        Record<string, number>
+        Entity
       > = await generatePlayerSkillsAndPhysicalDataForListOfClubs(
         testStartingIndex,
         testBaseEntities,
@@ -626,7 +539,7 @@ describe("Player utilities tests", async () => {
       const expectedPlayersCount: number =
         getExpectedPlayersCount(testBaseEntities);
 
-      const actualPlayers: Array<[string, Record<string, number>]> =
+      const actualPlayers: Array<[string, Entity]> =
         await generatePlayerBioDataForListOfClubs(
           testStartingIndex,
           testBaseEntities,

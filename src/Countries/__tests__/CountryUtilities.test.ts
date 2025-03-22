@@ -1,11 +1,10 @@
 import { test, fc } from "@fast-check/vitest";
-import { zipAll } from "lodash/fp";
+import { zipAll, over } from "lodash/fp";
 import { describe, expect } from "vitest";
 import { fakerToArb } from "../../Common/testingUtilities";
 import { convertArrayOfArraysToArrayOfSets } from "../../Common/CommonUtilities";
-
-import { Country } from "../CountryTypes";
-import { createCountry } from "../CountryUtilities";
+import { Entity } from "../../Common/CommonTypes";
+import { createCountry, getCountryID, getCountryName, getCountryCompetitions } from "../CountryUtilities";
 
 describe("Country Utilities tests", async () => {
   test.prop([
@@ -21,19 +20,24 @@ describe("Country Utilities tests", async () => {
       { minLength: 3, maxLength: 8 },
     ),
   ])("createCountry", async (testCountryIDNameTuple, testCompetitions) => {
-    const actualCountry: Country = await createCountry(
+    const actualCountry: Entity = await createCountry(
       testCountryIDNameTuple,
       testCompetitions,
     );
 
     const [expectedCountryID, expectedCountryName] = testCountryIDNameTuple;
-    expect(actualCountry.ID).toMatch(expectedCountryID);
-    expect(actualCountry.Name).toMatch(expectedCountryName);
-    const [testCompetitionIDs] = zipAll(testCompetitions);
+    const [testCompetitionIDs, ] = zipAll(testCompetitions);
+    
+    const [actualCountryID, actualCountryName, actualCountryCompetitionIDs] = over([getCountryID, getCountryName, getCountryCompetitions])(actualCountry)
+
+    expect(actualCountryID).toMatch(expectedCountryID);
+    expect(actualCountryName).toMatch(expectedCountryName);
+        
     const [expectedIDs, actualIDs] = convertArrayOfArraysToArrayOfSets([
       testCompetitionIDs,
-      actualCountry.Competitions,
+      actualCountryCompetitionIDs,
     ]);
+    
     expect(expectedIDs).toStrictEqual(actualIDs);
   });
 });

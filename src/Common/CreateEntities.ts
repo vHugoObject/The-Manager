@@ -64,7 +64,7 @@ export const createEntities = async (
     updateAllPaths({
       countries: flowAsync(
         zipWith(
-          async (competitions: Array<BaseEntity>, [id, name]: BaseEntity) => {
+          async (competitions: Array<BaseEntity>, [id, name]: BaseEntity): Promise<[string, Entity]> => {
             return [id, await createCountry([id, name], competitions)];
           },
           getDomesticLeagues(baseEntities),
@@ -72,7 +72,7 @@ export const createEntities = async (
       ),
       domesticLeagues: flowAsync(
         flattenCompetitions,
-        zipWith(async (clubs: Array<BaseEntity>, [id, name]: BaseEntity) => {
+        zipWith(async (clubs: Array<BaseEntity>, [id, name]: BaseEntity): Promise<[string, Entity]> => {
           return [id, await createCompetition([id, name], clubs)];
         }, getClubs(baseEntities)),
       ),
@@ -82,13 +82,13 @@ export const createEntities = async (
           async (
             players: Array<[string, PositionGroup]>,
             [id, name]: BaseEntity,
-          ) => {
+          ): Promise<[string, Entity]> => {
             return [id, await createClub([id, name], players)];
           },
           baseEntitiesPlayers,
         ),
       ),
-      players: async () => {
+      players: async (): Promise<Array<[string, Array<number>]>> => {
         return await generatePlayerBioDataForListOfClubs(0, baseEntities);
       },
     }),

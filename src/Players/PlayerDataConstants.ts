@@ -1,31 +1,4 @@
 import { PositionGroup } from "./PlayerTypes";
-export const PLAYERSKILLSANDPHYSICALDATAKEYS: Array<string> = [
-  "Tackling",
-  "Passing",
-  "Shooting",
-  "Dribbling",
-
-  "Marking",
-  "Vision",
-  "Strength",
-
-  "Attacking Work Rate",
-  "Defending Work Rate",
-  "Positional Awareness",
-  "Sprint Speed",
-  "Agility",
-
-  "GK Positioning",
-  "GK Diving",
-  "GK Handling",
-  "GK Reflexes",
-
-  "Height",
-  "Weight",
-  "Age",
-  "Years Left On Contract",
-  "Wages",
-];
 
 const HEIGHTRANGE: [number, number] = [160, 200];
 const WEIGHTRANGE: [number, number] = [60, 100];
@@ -159,28 +132,3 @@ export const PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION: Record<
   ],
 };
 
-export const DEFENDINGSKILLS = new Set([
-  "Tackling",
-  "Positional Awareness",
-  "Marking",
-  "Sprint Speed",
-  "Agility",
-  "Defending Work Rate",
-]);
-
-export const GOALKEEPINGSKILLS = new Set([
-  "GK Positioning",
-  "GK Diving",
-  "GK Handling",
-  "GK Reflexes",
-]);
-export const ATTACKINGSKILLS = new Set([
-  "Passing",
-  "Shooting",
-  "Dribbling",
-  "Vision",
-  "Sprint Speed",
-  "Positional Awareness",
-  "Stamina",
-  "Attacking Work Rate",
-]);

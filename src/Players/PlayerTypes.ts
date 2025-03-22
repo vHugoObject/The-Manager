@@ -1,44 +1,90 @@
 export enum PositionGroup {
-  Midfielder = "Midfielder",
-  Attacker = "Attacker",
-  Defender = "Defender",
-  Goalkeeper = "Goalkeeper",
+  Midfielder,
+  Attacker,
+  Defender,
+  Goalkeeper
 }
 
-export enum Attacker {
-  ST = "ST",
-  LW = "LW",
-  RW = "RW",
-  CF = "CF",
+
+export enum PlayerBioArrayIndices {
+  FirstName,
+  LastName,
+  NationalTeam,
+  Position,
+  PositionGroup,
 }
 
-export enum Midfielder {
-  CDM = "CDM",
-  CM = "CM",
-  RM = "RM",
-  LM = "LM",
+export enum PLAYERSKILLSANDPHYSICALDATAKEYS {
+  Tackling,
+  Passing,
+  Shooting,
+  Dribbling,
+
+  Marking,
+  Vision,
+  Strength,
+
+  AttackingWorkRate,
+  DefendingWorkRate,
+  PositionalAwareness,
+  SprintSpeed,
+  Agility,
+
+  GKPositioning,
+  GKDiving,
+  GKHandling,
+  GKReflexes,
+
+  Height,
+  Weight,
+  Age,
+  YearsLeftOnContract,
+  Wages,
 }
 
-export enum Defender {
-  RB = "RB",
-  LB = "LB",
-  RCB = "RCB",
-  LCB = "LCB",
+
+export enum ALLPOSITIONS {
+  GK,
+
+  RCB,
+  LCB,
+  LB,
+  RB,
+
+  CDM,
+  CM,
+  RM,
+  LM,
+
+  LW,
+  RW,
+  ST,
+  CF,
 }
 
-export enum Goalkeeper {
-  GK = "GK",
+
+export enum DEFENDINGSKILLS {
+  Tackling=0,
+  PositionalAwareness=9,
+  Marking=5,
+  SprintSpeed=10,
+  Agility=11,
+  DefendingWorkRate=8,
 }
 
-export type PositionType = Attacker | Midfielder | Defender | Goalkeeper;
-
-export interface ContractType {
-  Wage: number;
-  Years: number;
+export enum GOALKEEPINGSKILLS {
+  GKPositioning=12,
+  GKDiving=13,
+  GKHandling=14,
+  GKReflexes=15,
 }
 
-export interface Player {
-  Name: string;
-  PositionGroup: PositionGroup;
-  NationalTeam: string;
+export enum ATTACKINGSKILLS {
+  Passing=1,
+  Shooting=2,
+  Dribbling=3,
+  Vision=5,
+  SprintSpeed=10,
+  PositionalAwareness=9,
+  AttackingWorkRate=7,
 }

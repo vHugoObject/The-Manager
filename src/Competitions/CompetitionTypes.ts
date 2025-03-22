@@ -1,7 +1,7 @@
-export interface Competition {
-  ID: string;
-  Name: string;
-  Clubs: Array<string>;
+export enum CompetitionArrayIndices {
+  ID,
+  Name,
+  Clubs
 }
 
-export type Competitions = Record<string, Record<string, Competition>>;
+

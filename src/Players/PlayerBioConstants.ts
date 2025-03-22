@@ -1,25 +1,8 @@
 import {
-  Midfielder,
-  Attacker,
-  Defender,
-  Goalkeeper,
   PositionGroup,
 } from "./PlayerTypes";
 
-export const POSITIONS = {
-  Attacker,
-  Midfielder,
-  Defender,
-  Goalkeeper,
-};
 
-export const PLAYERBIOKEYS: Array<string> = [
-  "First Name",
-  "Last Name",
-  "National Team",
-  "Position",
-  "Position Group",
-];
 
 export const POSITIONGROUPSLIST: Array<PositionGroup> = [
   PositionGroup.Goalkeeper,
@@ -28,24 +11,6 @@ export const POSITIONGROUPSLIST: Array<PositionGroup> = [
   PositionGroup.Attacker,
 ];
 
-export const ALLPOSITIONS: Array<string> = [
-  "GK",
-
-  "RCB",
-  "LCB",
-  "LB",
-  "RB",
-
-  "CDM",
-  "CM",
-  "RM",
-  "LM",
-
-  "LW",
-  "RW",
-  "ST",
-  "CF",
-];
 
 export const PLAYERBIODATABYPOSITION: Record<
   PositionGroup,

@@ -1,8 +1,4 @@
-import { Club } from "../Clubs/ClubTypes";
-import { Player } from "../Players/PlayerTypes";
-import { Competition } from "../Competitions/CompetitionTypes";
-import { Country } from "../Countries/CountryTypes";
-import { MatchLog } from "../Matches/MatchTypes";
+
 
 export type BaseEntity = [string, string];
 
@@ -13,4 +9,5 @@ export interface BaseEntities {
   players?: Array<Array<Array<Array<BaseEntity>>>>;
 }
 
-export type Entity = Club | Player | Competition | Country | MatchLog;
+
+export type Entity = Array<number|string|Array<string>>

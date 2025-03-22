@@ -9,7 +9,6 @@ import {
   randomPlayerCompetitonAndClub,
   fakerToArb,
   convertToSet,
-  getEntities,
 } from "../../Common/index";
 import { createSave } from "../SaveCreator";
 
@@ -89,7 +88,7 @@ describe("SaveCreator Utilities tests", async () => {
       expect(actualSave.CurrentSeason).toEqual(testSeason);
 
       const actualEntitiesKeysSet: Set<string> = flowAsync(
-        getEntities,
+	property(["Entities"]),
         Object.keys,
         convertToSet,
       )(actualSave);

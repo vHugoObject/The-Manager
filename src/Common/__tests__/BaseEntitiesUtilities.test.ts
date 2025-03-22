@@ -12,7 +12,7 @@ import {
   property,
 } from "lodash/fp";
 import { flowAsync, updatePaths } from "futil-js";
-import { BaseEntities, Entity } from "../CommonTypes";
+import { BaseEntities } from "../CommonTypes";
 import { fakerToArb } from "../testingUtilities";
 import {
   getFirstLevelArrayLengths,
@@ -238,7 +238,7 @@ describe("BaseEntitiesUtilities", async () => {
         property(["clubs"]),
       )(testBaseEntities);
 
-      const actualClubsCount: Record<string, Entity> =
+      const actualClubsCount =
         getBaseEntitiesClubsCount(testBaseEntities);
       expect(actualClubsCount).toEqual(expectedClubsCount);
     },

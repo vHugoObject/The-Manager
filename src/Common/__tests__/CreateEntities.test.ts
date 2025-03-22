@@ -1,6 +1,5 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import { BaseEntity, BaseEntities, Entity } from "../CommonTypes";
 import {
   map,
   over,
@@ -13,6 +12,7 @@ import {
   identity,
 } from "lodash/fp";
 import { flowAsync } from "futil-js";
+import { BaseEntity, BaseEntities, Entity } from "../CommonTypes";
 import { BASECLUBCOMPOSITION, DEFAULTSQUADSIZE } from "../Constants";
 import { convertToSet } from "../CommonUtilities";
 import { fakerToArb } from "../testingUtilities";
