@@ -21,6 +21,6 @@ export const createSave = async ({
     EntitiesStatistics: {},
     PlayerSkillsAndPhysicalData:
       await generatePlayerSkillsAndPhysicalDataForListOfClubs(0, BaseEntities),
-    SaveID: "",
+    SaveID: crypto.randomUUID()
   });
 };

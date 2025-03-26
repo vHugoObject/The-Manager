@@ -1,5 +1,4 @@
 
-
 export type BaseEntity = [string, string];
 
 export interface BaseEntities {

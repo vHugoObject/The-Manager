@@ -3,10 +3,14 @@ import { flowAsync } from "futil-js";
 import { Faker, Randomizer, en } from "@faker-js/faker";
 import { fc } from "@fast-check/vitest";
 import { BaseEntities } from "./CommonTypes";
+import { Save, SaveArguments } from "../StorageUtilities/SaveTypes";
+import { createSave } from "../StorageUtilities/createSave";
+import { BaseCountries } from "../Countries/CountryTypes"
 import {
   getCountries,
   getDomesticLeagues,
   getClubs,
+  convertBaseCountriesToBaseEntities
 } from "./BaseEntitiesUtilities";
 
 class FakerBuilder<TValue> extends fc.Arbitrary<TValue> {
@@ -69,3 +73,29 @@ export const randomPlayerCompetitonAndClub = (
   );
   return [randomCompetitionID, randomClubID].toSorted();
 };
+
+
+export const createTestSave = curry(async(
+  g: fc.GeneratorValue,
+  [testPlayerName, testSeason,
+  testCountriesLeaguesClubs]: [string, number, BaseCountries],
+): Promise<Save> => {
+  const testBaseEntities: BaseEntities =
+        await convertBaseCountriesToBaseEntities(
+          testSeason,
+          testCountriesLeaguesClubs,
+        );
+
+  const [testPlayerMainCompetition, testPlayerClub]: [string, string] =
+        randomPlayerCompetitonAndClub(g, testBaseEntities);
+
+  const testSaveArguments: SaveArguments = {
+        Name: testPlayerName,
+        MainCompetition: testPlayerMainCompetition,
+        Club: testPlayerClub,
+        CurrentSeason: testSeason,
+        BaseEntities: testBaseEntities,
+  };
+  
+  return await createSave(testSaveArguments);
+})

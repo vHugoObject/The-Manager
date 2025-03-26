@@ -10,7 +10,7 @@ import {
   fakerToArb,
   convertToSet,
 } from "../../Common/index";
-import { createSave } from "../SaveCreator";
+import { createSave } from "../createSave";
 
 describe("SaveCreator Utilities tests", async () => {
   test.prop([

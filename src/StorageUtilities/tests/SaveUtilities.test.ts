@@ -2,39 +2,39 @@ import "fake-indexeddb/auto";
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import { deleteDB, IDBPDatabase } from "idb";
-import { flowAsync } from "futil-js";
-import { Save, SaveID, SaveArguments } from "../SaveTypes";
+import { map } from "lodash/fp"
+import { updatePaths, flowAsync } from "futil-js";
+import { Save, SaveID } from "../SaveTypes";
 import { BaseEntities } from "../../Common/CommonTypes";
+import { DBNAME, SAVESTORE, DBVERSION, KEYPATH } from "../SaveConstants"
 import {
+  createTestSave,
   convertBaseCountriesToBaseEntities,
   randomPlayerCompetitonAndClub,
   fakerToArb,
-  convertToSet,
   convertArrayOfArraysToArrayOfSets,
+  addOne,
 } from "../../Common/index";
-import { createSave } from "../SaveCreator";
 import {
   openSaveDB,
   addSaveToDB,
-  getSaveValue,
+  getSave,
   deleteSave,
-  getAllSaveValues,
+  getAllSaves,
   getAllSaveKeys,
-  updateSaveValue,
+  updateSave
 } from "../SaveUtilities";
 describe("SaveUtilities tests", async () => {
-  const testDBName: string = "the-manager";
-  const saveStore: string = "save-games";
-  const testDBVersion: number = 1;
 
   test.prop([fc.gen()])("openSaveDB", async (g) => {
+    
     const actualDB: IDBPDatabase = await openSaveDB();
-    expect(actualDB.name).toBe(testDBName);
-    expect(actualDB.version).toBe(testDBVersion);
+    expect(actualDB.name).toBe(DBNAME);
+    expect(actualDB.version).toBe(DBVERSION);
     const actualStoreNames = new Set(actualDB.objectStoreNames);
-    expect(actualStoreNames.has(saveStore)).toBeTruthy();
+    expect(actualStoreNames.has(SAVESTORE)).toBeTruthy();
     actualDB.close();
-    await deleteDB(testDBName);
+    await deleteDB(DBNAME);
   });
 
   test.prop([
@@ -62,44 +62,27 @@ describe("SaveUtilities tests", async () => {
             },
           ),
         ),
-        { minLength: 1, maxLength: 2 },
+        { minLength: 1, maxLength: 1 },
       );
     }),
     fc.gen(),
   ])(
-    "addSaveToDB, getSaveValue then deleteSave",
-    async (testPlayerName, testSeason, testCountriesLeaguesClubs, g) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
-      const [testPlayerMainCompetition, testPlayerClub]: [string, string] =
-        randomPlayerCompetitonAndClub(g, testBaseEntities);
-
-      const testSaveArguments: SaveArguments = {
-        Name: testPlayerName,
-        MainCompetition: testPlayerMainCompetition,
-        Club: testPlayerClub,
-        CurrentSeason: testSeason,
-        BaseEntities: testBaseEntities,
-      };
-
-      const testSave: Save = await createSave(testSaveArguments);
+    "addSaveToDB, getSaveValue, deleteSave and getKeys",
+    async (testPlayerName, testSeason, testCountriesLeaguesClubs, fcGen) => {
+      
+      const testSave: Save = await createTestSave(fcGen, [testPlayerName, testSeason, testCountriesLeaguesClubs])
       const actualSaveID: SaveID = await addSaveToDB(testSave);
-      const actualValue: Save = await getSaveValue(actualSaveID);
+      const actualValue: Save = await getSave(actualSaveID);
       expect(actualValue).toStrictEqual(testSave);
 
       await deleteSave(actualSaveID);
-      const db: IDBPDatabase = await openSaveDB();
-      const saveKeys: Set<string> = await flowAsync(
-        db.getAllKeys,
-        convertToSet,
-      )(saveStore);
-      expect(saveKeys.has(actualSaveID)).toBeFalsy();
+      const saveKeys: Array<IDBValidKey> = await getAllSaveKeys();
+      const saveKeysSet: Set<IDBValidKey> = new Set(saveKeys);
+      expect(saveKeysSet.has(actualSaveID)).toBeFalsy();
 
-      await deleteDB(testDBName);
-    },
+      await deleteDB(DBNAME);
+      
+    }
   );
 
   test.prop(
@@ -128,176 +111,91 @@ describe("SaveUtilities tests", async () => {
               },
             ),
           ),
-          { minLength: 1, maxLength: 2 },
+          { minLength: 1, maxLength: 1 },
         );
-      }),
+      }),      
       fc.gen(),
-    ],
-    { numRuns: 0 },
+    ], {numRuns: 75}
   )(
     "updateSaveValue",
-    async (testPlayerName, testSeason, testCountriesLeaguesClubs, g) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
-      const [testPlayerMainCompetition, testPlayerClub]: [string, string] =
-        randomPlayerCompetitonAndClub(g, testBaseEntities);
+    async (testPlayerName, testSeason, testCountriesLeaguesClubs, fcGen) => {
 
-      const testSaveArguments: SaveArguments = {
-        Name: testPlayerName,
-        MainCompetition: testPlayerMainCompetition,
-        Club: testPlayerClub,
-        CurrentSeason: testSeason,
-        BaseEntities: testBaseEntities,
-      };
-
-      const testSave: Save = await createSave(testSaveArguments);
-
+      const testBaseEntities: BaseEntities = await convertBaseCountriesToBaseEntities(testSeason, testCountriesLeaguesClubs)
+      const testSave: Save = await createTestSave(fcGen, [testPlayerName, testSeason, testCountriesLeaguesClubs])
+      
+      const [testNewPlayerMainCompetition, testNewPlayerClub]: [string, string] =
+            randomPlayerCompetitonAndClub(fcGen, testBaseEntities);
+      
       const saveID: SaveID = await addSaveToDB(testSave);
-      let expectedSaveValue: Save = await getSaveValue(saveID);
-      await updateSaveValue(expectedSaveValue);
-      let actualValue: Save = await getSaveValue(saveID);
-      expect(testSave).toStrictEqual(actualValue);
-
-      expectedSaveValue.Name = "Bald Fraud";
-      await updateSaveValue(expectedSaveValue);
-      actualValue = await getSaveValue(saveID);
-      expect(expectedSaveValue).toStrictEqual(actualValue);
-      await deleteDB(testDBName);
-    },
+      const testTransformers: Record<string, Function> = {
+	MainCompetition: () => testNewPlayerMainCompetition,
+	Club: () => testNewPlayerClub,	
+	CurrentSeason: addOne
+      }
+      const expectedUpdatedSave: Save = updatePaths(testTransformers, testSave)
+      
+      await updateSave(expectedUpdatedSave);
+      const actualUpdatedSave = await getSave(saveID);
+      
+      expect(actualUpdatedSave).toStrictEqual(expectedUpdatedSave);
+      await deleteDB(DBNAME);
+      
+    }
   );
 
   test.prop(
     [
-      fc.string(),
-      fc.integer({ min: 2000, max: 2100 }),
-      fc.constantFrom(1, 2).chain((testCompetitionsCount: number) => {
-        return fc.array(
-          fc.tuple(
-            fakerToArb((faker) => faker.location.country()),
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              {
-                minLength: testCompetitionsCount,
-                maxLength: testCompetitionsCount,
-              },
-            ),
-            fc.array(
+      fc.array(
+	fc.tuple(
+	  fc.string(),
+	  fc.integer({ min: 2000, max: 2100 }),
+	  fc.constantFrom(1, 2).chain((testCompetitionsCount: number) => {
+          return fc.array(
+            fc.tuple(
+              fakerToArb((faker) => faker.location.country()),
               fc.array(
-                fakerToArb((faker) => faker.company.name()),
-                { minLength: 20, maxLength: 20 },
+		fakerToArb((faker) => faker.company.name()),
+		{
+                  minLength: testCompetitionsCount,
+                  maxLength: testCompetitionsCount,
+		},
               ),
-              {
-                minLength: testCompetitionsCount,
-                maxLength: testCompetitionsCount,
-              },
+              fc.array(
+		fc.array(
+                  fakerToArb((faker) => faker.company.name()),
+                  { minLength: 20, maxLength: 20 },
+		),
+		{
+                  minLength: testCompetitionsCount,
+                  maxLength: testCompetitionsCount,
+		},
             ),
           ),
-          { minLength: 1, maxLength: 2 },
-        );
-      }),
+          { minLength: 1, maxLength: 1 },
+          );
+	})),
+	{minLength: 2, maxLength: 2},
+      ),
       fc.gen(),
     ],
-    { numRuns: 0 },
+    { numRuns: 50 },
   )(
     "getAllSaveValues",
-    async (testPlayerName, testSeason, testCountriesLeaguesClubs, g) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
-      const [testPlayerMainCompetition, testPlayerClub]: [string, string] =
-        randomPlayerCompetitonAndClub(g, testBaseEntities);
+    async (testNameSeasonTuplesAndCountriesLeaguesClubs, g) => {
 
-      const testSaveArguments: SaveArguments = {
-        Name: testPlayerName,
-        MainCompetition: testPlayerMainCompetition,
-        Club: testPlayerClub,
-        CurrentSeason: testSeason,
-        BaseEntities: testBaseEntities,
-      };
-
-      const testSave: Save = await createSave(testSaveArguments);
-
-      await addSaveToDB(testSave);
-      await addSaveToDB(testSave);
-      const actualSaves: Array<Save> = await getAllSaveValues();
+      const [testSaveOne, testSaveTwo] = await flowAsync(map(createTestSave(g)))(testNameSeasonTuplesAndCountriesLeaguesClubs)
+      
+      await addSaveToDB(testSaveOne);
+      await addSaveToDB(testSaveTwo);      
+      const actualSaves: Array<Save> = await getAllSaves();
       const [actualSavesSet, expectedSavesSet] =
-        convertArrayOfArraysToArrayOfSets([actualSaves, [testSave, testSave]]);
-
+            convertArrayOfArraysToArrayOfSets([actualSaves, [testSaveOne, testSaveTwo]]);
+      
       expect(actualSavesSet).toStrictEqual(expectedSavesSet);
 
-      await deleteDB(testDBName);
+      await deleteDB(DBNAME);
     },
   );
 
-  test.prop(
-    [
-      fc.string(),
-      fc.integer({ min: 2000, max: 2100 }),
-      fc.constantFrom(1, 2).chain((testCompetitionsCount: number) => {
-        return fc.array(
-          fc.tuple(
-            fakerToArb((faker) => faker.location.country()),
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              {
-                minLength: testCompetitionsCount,
-                maxLength: testCompetitionsCount,
-              },
-            ),
-            fc.array(
-              fc.array(
-                fakerToArb((faker) => faker.company.name()),
-                { minLength: 20, maxLength: 20 },
-              ),
-              {
-                minLength: testCompetitionsCount,
-                maxLength: testCompetitionsCount,
-              },
-            ),
-          ),
-          { minLength: 1, maxLength: 2 },
-        );
-      }),
-      fc.gen(),
-    ],
-    { numRuns: 0 },
-  )(
-    "getAllSaveKeys",
-    async (testPlayerName, testSeason, testCountriesLeaguesClubs, g) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
-      const [testPlayerMainCompetition, testPlayerClub]: [string, string] =
-        randomPlayerCompetitonAndClub(g, testBaseEntities);
 
-      const testSaveArguments: SaveArguments = {
-        Name: testPlayerName,
-        MainCompetition: testPlayerMainCompetition,
-        Club: testPlayerClub,
-        CurrentSeason: testSeason,
-        BaseEntities: testBaseEntities,
-      };
-
-      const testSave: Save = await createSave(testSaveArguments);
-
-      const expectedKeyOne: SaveID = await addSaveToDB(testSave);
-      const expectedKeyTwo: SaveID = await addSaveToDB(testSave);
-      const expectedSaveIDs: Array<SaveID> = [expectedKeyOne, expectedKeyTwo];
-      const actualSaveIDs: Array<SaveID> = await getAllSaveKeys();
-
-      expect(actualSaveIDs).toStrictEqual(expectedSaveIDs);
-      const [actualSaveIDsSet, expectedSaveIDsSet] =
-        convertArrayOfArraysToArrayOfSets([actualSaveIDs, expectedSaveIDs]);
-
-      expect(actualSaveIDsSet).toStrictEqual(expectedSaveIDsSet);
-      await deleteDB(testDBName);
-    },
-  );
 });

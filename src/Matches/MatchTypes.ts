@@ -1,6 +1,3 @@
-import { Club } from "../Clubs/ClubTypes";
-import { Player } from "../Players/PlayerTypes";
-import { StatisticsObject } from "../Common/CommonTypes";
 
 export interface SquadStatus {
   onField: Record<string, Player>;

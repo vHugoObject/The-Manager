@@ -75,7 +75,7 @@ export const leagueTwoClubs: Array<string> = [
   "Exeter",
 ];
 
-export const England: BaseCountry = [
+export const ENGLAND: BaseCountry = [
   "England",
   ["English Premier League", "The Championship", "League One", "League Two"],
   [premierLeagueClubs, championshipClubs, leagueOneClubs, leagueTwoClubs],

@@ -3,7 +3,7 @@ import {
 } from "./PlayerTypes";
 
 
-
+//
 export const POSITIONGROUPSLIST: Array<PositionGroup> = [
   PositionGroup.Goalkeeper,
   PositionGroup.Defender,

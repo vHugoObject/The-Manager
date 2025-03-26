@@ -1,5 +1,4 @@
 import { BaseCountry } from "./CountryTypes";
-import { England } from "./England";
-export { BASEENGLANDCOMPOSITION } from "./England";
+import { ENGLAND } from "./England";
 
-export const startingCountries: Array<BaseCountry> = [England];
+export const startingCountries: Array<BaseCountry> = [ENGLAND];
