@@ -8,13 +8,13 @@ export const getCountryName = property([CountryArrayIndices.Name])
 export const getCountryCompetitions = property(CountryArrayIndices.Competitions)
 
 export const createCountry = async (
-  [ID, Name]: [string, string],
+  name: string,
   competitions: Array<[string, string]>,
 ): Promise<Entity> => {  
   return flowAsync(
     zipAll,
     initial,
-    concat([ID, Name])
+    concat([name])
   )(competitions)
 };
 

@@ -65,7 +65,7 @@ export const createEntities = async (
       countries: flowAsync(
         zipWith(
           async (competitions: Array<BaseEntity>, [id, name]: BaseEntity): Promise<[string, Entity]> => {
-            return [id, await createCountry([id, name], competitions)];
+            return [id, await createCountry(name, competitions)];
           },
           getDomesticLeagues(baseEntities),
         ),
@@ -73,7 +73,7 @@ export const createEntities = async (
       domesticLeagues: flowAsync(
         flattenCompetitions,
         zipWith(async (clubs: Array<BaseEntity>, [id, name]: BaseEntity): Promise<[string, Entity]> => {
-          return [id, await createCompetition([id, name], clubs)];
+          return [id, await createCompetition(name, clubs)];
         }, getClubs(baseEntities)),
       ),
       clubs: flowAsync(
@@ -83,7 +83,7 @@ export const createEntities = async (
             players: Array<[string, PositionGroup]>,
             [id, name]: BaseEntity,
           ): Promise<[string, Entity]> => {
-            return [id, await createClub([id, name], players)];
+            return [id, await createClub(name, players)];
           },
           baseEntitiesPlayers,
         ),

@@ -7,23 +7,20 @@ import { Entity } from "../../Common/CommonTypes";
 import { createClub, getClubID, getClubName, getClubSquad } from "../ClubUtilities";
 
 describe("Club Utilities tests", async () => {
-  test.prop([
-    fc.tuple(
-      fc.uuid(),
-      fakerToArb((faker) => faker.company.name()),
-    ),
+  test.prop([ 
+
+    fakerToArb((faker) => faker.company.name()),
     fc.array(fc.tuple(fc.uuid(), fc.string()), {
       minLength: 25,
       maxLength: 25,
     }),
-  ])("createClub", async (testClubIDNameTuple, testPlayers) => {
-    const actualClub: Entity = await createClub(testClubIDNameTuple, testPlayers);
+  ])("createClub", async (testClubName, testPlayers) => {
+    const actualClub: Entity = await createClub(testClubName, testPlayers);
 
-    const [expectedClubID, expectedClubName] = testClubIDNameTuple;
     const [expectedPlayerIDs] = zipAll(testPlayers);
-    const [actualClubID, actualClubName, actualClubSquad] = over([getClubID, getClubName, getClubSquad])(actualClub)
-    expect(actualClubID).toMatch(expectedClubID);
-    expect(actualClubName).toMatch(expectedClubName);
+    const [actualClubName, actualClubSquad] = over([getClubID, getClubName, getClubSquad])(actualClub)
+
+    expect(actualClubName).toMatch(testClubName);
     
     const [expectedIDs, actualIDs] = convertArrayOfArraysToArrayOfSets([
       expectedPlayerIDs,

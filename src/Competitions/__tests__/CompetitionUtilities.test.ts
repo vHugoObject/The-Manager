@@ -16,32 +16,27 @@ import {
 describe("Competition Utilities tests", async () => {
 
   test.prop([
-    fc.tuple(
-      fc.uuid(),
-      fakerToArb((faker) => faker.company.name()),
-    ),
-
+    fakerToArb((faker) => faker.company.name()),
     fc.array(fc.tuple(fc.uuid(), fc.string()), {
       minLength: 18,
       maxLength: 50,
     }),
-  ])("createCompetition", async (testCompetitionIDNameTuple, testClubs) => {
+  ])("createCompetition", async (testCompetitionName, testClubs) => {
     const actualCompetition: Entity = await createCompetition(
-      testCompetitionIDNameTuple,
+      testCompetitionName,
       testClubs,
     );
-    const [expectedCompetitionID, expectedCompetitionName] =
-	  testCompetitionIDNameTuple;
-    const [testClubIDs] = zipAll(testClubs);
-
-        const [actualCountryID, actualCountryName, actualCountryCompetitionIDs] = over([getCompetitionID, getCompetitionName, getCompetitionClubs])(actualCompetition)
     
-    expect(actualCountryID).toMatch(expectedCompetitionID);
-    expect(actualCountryName).toMatch(expectedCompetitionName);
+    const [testCompetitionClubIDs] = zipAll(testClubs);
+
+        const [actualCompetitionName, actualCompetitionClubIDs] = over([getCompetitionID, getCompetitionName, getCompetitionClubs])(actualCompetition)
+    
+
+    expect(actualCompetitionName).toMatch(testCompetitionName);
     
     const [expectedIDs, actualIDs] = convertArrayOfArraysToArrayOfSets([
-      testClubIDs,
-      actualCountryCompetitionIDs
+      testCompetitionClubIDs,
+      actualCompetitionClubIDs
     ]);
     
     expect(expectedIDs).toStrictEqual(actualIDs);

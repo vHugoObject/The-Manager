@@ -8,10 +8,7 @@ import { createCountry, getCountryID, getCountryName, getCountryCompetitions } f
 
 describe("Country Utilities tests", async () => {
   test.prop([
-    fc.tuple(
-      fc.uuid(),
-      fakerToArb((faker) => faker.location.country()),
-    ),
+    fakerToArb((faker) => faker.location.country()),
     fc.array(
       fc.tuple(
         fc.uuid(),
@@ -19,19 +16,17 @@ describe("Country Utilities tests", async () => {
       ),
       { minLength: 3, maxLength: 8 },
     ),
-  ])("createCountry", async (testCountryIDNameTuple, testCompetitions) => {
+  ])("createCountry", async (testCountryName, testCompetitions) => {
     const actualCountry: Entity = await createCountry(
-      testCountryIDNameTuple,
+      testCountryName,
       testCompetitions,
     );
 
-    const [expectedCountryID, expectedCountryName] = testCountryIDNameTuple;
     const [testCompetitionIDs, ] = zipAll(testCompetitions);
     
-    const [actualCountryID, actualCountryName, actualCountryCompetitionIDs] = over([getCountryID, getCountryName, getCountryCompetitions])(actualCountry)
+    const [actualCountryName, actualCountryCompetitionIDs] = over([getCountryID, getCountryName, getCountryCompetitions])(actualCountry)
 
-    expect(actualCountryID).toMatch(expectedCountryID);
-    expect(actualCountryName).toMatch(expectedCountryName);
+    expect(actualCountryName).toMatch(testCountryName);
         
     const [expectedIDs, actualIDs] = convertArrayOfArraysToArrayOfSets([
       testCompetitionIDs,

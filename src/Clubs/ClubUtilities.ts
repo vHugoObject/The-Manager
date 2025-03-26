@@ -8,12 +8,12 @@ export const getClubName = property([ClubArrayIndices.Name])
 export const getClubSquad = property([ClubArrayIndices.Squad])
 
 export const createClub = async (
-  [ID, Name]: [string, string],
+  name: string,
   squad: Array<[string, string]>,
 ): Promise<Entity> => {
   return flowAsync(
     zipAll,
     initial,
-    concat([ID, Name])
+    concat([name])
   )(squad)
 };

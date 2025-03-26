@@ -8,12 +8,12 @@ export const getCompetitionName = property([CompetitionArrayIndices.Name])
 export const getCompetitionClubs = property(CompetitionArrayIndices.Clubs)
 
 export const createCompetition = async (
-  [ID, Name]: [string, string],
+  name: string,
   clubs: Array<[string, string]>,
 ): Promise<Entity> => {
   return flowAsync(zipAll,
     initial,
     shuffle,
-    concat([ID, Name]),
+    concat([name]),
   )(clubs)
 };
