@@ -2,9 +2,9 @@ import { Entity, BaseEntities } from "../Common/CommonTypes";
 
 export interface SaveArguments {
   Name: string;
-  MainCompetition: string;
+  UserMainCompetitionID: string;
   CurrentSeason: number;
-  Club: string;
+  UserClubID: string;
   BaseEntities: BaseEntities;
 }
 
@@ -12,9 +12,9 @@ export type SaveID = string | IDBValidKey;
 
 export interface Save {
   Name: string;
-  MainCompetition: string;
-  Club: string;
-  Seasons: number;
+  UserMainCompetitionID: string;
+  UserClubID: string;
+  SeasonsPlayed: number;
   CurrentSeason: number;
   CurrentDate: Date;
   Entities: Record<string, Entity>;

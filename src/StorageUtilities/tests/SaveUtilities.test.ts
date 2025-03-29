@@ -6,7 +6,7 @@ import { map } from "lodash/fp"
 import { updatePaths, flowAsync } from "futil-js";
 import { Save, SaveID } from "../SaveTypes";
 import { BaseEntities } from "../../Common/CommonTypes";
-import { DBNAME, SAVESTORE, DBVERSION, KEYPATH } from "../SaveConstants"
+import { DBNAME, SAVESTORE, DBVERSION } from "../SaveConstants"
 import {
   createTestSave,
   convertBaseCountriesToBaseEntities,

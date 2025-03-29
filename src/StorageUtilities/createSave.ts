@@ -5,15 +5,15 @@ import { generatePlayerSkillsAndPhysicalDataForListOfClubs } from "../Players/Pl
 
 export const createSave = async ({
   Name,
-  MainCompetition,
+  UserMainCompetitionID,
   CurrentSeason,
-  Club,
+  UserClubID,
   BaseEntities,
 }: SaveArguments): Promise<Save> => {
   return await promiseProps({
     Name,
-    MainCompetition,
-    Club,
+    UserMainCompetitionID,
+    UserClubID,
     Seasons: 1,
     CurrentSeason,
     CurrentDate: getThirdSundayOfAugust(CurrentSeason),

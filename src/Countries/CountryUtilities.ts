@@ -1,11 +1,13 @@
-import { zipAll, property, concat, initial } from "lodash/fp";
+import { zipAll, property, concat, initial, filter, startsWith, pickBy } from "lodash/fp";
 import { flowAsync } from "futil-js"
 import { Entity } from "../Common/CommonTypes";
 import { CountryArrayIndices } from "./CountryTypes";
 
-export const getCountryID = property([CountryArrayIndices.ID])
+export const isCountryID = startsWith("Country")
+export const filterCountriesByID = filter(isCountryID)
+export const pickCountries = pickBy((_:Entity, entityID: string): boolean => isCountryID(entityID))
 export const getCountryName = property([CountryArrayIndices.Name])
-export const getCountryCompetitions = property(CountryArrayIndices.Competitions)
+export const getCountryDomesticLeagues = property(CountryArrayIndices.Competitions)
 
 export const createCountry = async (
   name: string,

@@ -21,6 +21,7 @@ import {
   curry,
   size,
   flattenDeep,
+  split
 } from "lodash/fp";
 import { flowAsync, mapIndexed, mapValuesIndexed } from "futil-js";
 
@@ -35,6 +36,7 @@ export const getSecondLevelArrayLengths = flowAsync(
   map(map(size)),
   flattenDeep,
 );
+export const splitIDOnUnderscores = split("_")
 
 export const arrayRotator = ([array, rotations]: Array<any>): Array<any> => {
   const arrayLength: number = array.length;

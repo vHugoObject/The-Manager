@@ -8,3 +8,4 @@ export * from "./Constants";
 export * from "./firstNames";
 export * from "./lastNames";
 export * from "./countryNames";
+export * from "./EntityUtilities"

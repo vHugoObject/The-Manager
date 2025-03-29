@@ -11,8 +11,12 @@ import {
   split,
   first,
   multiply,
+  map,
+  flatten,
+  sum,
+  keyBy
 } from "lodash/fp";
-import { flowAsync, updatePaths, mapIndexed } from "futil-js";
+import { flowAsync, updatePaths, mapIndexed, unKeyBy } from "futil-js";
 import { DEFAULTSQUADSIZE } from "./Constants";
 import {
   unflatten,
@@ -20,12 +24,15 @@ import {
   sliceUpArray,
   getFirstLevelArrayLengths,
   getSecondLevelArrayLengths,
+  minusOne,
 } from "./CommonUtilities";
 
-export const getCountries = property(["countries"]);
-export const getDomesticLeagues = property(["domesticLeagues"]);
-export const getClubs = property(["clubs"]);
-export const getPlayers = property(["players"]);
+
+
+export const getBaseEntitiesCountries = property(["countries"]);
+export const getBaseEntitiesDomesticLeagues = property(["domesticLeagues"]);
+export const getBaseEntitiesClubs = property(["clubs"]);
+export const getBaseEntitiesPlayers = property(["players"]);
 
 export const flattenCompetitions = flattenDepth(1);
 export const flattenClubs = flattenDepth(2);
@@ -52,7 +59,7 @@ export const getIDNumber = flowAsync(split("_"), last, parseInt);
 export const getLastEntityIDNumber = flowAsync(last, getIDNumber);
 
 export const getBaseEntitiesClubsCount = flowAsync(
-  getClubs,
+  getBaseEntitiesClubs,
   flattenClubs,
   size,
 );
@@ -68,7 +75,7 @@ export const convertBaseCountriesToBaseEntities = async (
     ]),
     domesticLeagues: transformCompetitions(
       mapIndexed((competitionName: string, index: number) => [
-        `Competition_${season}_${index + 1}`,
+        `DomesticLeague_${season}_${index + 1}`,
         competitionName,
       ]),
     ),
@@ -100,6 +107,10 @@ export const getTotalActualClubs = flowAsync(
   getLastIDNumberOutOfIDNameTuple,
 );
 
+export const getExpectedLastID = ([expectedPosition, expectedCount, expectedStartingIndex]: [string, number, number]) => `${expectedPosition}_${minusOne(expectedStartingIndex+expectedCount)}`;
+
+export const getExpectedLastIDsForMultiplePositions = map(getExpectedLastID)
+
 export const getActualBaseEntitiesCount = updatePaths({
   countries: getLastIDNumberOutOfIDNameTuple,
   domesticLeagues: getTotalActualDomesticLeagues,
@@ -116,8 +127,16 @@ export const getTestBaseEntitiesCount = updatePaths({
 });
 
 export const getExpectedPlayersCount = flowAsync(
-  getClubs,
+  getBaseEntitiesClubs,
   flattenClubs,
   size,
   multiply(DEFAULTSQUADSIZE),
 );
+
+export const getExpectedEntitiesSansPlayerCount: number = flowAsync(
+  getTestBaseEntitiesCount,
+  Object.values,
+  flatten,
+  sum
+);
+

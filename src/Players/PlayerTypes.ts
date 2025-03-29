@@ -1,8 +1,8 @@
 export enum PositionGroup {
-  Midfielder,
-  Attacker,
-  Defender,
-  Goalkeeper
+  Goalkeeper="3",
+  Defender="2",
+  Midfielder="0",
+  Attacker="1",  
 }
 
 

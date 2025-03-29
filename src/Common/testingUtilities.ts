@@ -7,9 +7,9 @@ import { Save, SaveArguments } from "../StorageUtilities/SaveTypes";
 import { createSave } from "../StorageUtilities/createSave";
 import { BaseCountries } from "../Countries/CountryTypes"
 import {
-  getCountries,
-  getDomesticLeagues,
-  getClubs,
+  getBaseEntitiesCountries,
+  getBaseEntitiesDomesticLeagues,
+  getBaseEntitiesClubs,
   convertBaseCountriesToBaseEntities
 } from "./BaseEntitiesUtilities";
 
@@ -48,24 +48,24 @@ export const fastCheckRandomFromList = curry(
 );
 
 export const randomPlayerCompetitonAndClub = (
-  g: fc.GeneratorValue,
+  fcGen: fc.GeneratorValue,
   testBaseEntities: BaseEntities,
 ): [string, string] => {
   const randomCountryIndex: string = flowAsync(
-    getCountries,
+    getBaseEntitiesCountries,
     Object.keys,
-    fastCheckRandomFromList(g),
+    fastCheckRandomFromList(fcGen),
   )(testBaseEntities);
   const randomCompetitionIndex: string = flowAsync(
-    getDomesticLeagues,
+    getBaseEntitiesDomesticLeagues,
     property([randomCountryIndex]),
     Object.keys,
-    fastCheckRandomFromList(g),
+    fastCheckRandomFromList(fcGen),
   )(testBaseEntities);
   const [randomClubID]: string = flowAsync(
-    getClubs,
+    getBaseEntitiesClubs,
     property([randomCountryIndex, randomCompetitionIndex]),
-    fastCheckRandomFromList(g),
+    fastCheckRandomFromList(fcGen),
   )(testBaseEntities);
   const [randomCompetitionID] = property(
     ["domesticLeagues", randomCountryIndex, randomCompetitionIndex],
@@ -91,11 +91,12 @@ export const createTestSave = curry(async(
 
   const testSaveArguments: SaveArguments = {
         Name: testPlayerName,
-        MainCompetition: testPlayerMainCompetition,
-        Club: testPlayerClub,
+        UserMainCompetitionID: testPlayerMainCompetition,
+        UserClubID: testPlayerClub,
         CurrentSeason: testSeason,
         BaseEntities: testBaseEntities,
   };
   
   return await createSave(testSaveArguments);
 })
+

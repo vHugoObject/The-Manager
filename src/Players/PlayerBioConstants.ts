@@ -3,14 +3,6 @@ import {
 } from "./PlayerTypes";
 
 
-//
-export const POSITIONGROUPSLIST: Array<PositionGroup> = [
-  PositionGroup.Goalkeeper,
-  PositionGroup.Defender,
-  PositionGroup.Midfielder,
-  PositionGroup.Attacker,
-];
-
 
 export const PLAYERBIODATABYPOSITION: Record<
   PositionGroup,

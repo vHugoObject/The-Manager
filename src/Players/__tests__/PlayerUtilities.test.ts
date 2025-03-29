@@ -4,7 +4,6 @@ import {
   zipAll,
   map,
   flatten,
-  last,
   sum,
   min,
   max,
@@ -12,21 +11,28 @@ import {
   size,
   add,
   multiply,
+  first,
+  last,
 } from "lodash/fp";
 import { flowAsync } from "futil-js";
 import { PositionGroup } from "../PlayerTypes";
 import { BaseEntities, Entity } from "../../Common/CommonTypes";
-import { POSITIONGROUPSLIST } from "../PlayerBioConstants";
 import {
   convertToSet,
-  convertArrayOfArraysToArrayOfSets,
   convertBaseCountriesToBaseEntities,
   getExpectedPlayersCount,
   boundedModularAddition,
   getAverageModularStepForRangeOfData,
+  splitIDOnUnderscores,
+  getExpectedLastID
 } from "../../Common/index";
 import { fakerToArb } from "../../Common/testingUtilities";
 import {
+  getPlayerPositionGroupFromID,
+  filterGoalkeepersByID,
+  filterMidfieldersByID,
+  filterAttackersByID,
+  filterDefendersByID,
   generateDataForAGroupOfPlayersByAveragingModularIncreases,
   generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers,
   runModularIncreasersModularlyOverARangeOfPlayers,
@@ -35,10 +41,38 @@ import {
   generatePlayerSkillsAndPhysicalDataForListOfClubs,
   generatePlayerBioDataForMultiplePositionGroups,
   generatePlayerBioDataForListOfClubs,
-  getTotalPlayersToGenerateBasedOnGivenComposition,
+  sortPlayersByRatings
 } from "../PlayerUtilities";
 
 describe("Player utilities tests", async () => {
+  const POSITIONGROUPSLIST = Object.values(PositionGroup)
+  const getActualPositionGroupSet = flowAsync(map(getPlayerPositionGroupFromID), convertToSet)
+        const splitFirstPlayerIDIntoAList = flowAsync(first, splitIDOnUnderscores)
+      
+
+  const getActualPositionCountStartingIndexTuplesSet = flowAsync(over([filterGoalkeepersByID, filterMidfieldersByID, filterAttackersByID, filterDefendersByID]),
+	map((players: Array<string>): [string, number, number] => {
+	  const [playerPosition, playerIndex] = splitFirstPlayerIDIntoAList(players)
+	  return [playerPosition, size(players), parseInt(playerIndex)]	  
+	}), convertToSet)
+
+  test.prop([
+    fc.integer({min: 5, max: 25})
+      .chain((totalTestSkills: number) => {
+	return fc.dictionary(fc.string(), fc.array(fc.integer({min: 0, max: 100}), {minLength: totalTestSkills, maxLength: totalTestSkills}), { minKeys: 5})
+      })
+  ])(
+    "sortPlayersByRatings",
+    async (testPlayers) => {
+      
+      const actualSortedPlayers: Record<string, Array<number>> = sortPlayersByRatings(testPlayers)
+
+      expect(actualSortedPlayers).toMatchObject(testPlayers)      
+      
+      
+    }
+  );
+  
   test.prop([
     fc
       .tuple(
@@ -85,14 +119,18 @@ describe("Player utilities tests", async () => {
         number,
         number,
       ] = testPositionCountStartingIndex;
-
+      
       expect(actualPlayers.length).toEqual(expectedCount);
-      const expectedLastID: string = `${expectedPosition}_${expectedStartingIndex + expectedCount}`;
 
-      const [actualPlayersIDs, actualPlayerDataValues] = zipAll(actualPlayers);
+      const expectedLastID = getExpectedLastID([expectedPosition, expectedCount, expectedStartingIndex])
+      
+      const [actualPlayersIDs, actualPlayerDataValues] = zipAll(actualPlayers);      
       const actualPlayersIDsSet: Set<string> = convertToSet(actualPlayersIDs);
-
       expect(actualPlayersIDsSet.has(expectedLastID)).toBeTruthy();
+
+      const expectedPositionGroupSet: Set<PositionGroup> = new Set([expectedPosition])
+      const actualPositionGroupSet: Set<string> = getActualPositionGroupSet(actualPlayersIDs)
+      expect(actualPositionGroupSet).toStrictEqual(expectedPositionGroupSet)
 
       const sumOfActualPlayerDataValues: number = flowAsync(
 	flatten,
@@ -163,12 +201,18 @@ describe("Player utilities tests", async () => {
       ] = testPositionCountStartingIndex;
 
       expect(actualPlayers.length).toEqual(expectedCount);
-      const expectedLastID: string = `${expectedPosition}_${expectedStartingIndex + expectedCount}`;
+
+      const expectedLastID = getExpectedLastID([expectedPosition, expectedCount, expectedStartingIndex])
+
+
 
       const [actualPlayersIDs, actualPlayerDataValues] = zipAll(actualPlayers);
       const actualPlayersIDsSet: Set<string> = convertToSet(actualPlayersIDs);
-
       expect(actualPlayersIDsSet.has(expectedLastID)).toBeTruthy();
+
+      const expectedPositionGroupSet: Set<PositionGroup> = new Set([expectedPosition])
+      const actualPositionGroupSet: Set<string> = getActualPositionGroupSet(actualPlayersIDs)
+      expect(actualPositionGroupSet).toStrictEqual(expectedPositionGroupSet)
 
       const sumOfActualPlayerDataValues: number = flowAsync(
 	flatten,
@@ -225,6 +269,7 @@ describe("Player utilities tests", async () => {
 	flatten,
         sum,
       )(actualPlayerDataValues);
+
 
       const [sumOfExpectedMinOfSkillRanges, sumOfExpectedMaxOfSkillRanges] =
         flowAsync(
@@ -323,11 +368,8 @@ describe("Player utilities tests", async () => {
   ])(
     "generateSkillsAndPhysicalDataForMultiplePositionGroups",
     async (testPositionCountStartingIndexTuples) => {
-      const [_, expectedCounts, __]: [
-        Array<PositionGroup>,
-        Array<number>,
-        Array<number>,
-      ] = zipAll(testPositionCountStartingIndexTuples);
+
+      const expectedPositionCountStartingIndexTuplesSet = convertToSet(testPositionCountStartingIndexTuples);
 
       const actualPlayers: Record<
         string,
@@ -336,15 +378,21 @@ describe("Player utilities tests", async () => {
         testPositionCountStartingIndexTuples,
       );
 
+      
+      const [actualPlayerIDs, actualPlayerDataValues] = flowAsync(Object.entries, zipAll)(actualPlayers)
+
+      
+      const actualPositionCountStartingIndexTuplesSet = getActualPositionCountStartingIndexTuplesSet(actualPlayerIDs)
+
+      expect(actualPositionCountStartingIndexTuplesSet).toStrictEqual(expectedPositionCountStartingIndexTuplesSet)
+
 
       const sumOfActualPlayerDataValues: number = flowAsync(
-        Object.values,
 	flatten,
         sum,
-      )(actualPlayers);
+      )(actualPlayerDataValues);
 
       expect(sumOfActualPlayerDataValues).toBeGreaterThan(0);
-      expect(Object.keys(actualPlayers).length).toEqual(sum(expectedCounts));
     },
   );
 
@@ -374,11 +422,7 @@ describe("Player utilities tests", async () => {
   ])(
     "generatePlayerBioDataForMultiplePositionGroups",
     async (testPositionCountStartingIndexTuples) => {
-      const [_, expectedCounts, __]: [
-        Array<PositionGroup>,
-        Array<number>,
-        Array<number>,
-      ] = zipAll(testPositionCountStartingIndexTuples);
+      const expectedPositionCountStartingIndexTuplesSet = convertToSet(testPositionCountStartingIndexTuples)
 
       const actualPlayers: Array<
         [string,
@@ -387,58 +431,20 @@ describe("Player utilities tests", async () => {
         testPositionCountStartingIndexTuples,
       );
 
+      const [actualPlayerIDs, actualPlayerDataValues] = zipAll(actualPlayers)
 
+                              
+      const actualPositionCountStartingIndexTuplesSet = getActualPositionCountStartingIndexTuplesSet(actualPlayerIDs)
+
+      expect(actualPositionCountStartingIndexTuplesSet).toStrictEqual(expectedPositionCountStartingIndexTuplesSet)
+
+  
       const sumOfActualPlayerDataValues: number = flowAsync(
-        map(last),
 	flatten,
         sum,
-      )(actualPlayers);
+      )(actualPlayerDataValues);
 
       expect(sumOfActualPlayerDataValues).toBeGreaterThan(0);
-      expect(Object.keys(actualPlayers).length).toEqual(sum(expectedCounts));
-    },
-  );
-
-  test.prop([
-    fc.tuple(
-      fc.tuple(fc.constant(PositionGroup.Goalkeeper), fc.nat()),
-      fc.tuple(fc.constant(PositionGroup.Defender), fc.nat()),
-      fc.tuple(fc.constant(PositionGroup.Midfielder), fc.nat()),
-      fc.tuple(fc.constant(PositionGroup.Attacker), fc.nat()),
-    ),
-    fc.integer({ min: 3 }),
-    fc.nat(),
-  ])(
-    "getTotalPlayersToGenerateBasedOnGivenComposition",
-    async (testComposition, testTotalClubs, testStartingIndex) => {
-      const testCompositionGenerator =
-        getTotalPlayersToGenerateBasedOnGivenComposition(testComposition);
-      const actualPlayers: Array<[PositionGroup, number, number]> =
-        testCompositionGenerator(testStartingIndex, testTotalClubs);
-
-      const [, startingCounts] = zipAll(testComposition);
-      const [actualPositionGroups, actualCounts, actualStartingIndices] =
-        zipAll(actualPlayers);
-      const [
-        expectedPositionGroupsSet,
-        actualPositionGroupsSet,
-        expectedStartingIndicesSet,
-        actualStartingIndicesSet,
-      ] = convertArrayOfArraysToArrayOfSets([
-        POSITIONGROUPSLIST,
-        actualPositionGroups,
-        [testStartingIndex],
-        actualStartingIndices,
-      ]);
-
-      expect(actualPositionGroupsSet).toStrictEqual(expectedPositionGroupsSet);
-      expect(actualStartingIndicesSet).toStrictEqual(
-        expectedStartingIndicesSet,
-      );
-      const actualSumOfStartingCounts: number = sum(startingCounts);
-      if (actualSumOfStartingCounts > 0) {
-        expect(sum(actualCounts)).toBeGreaterThan(actualSumOfStartingCounts);
-      }
     },
   );
 
@@ -548,4 +554,8 @@ describe("Player utilities tests", async () => {
       expect(actualPlayers.length).toEqual(expectedPlayersCount);
     },
   );
+
+  
+
+  
 });

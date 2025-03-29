@@ -1,9 +1,11 @@
-import { zipAll, property, initial, shuffle, concat } from "lodash/fp";
+import { zipAll, property, initial, shuffle, concat, filter, startsWith, pickBy } from "lodash/fp";
 import { CompetitionArrayIndices  } from "./CompetitionTypes";
 import { flowAsync } from "futil-js"
 import { Entity } from "../Common/CommonTypes";
 
-export const getCompetitionID = property([CompetitionArrayIndices.ID])
+export const isDomesticLeagueID = startsWith("DomesticLeague")
+export const filterDomesticLeaguesByID = filter(isDomesticLeagueID)
+export const pickDomesticLeagues = pickBy((_:Entity, entityID: string) => isDomesticLeagueID(entityID))
 export const getCompetitionName = property([CompetitionArrayIndices.Name])
 export const getCompetitionClubs = property(CompetitionArrayIndices.Clubs)
 

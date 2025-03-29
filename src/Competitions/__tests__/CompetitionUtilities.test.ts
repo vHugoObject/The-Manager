@@ -8,7 +8,6 @@ import {
 import { Entity } from "../../Common/CommonTypes";
 import {
   createCompetition,
-  getCompetitionID,
   getCompetitionName,
   getCompetitionClubs
 } from "../CompetitionUtilities";
@@ -29,7 +28,7 @@ describe("Competition Utilities tests", async () => {
     
     const [testCompetitionClubIDs] = zipAll(testClubs);
 
-        const [actualCompetitionName, actualCompetitionClubIDs] = over([getCompetitionID, getCompetitionName, getCompetitionClubs])(actualCompetition)
+        const [actualCompetitionName, actualCompetitionClubIDs] = over([getCompetitionName, getCompetitionClubs])(actualCompetition)
     
 
     expect(actualCompetitionName).toMatch(testCompetitionName);
