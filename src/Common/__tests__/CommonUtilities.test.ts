@@ -28,6 +28,7 @@ import {
   normalizePercentages,
   weightedMean,
   weightedRandom,
+  sortTuplesByFirstValueInTuple,
   arrayRotator,
   accumulate,
   sliceUpArray,
@@ -113,6 +114,26 @@ describe("CommonUtilities test suite", async () => {
       expect(actualPercentage).toBeLessThan(1);
     });
   });
+
+    test.prop([
+      fc.array(
+	fc.tuple(fc.integer(),
+	  fc.integer()),
+	{minLength: 4, maxLength: 100}
+      ),
+    ])("sortTuplesByFirstValueInTuple", async (testTuples) => {
+      const actualSortedTuples: Array<[number, number]> = sortTuplesByFirstValueInTuple(testTuples)
+      const [expectedFirstValue, expectedLastValue]: [number, number] = flowAsync(	
+	zipAll,
+	first,
+	over([min, max])
+      )(testTuples)
+      const [[actualFirstValue,], [actualLastValue,]] = over([first, last])(actualSortedTuples)
+      expect(actualFirstValue).toEqual(expectedFirstValue)
+      expect(actualLastValue).toEqual(expectedLastValue)
+      
+  });
+
 
   test.prop([
     fc.integer({ min: 3, max: 1000 }).chain((minLength: number) => {

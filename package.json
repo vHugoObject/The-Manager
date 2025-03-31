@@ -16,7 +16,6 @@
     "futil-js": "^1.76.2",
     "idb": "^8.0.0",
     "lodash": "^4.17.21",
-    "lodash.product": "^18.10.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"
@@ -35,6 +34,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
     "fake-indexeddb": "^6.0.0",
+    "fast-cartesian": "^9.0.1",
     "globals": "^15.9.0",
     "jsdom": "^25.0.0",
     "postcss": "^8.4.47",

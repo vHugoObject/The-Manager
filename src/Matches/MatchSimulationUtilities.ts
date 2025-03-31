@@ -1,168 +1,117 @@
-import "lodash.product";
-import _ from "lodash";
-import { mean, range, partial, sum, gt, lt, eq } from "lodash";
 import {
-  concat,
-  sortBy,
-  multiply,
   map,
   reverse,
-  dropWhile,
-  mergeAll,
+  at,
+  mean,
+  partition,
+  first,
+  curry,
+  last,
+  tail,
+  over,
   zipAll,
-  flow,
-  take,
+  identity,
+  flatten,
 } from "lodash/fp";
-import { flowAsync } from "futil-js";
+import { flowAsync, mapIndexed } from "futil-js";
 import {
+  DEFENSESTRENGTHBALANCE,
   U,
   HOMEEFFECT,
   POSSIBLEGOALS,
   THETA,
   SHAPE,
-  EMPTYSCOREMATRIX,
-  MATCHRESULTS,
 } from "./MatchConstants";
-import { MatchResult } from "./MatchTypes";
-import { Player } from "../Players/PlayerTypes";
-import { StatisticsObject } from "../Common/CommonTypes";
+import { DEFENDINGSKILLS, GOALKEEPINGSKILLS, ATTACKINGSKILLS } from "../Players/PlayerTypes"
 import {
-  normalizePercentages,
   weightedMean,
   weightedRandom,
+  convertIntegersToPercentages,
+  sortTuplesByFirstValueInTuple,
 } from "../Common/CommonUtilities";
 import {
-  getGoalkeepingRating,
-  getOutfieldPlayersDefendingRatings,
-  getAttackingRatings,
-  filterGoalkeepers,
+  isGoalkeeperID
 } from "../Players/PlayerUtilities";
 
+
+
+export const calculateMeanCategoryStrengthForPlayer = curry((skills: Array<string>, player: [string, Array<number>]): number => {
+  return flowAsync(last, at(skills), mean)(player)
+})
+
+
+export const calculateMeanCategoryStrengthForGroupOfPlayers = curry((skills: Array<string>, players: Array<[string, Array<number>]>): number => {
+  return flowAsync(map(calculateMeanCategoryStrengthForPlayer(skills)), mean)(players)
+})
+
 export const calculateDefenseStrength = async (
-  players: Array<Player>,
+  playerSkills: Record<string, Array<number>>,
 ): Promise<number> => {
-  let playerRatings: Array<number> =
-    await getOutfieldPlayersDefendingRatings(players);
-  const goalkeeper: Array<Player> = filterGoalkeepers(players);
+  
+  const [DEFENDINGSKILLSASLIST, GOALKEEPINGSKILLSASLIST] = map(flowAsync(Object.values))([DEFENDINGSKILLS, GOALKEEPINGSKILLS])
 
-  if (goalkeeper.length == 1) {
-    const addGoalkeeper = concat(playerRatings);
-    return await flowAsync(getGoalkeepingRating, addGoalkeeper, mean)(players);
-  }
-
-  return mean(playerRatings);
+  return await flowAsync(Object.entries,
+    partition(flowAsync(first, isGoalkeeperID)),
+    over([flowAsync(first, first, calculateMeanCategoryStrengthForPlayer(GOALKEEPINGSKILLSASLIST)),
+      flowAsync(tail, first, calculateMeanCategoryStrengthForGroupOfPlayers(DEFENDINGSKILLSASLIST))]),
+    weightedMean(DEFENSESTRENGTHBALANCE)
+  )(playerSkills)
 };
 
 export const calculateAttackStrength = async (
-  players: Array<Player>,
+  playerSkills: Record<string, Array<number>>,
 ): Promise<number> => {
-  return await flowAsync(getAttackingRatings, mean)(players);
+  const ATTACKINGSKILLSASLIST = Object.values(ATTACKINGSKILLS)
+  return await flowAsync(Object.entries, calculateMeanCategoryStrengthForGroupOfPlayers(ATTACKINGSKILLSASLIST))(playerSkills);
 };
 
-export const convertStrengthToCoefficient = multiply(0.01);
 
-export const calculateClubStrengths = async (
-  players: Array<Player>,
-): Promise<Array<number>> => {
-  type calculatorFunction = (arg1: Array<Player>) => Promise<number>;
-  const calculators: [calculatorFunction, calculatorFunction] = [
-    calculateDefenseStrength,
-    calculateAttackStrength,
-  ];
-  return await Promise.all(
-    calculators.map(
-      async (calculator: Function): Promise<number> =>
-        await calculator(players),
-    ),
-  );
-};
+export const calculateClubStrengths = flowAsync(over([calculateAttackStrength, calculateDefenseStrength]))
 
-export const calculateAttackCoefficient = flowAsync(
-  calculateAttackStrength,
-  convertStrengthToCoefficient,
-);
-export const calculateDefenseCoefficient = flowAsync(
-  calculateDefenseStrength,
-  convertStrengthToCoefficient,
-);
-
-export const calculateCoefficients = async (
-  attackingClub: Array<Player>,
-  defendingClub: Array<Player>,
-) => {
-  return await Promise.all([
-    await calculateAttackCoefficient(attackingClub),
-    await calculateDefenseCoefficient(defendingClub),
-  ]);
-};
-
-export const calculateHomeStrength = async (
-  homePlayers: Array<Player>,
-  awayPlayers: Array<Player>,
-): Promise<number> => {
-  const getHomeStrength = ([homeAttack, awayDefense]: [
+export const calculateHomeStrength = ([homeAttack, awayDefense]: [
     number,
     number,
   ]): number => {
     return Math.exp(-Math.exp(U + HOMEEFFECT + homeAttack + awayDefense));
   };
 
-  return await flowAsync(calculateCoefficients, getHomeStrength)(
-    homePlayers,
-    awayPlayers,
-  );
-};
-
-export const calculateAwayStrength = async (
-  homePlayers: Array<Player>,
-  awayPlayers: Array<Player>,
-): Promise<number> => {
-  const getAwayStrength = ([awayAttack, homeDefense]: [
+export const calculateAwayStrength = ([awayAttack, homeDefense]: [
     number,
     number,
   ]): number => {
     return Math.exp(-Math.exp(U + awayAttack + homeDefense));
   };
-  return await flowAsync(calculateCoefficients, getAwayStrength)(
-    awayPlayers,
-    homePlayers,
-  );
-};
 
-export const calculateMatchStrengths = async ([homePlayers, awayPlayers]: [
-  Array<Player>,
-  Array<Player>,
-]): Promise<[number, number]> => {
-  return await Promise.all([
-    await calculateHomeStrength(homePlayers, awayPlayers),
-    await calculateAwayStrength(homePlayers, awayPlayers),
-  ]);
-};
+export const calculateMatchStrengths = flowAsync(
+  map(calculateClubStrengths),  
+  over([flowAsync(first, identity), flowAsync(last, reverse)]),
+  zipAll,
+  map(convertIntegersToPercentages),
+  over([flowAsync(first, calculateHomeStrength), flowAsync(last, calculateAwayStrength)]),
+)
 
-export const weibullCDFGoals = async (
+
+export const weibullCDFGoals = curry(async (
   shape: number,
   clubStrength: number,
   goals: number,
 ): Promise<number> => {
-  return 1 - Math.exp(-Math.pow((goals + 1) * clubStrength, shape));
-};
 
-export const getBaseWeibullCDFGoals = partial(weibullCDFGoals, SHAPE);
+  return 1 - Math.exp(-Math.pow((goals + 1) * clubStrength, shape));
+});
+
+export const getBaseWeibullCDFGoals = weibullCDFGoals(SHAPE)
 
 export const weibullCDFGoalsList = async (
   clubStrength: number,
 ): Promise<Array<number>> => {
-  return await Promise.all(
-    POSSIBLEGOALS.map(async (goals: number) => {
-      return await getBaseWeibullCDFGoals(clubStrength, goals);
-    }),
-  );
+  return await flowAsync(map(getBaseWeibullCDFGoals(clubStrength)))(POSSIBLEGOALS)   
 };
 
-export const calculateJointProbability = async (
+export const calculateJointProbability = curry(async (
   theta: number,
   [homeProb, awayProb]: [number, number],
-) => {
+): Promise<number> => {
   return (
     Math.log(
       1 +
@@ -171,163 +120,35 @@ export const calculateJointProbability = async (
           (Math.exp(-theta) - 1),
     ) * -(1 / theta)
   );
-};
+});
 
-export const getBaseJointProbability = partial(
-  calculateJointProbability,
-  THETA,
-);
+export const getBaseJointProbability =  calculateJointProbability(THETA)
 
-export const getClubsScoreProbabilities = async (
-  homeClubStrengthAndScore: [number, number],
-  awayClubStrengthAndScore: [number, number],
-): Promise<Array<number>> => {
-  return await Promise.all(
-    [homeClubStrengthAndScore, awayClubStrengthAndScore].map(
-      async (clubStrengthAndScore: [number, number]) => {
-        return await getBaseWeibullCDFGoals(...clubStrengthAndScore);
-      },
-    ),
-  );
-};
 
 export const createJointProbabilitiesMatrixForGoals = async ([
-  homeClubStrength,
-  awayClubStrength,
-]: [number, number]): Promise<Array<[[number, number], number]>> => {
-  return await Promise.all(
-    EMPTYSCOREMATRIX.map(async ([homeScore, awayScore]) => {
-      const jointProbability = await flowAsync(
-        getClubsScoreProbabilities,
-        normalizePercentages,
-        getBaseJointProbability,
-      )([homeClubStrength, homeScore], [awayClubStrength, awayScore]);
-
-      return [[homeScore, awayScore], jointProbability];
+  homeWeibullCDFGoalsList,
+  awayWeibullCDFGoalsList,
+]: [Array<number>, Array<number>]): Promise<Array<[number, [number, number]]>> => {
+  return await flowAsync(
+    mapIndexed(async(homeProbability: number, homeGoals: number): Promise<Array<[number, Array<[number, number]>]>> => {      
+      return await flowAsync(mapIndexed(async(awayProbability: number, awayGoals: number) => [await getBaseJointProbability([homeProbability, awayProbability]), [homeGoals, awayGoals]]))(awayWeibullCDFGoalsList)
     }),
-  );
+    flatten,
+  )(homeWeibullCDFGoalsList)
 };
 
-export const playersToJointProbabilitiesMatrixForGoals = flowAsync(
-  calculateMatchStrengths,
-  createJointProbabilitiesMatrixForGoals,
-);
-
-export const sortProbabilityMatrix = (
-  goalsMatrix: Array<[[number, number], number]>,
-): Array<[[number, number], number]> => {
-  return sortBy(([a, b]) => b, goalsMatrix);
-};
-
-export const splitJointProbabilitiesMatrixIntoTwoLists = async (
-  jointProbabilitiyMatrix: Array<[[number, number], number]>,
-): Promise<(number | [number, number])[][]> => {
-  const tupleLength: number = jointProbabilitiyMatrix[0].length;
-  return await Promise.all(
-    range(tupleLength).map(async (index: number) => {
-      return map((value) => value[index], jointProbabilitiyMatrix);
-    }),
-  );
-};
-
-export const convertJointProbabilitiesMatrixToLists = async (
-  jointProbabilitiyMatrix: Array<[[number, number], number]>,
-): Promise<Array<Array<number>>> => {
-  const tupleLength: number = jointProbabilitiyMatrix[0].flat().length;
-  return await Promise.all(
-    range(tupleLength).map(async (index: number) => {
-      return map((value) => value.flat()[index], jointProbabilitiyMatrix);
-    }),
-  );
-};
-
-export const matchActualGoals = async (
-  goalsMatrix: Array<[[number, number], number]>,
-): Promise<[number, number]> => {
-  const getScore = flowAsync(
-    sortProbabilityMatrix,
-    splitJointProbabilitiesMatrixIntoTwoLists,
-    reverse,
-    weightedRandom,
-  );
-
-  return await getScore(goalsMatrix);
-};
-
-export const whoWon = ([homeGoals, awayGoals]: [number, number]): [
-  StatisticsObject,
-  StatisticsObject,
-] => {
-  const result: Array<[MatchResult, boolean]> = [
-    [MatchResult.homeWin, gt(homeGoals, awayGoals)],
-    [MatchResult.draw, eq(homeGoals, awayGoals)],
-    [MatchResult.awayWin, lt(homeGoals, awayGoals)],
-  ];
-  return MATCHRESULTS[dropWhile(([, value]) => value == false, result)[0][0]];
-};
-
-// better, but still not correct,
-//not sure this is the correct way to calculate expected goal
-// need to use sample
-export const matchExpectedGoals = async (
-  goalsMatrix: Array<[[number, number], number]>,
-): Promise<Array<number>> => {
-  const [homeScores, awayScores, weights] = await flowAsync(
-    sortProbabilityMatrix,
-    reverse,
-    convertJointProbabilitiesMatrixToLists,
-    map(take(5)),
-  )(goalsMatrix);
-  return await Promise.all(
-    [homeScores, awayScores].map(
-      async (scores: Array<number>) => await weightedMean(weights, scores),
-    ),
-  );
-};
-
-// Goals Against
-export const matchGoals = async (
-  goalsMatrix: Array<[[number, number], number]>,
-): Promise<[StatisticsObject, StatisticsObject]> => {
-  const funcs = [matchActualGoals, matchExpectedGoals];
-  const [
-    [homeActualGoals, awayActualGoals],
-    [homeExpectedGoals, awayExpectedGoals],
-  ] = await Promise.all(
-    funcs.map(async (func) => {
-      return func(goalsMatrix);
-    }),
-  );
-  return [
-    { Goals: homeActualGoals, "Expected Goals": homeExpectedGoals },
-    { Goals: awayActualGoals, "Expected Goals": awayExpectedGoals },
-  ];
-};
-
-export const matchWinDrawLoss = async (
-  goalStatistics: [StatisticsObject, StatisticsObject],
-): Promise<[StatisticsObject, StatisticsObject]> => {
-  const [{ Goals: homeGoals }, { Goals: awayGoals }] = goalStatistics;
-  return whoWon([homeGoals as number, awayGoals as number]);
-};
 
 export const generateMatchGoals = flowAsync(
-  playersToJointProbabilitiesMatrixForGoals,
-  matchGoals,
-);
+  calculateMatchStrengths,
+  flowAsync(map(weibullCDFGoalsList)),
+  createJointProbabilitiesMatrixForGoals,
+  sortTuplesByFirstValueInTuple,
+  zipAll,
+  weightedRandom
+)
 
-export const generateMatchStatistics = async (
-  matchPlayers: [Array<Player>, Array<Player>],
-): Promise<[StatisticsObject, StatisticsObject]> => {
-  const goals: [StatisticsObject, StatisticsObject] =
-    await generateMatchGoals(matchPlayers);
-  const stats: Array<[StatisticsObject, StatisticsObject]> = await Promise.all(
-    [matchWinDrawLoss].map(async (func: Function) => {
-      return await func(goals);
-    }),
-  );
-  return flow(zipAll, map(mergeAll))(concat(stats, [goals])) as [
-    StatisticsObject,
-    StatisticsObject,
-  ];
-};
+
+
+
+
+

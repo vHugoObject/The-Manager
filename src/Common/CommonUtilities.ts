@@ -21,13 +21,18 @@ import {
   curry,
   size,
   flattenDeep,
-  split
+  split,
+  findIndex,
+  max,
 } from "lodash/fp";
+
+
 import { flowAsync, mapIndexed, mapValuesIndexed } from "futil-js";
 
 export const addOne = add(1);
 export const minusOne = add(-1);
 export const multiplyByTwo = multiply(2);
+export const divideByTwo = multiply(1/2);
 export const half = multiply(1 / 2);
 export const lastTwoArrayValues = takeRight(2);
 export const firstTwoArrayValues = take(2);
@@ -37,6 +42,11 @@ export const getSecondLevelArrayLengths = flowAsync(
   flattenDeep,
 );
 export const splitIDOnUnderscores = split("_")
+export const convertIntegerToPercentage = multiply(0.01);
+export const convertIntegersToPercentages = map(convertIntegerToPercentage)
+export const sortTuplesByFirstValueInTuple = sortBy(first)
+
+
 
 export const arrayRotator = ([array, rotations]: Array<any>): Array<any> => {
   const arrayLength: number = array.length;
@@ -60,53 +70,22 @@ export const normalizePercentages = async (
   );
 };
 
-export const weightedMean = async (
+export const weightedMean = curry(async(
   arrWeights: number[],
   arrValues: number[],
 ): Promise<number> => {
   return await flowAsync(
     normalizePercentages,
-    zipWith((value: number, weight: number) => {
-      const sum = value * weight;
-      return [sum, weight];
-    }, arrValues),
-    reduce(
-      (p: Array<number>, c: Array<number>) => [p[0] + c[0], p[1] + c[1]],
-      [0, 0],
-    ),
-    over([first, last]),
+    over([flowAsync(
+      zipWith((value: number, weight: number): number => {
+	return value * weight
+      }, arrValues),
+      sum
+    ),sum]),
     ([totalOfValues, totalOfWeights]: [number, number]) =>
       totalOfValues / totalOfWeights,
-  )(arrWeights);
-};
-
-export const weightedRandom = async ([weights, items]: [
-  number[],
-  any[],
-]): Promise<any> => {
-  const initialValue: number = 0;
-  const cumulativeWeights: number[] = [];
-  const _: number = weights.reduce((accumulator, currentValue) => {
-    accumulator += currentValue;
-    cumulativeWeights.push(accumulator);
-    return accumulator;
-  }, initialValue);
-
-  const maxCumulativeWeight: number = Math.max(...cumulativeWeights);
-  const randomNumber: number = maxCumulativeWeight * Math.random();
-  const randomIndex: number = cumulativeWeights.findIndex(
-    (weight) => weight >= randomNumber,
-  );
-  return items[randomIndex];
-};
-
-export const constantifyObjectValues = mapValuesIndexed(constant);
-
-export const convertToSet = (collection: Array<any>): Set<any> => {
-  return new Set(collection);
-};
-
-export const convertArrayOfArraysToArrayOfSets = map(convertToSet);
+  )(arrWeights);  
+});
 
 export const accumulate = curry(
   ([func, initial]: [Function, any], array: Array<any>): Array<any> => {
@@ -122,6 +101,31 @@ export const accumulate = curry(
 
 export const getRunningSumOfList = accumulate([add, 0]);
 export const multiplyAccumulate = accumulate([multiply, 1]);
+
+
+export const weightedRandom = async <T>([weights, items]: [
+  number[],
+  Array<T>
+]): Promise<T> => {
+
+  return flowAsync(
+    normalizePercentages,
+    getRunningSumOfList,  
+    max,
+    multiply(Math.random()),
+    (randomNumber: number): number => findIndex((weight: number) => weight >= randomNumber)(weights),
+    (randomIndex: number): T => items.at(randomIndex)
+  )(weights)
+};
+
+export const constantifyObjectValues = mapValuesIndexed(constant);
+
+export const convertToSet = (collection: Array<any>): Set<any> => {
+  return new Set(collection);
+};
+
+export const convertArrayOfArraysToArrayOfSets = map(convertToSet);
+
 
 export const sliceUpArray = curry(
   (listOfSliceLengths: Array<number>, array: Array<any>): Array<any> => {
