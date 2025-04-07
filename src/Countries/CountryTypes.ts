@@ -1,7 +1,7 @@
 export enum CountryArrayIndices {
   Name,
-  Competitions
+  Competitions,
 }
 
-export type BaseCountry = [string, Array<string>, Array<Array<string>>]
-export type BaseCountries = Array<BaseCountry>
+export type BaseCountry = [string, Array<string>, Array<Array<string>>];
+export type BaseCountries = Array<BaseCountry>;

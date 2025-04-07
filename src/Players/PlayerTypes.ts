@@ -1,10 +1,9 @@
 export enum PositionGroup {
-  Goalkeeper="3",
-  Defender="2",
-  Midfielder="0",
-  Attacker="1",  
+  Goalkeeper = "3",
+  Defender = "2",
+  Midfielder = "0",
+  Attacker = "1",
 }
-
 
 export enum PlayerBioArrayIndices {
   FirstName,
@@ -42,7 +41,6 @@ export enum PLAYERSKILLSANDPHYSICALDATAKEYS {
   Wages,
 }
 
-
 export enum ALLPOSITIONS {
   GK,
 
@@ -62,29 +60,28 @@ export enum ALLPOSITIONS {
   CF,
 }
 
-
 export enum DEFENDINGSKILLS {
-  Tackling="0",
-  PositionalAwareness="9",
-  Marking="5",
-  SprintSpeed="10",
-  Agility="11",
-  DefendingWorkRate="8",
+  Tackling = "0",
+  PositionalAwareness = "9",
+  Marking = "5",
+  SprintSpeed = "10",
+  Agility = "11",
+  DefendingWorkRate = "8",
 }
 
 export enum GOALKEEPINGSKILLS {
-  GKPositioning="12",
-  GKDiving="13",
-  GKHandling="14",
-  GKReflexes="15",
+  GKPositioning = "12",
+  GKDiving = "13",
+  GKHandling = "14",
+  GKReflexes = "15",
 }
 
 export enum ATTACKINGSKILLS {
-  Passing="1",
-  Shooting="2",
-  Dribbling="3",
-  Vision="5",
-  SprintSpeed="10",
-  PositionalAwareness="9",
-  AttackingWorkRate="7",
+  Passing = "1",
+  Shooting = "2",
+  Dribbling = "3",
+  Vision = "5",
+  SprintSpeed = "10",
+  PositionalAwareness = "9",
+  AttackingWorkRate = "7",
 }

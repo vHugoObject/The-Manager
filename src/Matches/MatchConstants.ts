@@ -1,5 +1,4 @@
-
-export const DEFENSESTRENGTHBALANCE: [number, number] = [5, 95]
+export const DEFENSESTRENGTHBALANCE: [number, number] = [5, 95];
 export const HOMEEFFECT: number = 0.383;
 export const U: number = -1.035;
 export const THETA: number = 0.562;

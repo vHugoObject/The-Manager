@@ -1,8 +1,4 @@
-import {
-  PositionGroup,
-} from "./PlayerTypes";
-
-
+import { PositionGroup } from "./PlayerTypes";
 
 export const PLAYERBIODATABYPOSITION: Record<
   PositionGroup,

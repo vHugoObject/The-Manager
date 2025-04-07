@@ -1,6 +1,4 @@
 export enum CompetitionArrayIndices {
   Name,
-  Clubs
+  Clubs,
 }
-
-

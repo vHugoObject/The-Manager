@@ -4,7 +4,11 @@ import { describe, expect } from "vitest";
 import { fakerToArb } from "../../Common/testingUtilities";
 import { convertArrayOfArraysToArrayOfSets } from "../../Common/CommonUtilities";
 import { Entity } from "../../Common/CommonTypes";
-import { createCountry, getCountryName, getCountryCompetitions } from "../CountryUtilities";
+import {
+  createCountry,
+  getCountryName,
+  getCountryCompetitions,
+} from "../CountryUtilities";
 
 describe("Country Utilities tests", async () => {
   test.prop([
@@ -22,17 +26,20 @@ describe("Country Utilities tests", async () => {
       testCompetitions,
     );
 
-    const [testCompetitionIDs, ] = zipAll(testCompetitions);
-    
-    const [actualCountryName, actualCountryCompetitionIDs] = over([getCountryName, getCountryCompetitions])(actualCountry)
+    const [testCompetitionIDs] = zipAll(testCompetitions);
+
+    const [actualCountryName, actualCountryCompetitionIDs] = over([
+      getCountryName,
+      getCountryCompetitions,
+    ])(actualCountry);
 
     expect(actualCountryName).toMatch(testCountryName);
-        
+
     const [expectedIDs, actualIDs] = convertArrayOfArraysToArrayOfSets([
       testCompetitionIDs,
       actualCountryCompetitionIDs,
     ]);
-    
+
     expect(expectedIDs).toStrictEqual(actualIDs);
   });
 });

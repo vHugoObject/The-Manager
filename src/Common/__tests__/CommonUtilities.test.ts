@@ -1,6 +1,6 @@
 import { test, fc } from "@fast-check/vitest";
 import { assert, describe, expect } from "vitest";
-import { fakerToArb } from "../../Common/index";
+import { fakerToArb } from "../testingUtilities";
 import {
   curry,
   first,
@@ -16,6 +16,13 @@ import {
   add,
   mean,
   zipAll,
+  reverse,
+  slice,
+  filter,
+  spread,
+  subtract,
+  eq,
+  flatten,
 } from "lodash/fp";
 import { flowAsync } from "futil-js";
 import {
@@ -50,6 +57,14 @@ import {
   convertListOfListsToListOfRanges,
   boundedModularAddition,
   getAverageModularStepForRangeOfData,
+  runTwoFunctionsOnATuplePair,
+  convertObjectKeysIntoSet,
+  convertToSet,
+  mapEmptyListsOverRecordValues,
+  convertListOfIntegersIntoListOfStrings,
+  convertListOfStringsIntoListOfIntegers,
+  zipLongest,
+  getListsSizeDifference,
 } from "../CommonUtilities";
 
 describe("CommonUtilities test suite", async () => {
@@ -86,13 +101,158 @@ describe("CommonUtilities test suite", async () => {
       expectedEffectiveRotations,
       testArrayLength,
     ]);
+  });
 
-    const expectedIndexOfFirstItem = getExpectedNewIndex(0);
-    expect(actualRotatedArray[expectedIndexOfFirstItem]).toBe(first(testArray));
+  test.prop([
+    fc
+      .tuple(
+        fc.array(fc.oneof(fc.nat({ max: 50 })), {
+          minLength: 50,
+          maxLength: 100,
+        }),
+        fc.integer({ min: 2, max: 48 }),
+      )
+      .chain(([testList, testSliceEndIndex]: [Array<number>, number]) => {
+        return fc.tuple(
+          fc.constant(testList.length - testSliceEndIndex),
+          fc.tuple(
+            fc.constant(testList),
+            fc.constant(slice(0, testSliceEndIndex, testList)),
+          ),
+        );
+      }),
+  ])("getListsSizeDifference", async (testArgs) => {
+    const [expectedSizeDifference, testLists]: [
+      number,
+      [Array<number>, Array<number>],
+    ] = testArgs;
+    const actualSizeDifference: number = getListsSizeDifference(testLists);
+    expect(actualSizeDifference).toEqual(expectedSizeDifference);
+  });
 
-    const testArrayLastIndex: number = testArrayLength - 1;
-    const expectedIndexOfLastItem = getExpectedNewIndex(testArrayLastIndex);
-    expect(actualRotatedArray[expectedIndexOfLastItem]).toBe(last(testArray));
+  test.prop([
+    fc
+      .tuple(
+        fc.array(fc.oneof(fc.nat({ max: 50 })), {
+          minLength: 2,
+          maxLength: 25,
+        }),
+        fc.integer({ min: 2, max: 24 }),
+        fc.integer({ min: 51 }),
+      )
+      .chain(
+        ([testList, testSliceEndIndex, testFillValue]: [
+          Array<number>,
+          number,
+          number,
+        ]) => {
+          return fc.tuple(
+            fc.constant(testFillValue),
+            fc.tuple(
+              fc.constant(testList),
+              fc.constant(slice(0, testSliceEndIndex, testList)),
+            ),
+          );
+        },
+      ),
+  ])("zipLongest", async (testArgs) => {
+    const [testFillValue, testLists]: [number, [Array<number>, Array<number>]] =
+      testArgs;
+    const actualZippedLists = zipLongest(testFillValue, testLists);
+    const expectedFillValueCount: number = getListsSizeDifference(testLists);
+    console.log(actualZippedLists, testFillValue, testLists);
+    const actualFilledValueCount: number = flowAsync(
+      flatten,
+      filter(eq(testFillValue)),
+      size,
+    )(actualZippedLists);
+    expect(actualFilledValueCount).toEqual(expectedFillValueCount);
+  });
+
+  test.prop([
+    fc.nat({ max: 100 }).chain((expectedKeysCount: number) => {
+      return fc.tuple(
+        fc.constant(expectedKeysCount),
+        fc.dictionary(fc.string(), fc.integer(), {
+          minKeys: expectedKeysCount,
+          maxKeys: expectedKeysCount,
+        }),
+      );
+    }),
+  ])("getObjectKeysCount", async (testTuple) => {
+    const [expectedKeysCount, testRecord] = testTuple;
+    const actualKeysCount: number = getObjectKeysCount(testRecord);
+    expect(actualKeysCount).toEqual(expectedKeysCount);
+  });
+
+  test.prop([
+    fc
+      .array(fc.integer(), { minLength: 2 })
+      .chain((testIntegers: Array<number>) => {
+        return fc.tuple(fc.constant(testIntegers), fc.constant(testIntegers));
+      }),
+  ])("runTwoFunctionsOnATuplePair", async (testTuple) => {
+    const testFunctionOne = runTwoFunctionsOnATuplePair([reverse, reverse]);
+    const testFunctionTwo = runTwoFunctionsOnATuplePair([sum, sum]);
+
+    const actualFirstResult = testFunctionOne(testTuple);
+    const actualSecondResult = testFunctionTwo(testTuple);
+
+    flowAsync(
+      map(convertArrayOfArraysToArrayOfSets),
+      map(([actualFirstSet, actualSecondSet]: [Set<number>, Set<number>]) => {
+        expect(actualFirstSet).toStrictEqual(actualSecondSet);
+      }),
+    )([actualFirstResult, actualSecondResult]);
+  });
+
+  test.prop([fc.array(fc.integer(), { minLength: 2 })])(
+    "convertListOfIntegersIntoListOfStrings",
+    async (testIntegers) => {
+      const convertedIntegers: Array<string> =
+        convertListOfIntegersIntoListOfStrings(testIntegers);
+      const actualIntegers: Array<number> = flowAsync(
+        convertListOfStringsIntoListOfIntegers,
+      )(convertedIntegers);
+      const [actualIntegersSet, expectedIntegersSet] =
+        convertArrayOfArraysToArrayOfSets([actualIntegers, testIntegers]);
+      expect(actualIntegersSet).toStrictEqual(expectedIntegersSet);
+    },
+  );
+
+  test.prop([
+    fc.array(fc.integer(), { minLength: 2 }).chain((nums: Array<number>) => {
+      return fc.constant(convertListOfIntegersIntoListOfStrings(nums));
+    }),
+  ])("convertListOfStringsIntoListOfIntegers", async (testIntegers) => {
+    const convertedIntegers: Array<number> =
+      convertListOfStringsIntoListOfIntegers(testIntegers);
+    const actualIntegers: Array<string> = flowAsync(
+      convertListOfIntegersIntoListOfStrings,
+    )(convertedIntegers);
+
+    const [actualIntegersSet, expectedIntegersSet] =
+      convertArrayOfArraysToArrayOfSets([actualIntegers, testIntegers]);
+    expect(actualIntegersSet).toStrictEqual(expectedIntegersSet);
+  });
+
+  test.prop([
+    fc.dictionary(fc.string(), fc.oneof(fc.integer(), fc.string()), {
+      minKeys: 3,
+    }),
+  ])("mapEmptyListsOverRecordValues", async (testRecord) => {
+    const actualNewRecord = mapEmptyListsOverRecordValues(testRecord);
+    const [actualKeys, expectedKeys] = map(convertObjectKeysIntoSet)([
+      actualNewRecord,
+      testRecord,
+    ]);
+    expect(actualKeys).toStrictEqual(expectedKeys);
+    const actualNewRecordValuesSet = flowAsync(
+      Object.values,
+      map(size),
+      convertToSet,
+    )(actualNewRecord);
+    expect(actualNewRecordValuesSet).toStrictEqual(new Set([0]));
   });
 
   test.prop([
@@ -108,32 +268,32 @@ describe("CommonUtilities test suite", async () => {
     ),
   ])("normalizePercentages", async (testPercentages) => {
     const actualPercentages: Array<number> =
-      await normalizePercentages(testPercentages);
+      normalizePercentages(testPercentages);
     actualPercentages.forEach((actualPercentage: number) => {
       expect(actualPercentage).toBeGreaterThan(0);
       expect(actualPercentage).toBeLessThan(1);
     });
   });
 
-    test.prop([
-      fc.array(
-	fc.tuple(fc.integer(),
-	  fc.integer()),
-	{minLength: 4, maxLength: 100}
-      ),
-    ])("sortTuplesByFirstValueInTuple", async (testTuples) => {
-      const actualSortedTuples: Array<[number, number]> = sortTuplesByFirstValueInTuple(testTuples)
-      const [expectedFirstValue, expectedLastValue]: [number, number] = flowAsync(	
-	zipAll,
-	first,
-	over([min, max])
-      )(testTuples)
-      const [[actualFirstValue,], [actualLastValue,]] = over([first, last])(actualSortedTuples)
-      expect(actualFirstValue).toEqual(expectedFirstValue)
-      expect(actualLastValue).toEqual(expectedLastValue)
-      
+  test.prop([
+    fc.array(fc.tuple(fc.integer(), fc.integer()), {
+      minLength: 4,
+      maxLength: 100,
+    }),
+  ])("sortTuplesByFirstValueInTuple", async (testTuples) => {
+    const actualSortedTuples: Array<[number, number]> =
+      sortTuplesByFirstValueInTuple(testTuples);
+    const [expectedFirstValue, expectedLastValue]: [number, number] = flowAsync(
+      zipAll,
+      first,
+      over([min, max]),
+    )(testTuples);
+    const [[actualFirstValue], [actualLastValue]] = over([first, last])(
+      actualSortedTuples,
+    );
+    expect(actualFirstValue).toEqual(expectedFirstValue);
+    expect(actualLastValue).toEqual(expectedLastValue);
   });
-
 
   test.prop([
     fc.integer({ min: 3, max: 1000 }).chain((minLength: number) => {
@@ -159,10 +319,7 @@ describe("CommonUtilities test suite", async () => {
       number,
     ];
 
-    const actualMean: number = await weightedMean(
-      testPercentages,
-      testIntegers,
-    );
+    const actualMean: number = weightedMean(testPercentages, testIntegers);
     expect(actualMean).toBeGreaterThanOrEqual(expectedMin);
     expect(actualMean).toBeLessThan(expectedMax);
   });
@@ -187,7 +344,7 @@ describe("CommonUtilities test suite", async () => {
     const [testPercentages, testIntegers]: [Array<number>, Array<number>] =
       testPercentagesAndIntegers;
 
-    const actualChosenNumber: number = await weightedRandom([
+    const actualChosenNumber: number = weightedRandom([
       testPercentages,
       testIntegers,
     ]);

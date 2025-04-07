@@ -5,14 +5,14 @@ import { generatePlayerSkillsAndPhysicalDataForListOfClubs } from "../Players/Pl
 
 export const createSave = async ({
   Name,
-  UserMainCompetitionID,
+  UserMainDomesticLeagueID,
   CurrentSeason,
   UserClubID,
   BaseEntities,
 }: SaveArguments): Promise<Save> => {
   return await promiseProps({
     Name,
-    UserMainCompetitionID,
+    UserMainDomesticLeagueID,
     UserClubID,
     Seasons: 1,
     CurrentSeason,
@@ -21,6 +21,6 @@ export const createSave = async ({
     EntitiesStatistics: {},
     PlayerSkillsAndPhysicalData:
       await generatePlayerSkillsAndPhysicalDataForListOfClubs(0, BaseEntities),
-    SaveID: crypto.randomUUID()
+    SaveID: crypto.randomUUID(),
   });
 };

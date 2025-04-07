@@ -24,29 +24,66 @@ import {
   split,
   findIndex,
   max,
+  mapValues,
+  countBy,
+  flatten,
+  toString,
+  spread,
+  zip,
 } from "lodash/fp";
-
 
 import { flowAsync, mapIndexed, mapValuesIndexed } from "futil-js";
 
+export const convertToSet = <T>(collection: Array<T>): Set<T> => {
+  return new Set(collection);
+};
+export const convertArrayOfArraysToArrayOfSets = map(convertToSet);
+
+export const asyncOver = flowAsync(over);
+export const asyncMap = flowAsync(map);
+export const basicSort = sortBy(identity);
 export const addOne = add(1);
 export const minusOne = add(-1);
 export const multiplyByTwo = multiply(2);
-export const divideByTwo = multiply(1/2);
+export const divideByTwo = multiply(1 / 2);
 export const half = multiply(1 / 2);
 export const lastTwoArrayValues = takeRight(2);
 export const firstTwoArrayValues = take(2);
 export const getFirstLevelArrayLengths = map(size);
+export const getFirstLevelArrayLengthsAsSet = flowAsync(
+  getFirstLevelArrayLengths,
+  convertToSet,
+);
 export const getSecondLevelArrayLengths = flowAsync(
   map(map(size)),
   flattenDeep,
 );
-export const splitIDOnUnderscores = split("_")
+export const splitIDOnUnderscores = split("_");
 export const convertIntegerToPercentage = multiply(0.01);
-export const convertIntegersToPercentages = map(convertIntegerToPercentage)
-export const sortTuplesByFirstValueInTuple = sortBy(first)
+export const convertIntegersToPercentages = map(convertIntegerToPercentage);
+export const sortTuplesByFirstValueInTuple = sortBy(first);
+export const convertObjectKeysIntoSet = flowAsync(Object.keys, convertToSet);
+export const convertListOfIntegersIntoListOfStrings = map(toString);
+export const convertListOfStringsIntoListOfIntegers = map(parseInt);
 
+export const runTwoFunctionsOnATuplePair = curry(
+  async (
+    [firstFunction, lastFunction]: [
+      (...args: any) => any,
+      (...args: any) => any,
+    ],
+    tuple: [any, any],
+  ) => {
+    return over([
+      flowAsync(first, firstFunction),
+      flowAsync(last, lastFunction),
+    ])(tuple);
+  },
+);
 
+export const mapEmptyListsOverRecordValues = mapValues((_: any) => []);
+export const countByIdentity = countBy(identity);
+export const getSumOfFlattenedList = flowAsync(flatten, sum);
 
 export const arrayRotator = ([array, rotations]: Array<any>): Array<any> => {
   const arrayLength: number = array.length;
@@ -61,31 +98,49 @@ export const arrayRotator = ([array, rotations]: Array<any>): Array<any> => {
   )(array);
 };
 
-export const normalizePercentages = async (
+export const normalizePercentages = (
   percentages: Array<number>,
-): Promise<Array<number>> => {
+): Array<number> => {
   const sumOfPercentages: number = sum(percentages);
   return map((percent: number): number => percent / sumOfPercentages)(
     percentages,
   );
 };
 
-export const weightedMean = curry(async(
-  arrWeights: number[],
-  arrValues: number[],
-): Promise<number> => {
-  return await flowAsync(
-    normalizePercentages,
-    over([flowAsync(
-      zipWith((value: number, weight: number): number => {
-	return value * weight
-      }, arrValues),
-      sum
-    ),sum]),
-    ([totalOfValues, totalOfWeights]: [number, number]) =>
-      totalOfValues / totalOfWeights,
-  )(arrWeights);  
-});
+export const getListsSizeDifference = flowAsync(map(size), spread(subtract));
+
+export const zipLongest = curry(
+  <T>(
+    fillValue: T,
+    [listOne, listTwo]: [Array<T>, Array<T>],
+  ): Array<[T, T]> => {
+    return flowAsync(
+      getListsSizeDifference,
+      (length: number) => Array.from({ length }, () => fillValue),
+      concat(listTwo),
+      zip(listOne),
+    )([listOne, listTwo]);
+  },
+);
+
+export const weightedMean = curry(
+  (arrWeights: number[], arrValues: number[]): Promise<number> => {
+    return flowAsync(
+      normalizePercentages,
+      over([
+        flowAsync(
+          zipWith((value: number, weight: number): number => {
+            return value * weight;
+          }, arrValues),
+          sum,
+        ),
+        sum,
+      ]),
+      ([totalOfValues, totalOfWeights]: [number, number]) =>
+        totalOfValues / totalOfWeights,
+    )(arrWeights);
+  },
+);
 
 export const accumulate = curry(
   ([func, initial]: [Function, any], array: Array<any>): Array<any> => {
@@ -102,30 +157,22 @@ export const accumulate = curry(
 export const getRunningSumOfList = accumulate([add, 0]);
 export const multiplyAccumulate = accumulate([multiply, 1]);
 
-
-export const weightedRandom = async <T>([weights, items]: [
+export const weightedRandom = <T>([weights, items]: [
   number[],
-  Array<T>
-]): Promise<T> => {
-
+  Array<T>,
+]): T => {
   return flowAsync(
     normalizePercentages,
-    getRunningSumOfList,  
+    getRunningSumOfList,
     max,
     multiply(Math.random()),
-    (randomNumber: number): number => findIndex((weight: number) => weight >= randomNumber)(weights),
-    (randomIndex: number): T => items.at(randomIndex)
-  )(weights)
+    (randomNumber: number): number =>
+      findIndex((weight: number) => weight >= randomNumber)(weights),
+    (randomIndex: number): T => items.at(randomIndex),
+  )(weights);
 };
 
 export const constantifyObjectValues = mapValuesIndexed(constant);
-
-export const convertToSet = (collection: Array<any>): Set<any> => {
-  return new Set(collection);
-};
-
-export const convertArrayOfArraysToArrayOfSets = map(convertToSet);
-
 
 export const sliceUpArray = curry(
   (listOfSliceLengths: Array<number>, array: Array<any>): Array<any> => {

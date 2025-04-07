@@ -10,15 +10,16 @@ import {
   fakerToArb,
   convertToSet,
 } from "../../Common/index";
-import { getCompetitionClubs } from "../../Competitions/CompetitionUtilities"
-import { getUserName,
+import { getCompetitionClubs } from "../../Competitions/CompetitionUtilities";
+import {
+  getUserName,
   getUserMainCompetitionID,
   getUserClubID,
   getCurrentSeason,
   getSavePlayerSkills,
   getEntityFromSaveEntities,
-  getGroupOfPlayerSkillsFromSave
-} from "../SaveUtilities"
+  getGroupOfPlayerSkillsFromSave,
+} from "../SaveUtilities";
 import { createSave } from "../createSave";
 
 describe("SaveCreator Utilities tests", async () => {
@@ -54,7 +55,6 @@ describe("SaveCreator Utilities tests", async () => {
   ])(
     "test createSave, getEntityFromSave, and getEntitiesFromSave",
     async (testPlayerName, testSeason, testCountriesLeaguesClubs, fcGen) => {
-      
       const testBaseEntities: BaseEntities =
         await convertBaseCountriesToBaseEntities(
           testSeason,
@@ -72,36 +72,53 @@ describe("SaveCreator Utilities tests", async () => {
       };
 
       const actualSave: Save = await createSave(testSaveArguments);
-      
-      const [actualUserName,
-	actualUserMainCompetitionID,
-	actualUserClubID,
-	actualCurrentSeason] = over([
-	  getUserName, 
-	  getUserMainCompetitionID,
-	  getUserClubID,
-	  getCurrentSeason
-	])(actualSave)
-      
+
+      const [
+        actualUserName,
+        actualUserMainCompetitionID,
+        actualUserClubID,
+        actualCurrentSeason,
+      ] = over([
+        getUserName,
+        getUserMainCompetitionID,
+        getUserClubID,
+        getCurrentSeason,
+      ])(actualSave);
+
       expect(actualUserName).toEqual(testPlayerName);
       expect(actualUserMainCompetitionID).toEqual(testPlayerMainCompetition);
       expect(actualUserClubID).toEqual(testPlayerClub);
       expect(actualCurrentSeason).toEqual(testSeason);
 
+      const actualPlayerMainCompetitionClubsSet = flowAsync(
+        getEntityFromSaveEntities,
+        getCompetitionClubs,
+        convertToSet,
+      )([actualSave, testPlayerMainCompetition]);
+      expect(
+        actualPlayerMainCompetitionClubsSet.has(testPlayerClub),
+      ).toBeTruthy();
 
-      const actualPlayerMainCompetitionClubsSet = flowAsync(getEntityFromSaveEntities, getCompetitionClubs, convertToSet)([actualSave, testPlayerMainCompetition])
-      expect(actualPlayerMainCompetitionClubsSet.has(testPlayerClub)).toBeTruthy();
-      
-      const getSavePlayerSkillsIDs = flowAsync(getSavePlayerSkills, Object.keys)
-      const getExpectedPlayerIDsFromSaveEntities = flowAsync(getGroupOfPlayerSkillsFromSave, Object.keys)
-      
-      const actualSavePlayerSkillsIDs: Array<string> = getSavePlayerSkillsIDs(actualSave)
-      const actualSavePlayerBiosIDs: Array<Array<number>> = getExpectedPlayerIDsFromSaveEntities([actualSave, actualSavePlayerSkillsIDs])
+      const getSavePlayerSkillsIDs = flowAsync(
+        getSavePlayerSkills,
+        Object.keys,
+      );
+      const getExpectedPlayerIDsFromSaveEntities = flowAsync(
+        getGroupOfPlayerSkillsFromSave,
+        Object.keys,
+      );
 
-      
-      expect(actualSavePlayerBiosIDs.length).toEqual(actualSavePlayerSkillsIDs.length)
-      
-      
+      const actualSavePlayerSkillsIDs: Array<string> =
+        getSavePlayerSkillsIDs(actualSave);
+      const actualSavePlayerBiosIDs: Array<Array<number>> =
+        getExpectedPlayerIDsFromSaveEntities([
+          actualSave,
+          actualSavePlayerSkillsIDs,
+        ]);
+
+      expect(actualSavePlayerBiosIDs.length).toEqual(
+        actualSavePlayerSkillsIDs.length,
+      );
     },
   );
 
@@ -146,9 +163,8 @@ describe("SaveCreator Utilities tests", async () => {
           testCountriesLeaguesClubs,
         );
       const [testPlayerMainCompetition, testPlayerClub]: [string, string] =
-            randomPlayerCompetitonAndClub(fcGen, testBaseEntities);
+        randomPlayerCompetitonAndClub(fcGen, testBaseEntities);
 
-      
       const testSaveArguments: SaveArguments = {
         Name: testPlayerName,
         UserMainCompetitionID: testPlayerMainCompetition,
@@ -156,7 +172,6 @@ describe("SaveCreator Utilities tests", async () => {
         CurrentSeason: testSeason,
         BaseEntities: testBaseEntities,
       };
-
 
       await createSave(testSaveArguments);
     },

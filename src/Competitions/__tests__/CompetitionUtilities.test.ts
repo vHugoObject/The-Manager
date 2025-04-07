@@ -2,18 +2,15 @@ import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import { zipAll, over } from "lodash/fp";
 import { fakerToArb } from "../../Common/testingUtilities";
-import {
-  convertArrayOfArraysToArrayOfSets,
-} from "../../Common/CommonUtilities";
+import { convertArrayOfArraysToArrayOfSets } from "../../Common/CommonUtilities";
 import { Entity } from "../../Common/CommonTypes";
 import {
   createCompetition,
   getCompetitionName,
-  getCompetitionClubs
+  getCompetitionClubs,
 } from "../CompetitionUtilities";
 
 describe("Competition Utilities tests", async () => {
-
   test.prop([
     fakerToArb((faker) => faker.company.name()),
     fc.array(fc.tuple(fc.uuid(), fc.string()), {
@@ -25,19 +22,21 @@ describe("Competition Utilities tests", async () => {
       testCompetitionName,
       testClubs,
     );
-    
+
     const [testCompetitionClubIDs] = zipAll(testClubs);
 
-        const [actualCompetitionName, actualCompetitionClubIDs] = over([getCompetitionName, getCompetitionClubs])(actualCompetition)
-    
+    const [actualCompetitionName, actualCompetitionClubIDs] = over([
+      getCompetitionName,
+      getCompetitionClubs,
+    ])(actualCompetition);
 
     expect(actualCompetitionName).toMatch(testCompetitionName);
-    
+
     const [expectedIDs, actualIDs] = convertArrayOfArraysToArrayOfSets([
       testCompetitionClubIDs,
-      actualCompetitionClubIDs
+      actualCompetitionClubIDs,
     ]);
-    
+
     expect(expectedIDs).toStrictEqual(actualIDs);
   });
 });

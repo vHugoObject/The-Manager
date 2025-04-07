@@ -1,4 +1,3 @@
-
 export type BaseEntity = [string, string];
 
 export interface BaseEntities {
@@ -8,5 +7,4 @@ export interface BaseEntities {
   players?: Array<Array<Array<Array<BaseEntity>>>>;
 }
 
-
-export type Entity = Array<number|string|Array<string>>
+export type Entity = Array<number | string | Array<string>>;

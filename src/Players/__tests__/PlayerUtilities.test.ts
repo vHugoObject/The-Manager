@@ -72,6 +72,26 @@ describe("Player utilities tests", async () => {
       
     }
   );
+
+
+    
+  test.prop([
+    fc.dictionary(fc.constantFrom(
+        ...POSITIONGROUPSLIST
+    ),
+      fc.array(fc.nat({max: 100}), {minLength: })
+    )
+  ])(
+    "getPositionBreakdownOfRecordOfPlayers",
+    async (testPlayers) => {
+      
+      const actualSortedPlayers: Record<string, Array<number>> = sortPlayersByRatings(testPlayers)
+
+      expect(actualSortedPlayers).toMatchObject(testPlayers)      
+      
+      
+    }
+  );
   
   test.prop([
     fc

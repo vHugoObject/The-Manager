@@ -2,7 +2,7 @@ import { Entity, BaseEntities } from "../Common/CommonTypes";
 
 export interface SaveArguments {
   Name: string;
-  UserMainCompetitionID: string;
+  UserMainDomesticLeagueID: string;
   CurrentSeason: number;
   UserClubID: string;
   BaseEntities: BaseEntities;
@@ -12,7 +12,7 @@ export type SaveID = string | IDBValidKey;
 
 export interface Save {
   Name: string;
-  UserMainCompetitionID: string;
+  UserMainDomesticLeagueID: string;
   UserClubID: string;
   SeasonsPlayed: number;
   CurrentSeason: number;

@@ -1,25 +1,56 @@
 import { describe, expect } from "vitest";
 import { test, fc } from "@fast-check/vitest";
-import { over, zipAll, zipObject, countBy } from "lodash/fp";
+import {
+  over,
+  multiply,
+  zipAll,
+  zipObject,
+  countBy,
+  flatMapDeep,
+  map,
+  size,
+  flatten,
+  uniq,
+} from "lodash/fp";
 import { flowAsync } from "futil-js";
-import { PositionGroup } from "../../Players/PlayerTypes"
+import { PositionGroup } from "../../Players/PlayerTypes";
 import { Entity, BaseEntities } from "../../Common/CommonTypes";
-import { Save } from "../../StorageUtilities/SaveTypes"
-import { fakerToArb, createTestSave, randomPlayerCompetitonAndClub,
-  convertBaseCountriesToBaseEntities, convertArrayOfArraysToArrayOfSets } from "../../Common/index"
-import { DEFAULTMATCHCOMPOSITION } from "../ClubConstants"
-import { getPlayerPositionGroupFromID } from "../../Players/PlayerUtilities"
-import { createClub, getClubName, getClubSquad,
+import { Save } from "../../StorageUtilities/SaveTypes";
+import {
+  fakerToArb,
+  createTestSave,
+  convertBaseCountriesToBaseEntities,
+  convertArrayOfArraysToArrayOfSets,
+  defaultGetAListOfRandomMatches,
+  DEFAULTTESTMATCHES,
+  DEFAULTPLAYERSPERTESTMATCHES,
+  DEFAULTSQUADSIZE,
+  getFirstLevelArrayLengthsAsSet,
+  fastCheckTestBaseEntitiesGenerator,
+  getCompletelyRandomClubID,
+} from "../../Common/index";
+import { DEFAULTMATCHCOMPOSITION } from "../ClubConstants";
+import { getPlayerPositionGroupFromID } from "../../Players/PlayerUtilities";
+import {
+  createClub,
+  getClubName,
+  getClubSquad,
   getClubSquadFromSave,
   getClubPlayerSkillsFromSave,
-  getClubBestStarting11FromSave
+  getClubBestStarting11FromSave,
+  getClubBestStarting11ForAGroupOfMatchupsWithDefaultCompFromSave,
 } from "../ClubUtilities";
 
 describe("Club Utilities tests", async () => {
-
-  
-  test.prop([ 
-
+  const getActualComposition = flowAsync(
+    Object.keys,
+    countBy(getPlayerPositionGroupFromID),
+  );
+  const getActualPlayerIDsCountsFromStartingElevens = flowAsync(
+    flatMapDeep(map(Object.keys)),
+    size,
+  );
+  test.prop([
     fakerToArb((faker) => faker.company.name()),
     fc.array(fc.uuid(), {
       minLength: 25,
@@ -28,10 +59,12 @@ describe("Club Utilities tests", async () => {
   ])("createClub", async (testClubName, testPlayers) => {
     const actualClub: Entity = await createClub(testClubName, testPlayers);
 
-    const [actualClubName, actualClubSquad] = over([getClubName, getClubSquad])(actualClub)
+    const [actualClubName, actualClubSquad] = over([getClubName, getClubSquad])(
+      actualClub,
+    );
 
     expect(actualClubName).toMatch(testClubName);
-    
+
     const [expectedIDs, actualIDs] = convertArrayOfArraysToArrayOfSets([
       testPlayers,
       actualClubSquad,
@@ -40,64 +73,124 @@ describe("Club Utilities tests", async () => {
   });
 
   test.prop([
-    fc.string(),
     fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2).chain((testCompetitionsCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testCompetitionsCount,
-              maxLength: testCompetitionsCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testCompetitionsCount,
-              maxLength: testCompetitionsCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 1 },
-      );
-    }),
+    fc.string(),
+    fc.tuple(
+      fc.integer({ min: 1, max: 3 }),
+      fc.integer({ min: 1, max: 3 }),
+      fc.integer({ min: 1, max: 20 }),
+    ),
     fc.gen(),
   ])(
     "getClubSquadFromSave, getClubPlayerSkillsFromSave, getClubBestStarting11FromSave",
-    async (testPlayerName, testSeason, testCountriesLeaguesClubs, fcGen) => {
-      
-      const testSave: Save = await createTestSave(fcGen, [testPlayerName, testSeason, testCountriesLeaguesClubs])
-      const testBaseEntities: BaseEntities = await convertBaseCountriesToBaseEntities(testSeason, testCountriesLeaguesClubs)
-      // change func name
-      const [testClubID,]  = randomPlayerCompetitonAndClub(fcGen, testBaseEntities)
-      
-      const actualPlayerSkills: Record<string, Array<number>> = getClubPlayerSkillsFromSave([testSave, testClubID])
-      
-      const [actualPlayerIDs,]: [Array<string>, Array<Array<number>>] = flowAsync(Object.entries,zipAll)(actualPlayerSkills)
+    async (
+      testSeason,
+      testPlayerName,
+      testCountriesDomesticsLeaguesClubsCount,
+      fcGen,
+    ) => {
+      const testSave: Save = await createTestSave(fcGen, [
+        testPlayerName,
+        testSeason,
+        testCountriesDomesticsLeaguesClubsCount,
+      ]);
+      const testBaseEntities: BaseEntities =
+        await fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
+        );
 
-      const expectedPlayerIDs = getClubSquadFromSave([testSave, testClubID])
-      
-      const [actualPlayerIDsSet, expectedPlayerIDsSet] = convertArrayOfArraysToArrayOfSets([actualPlayerIDs, expectedPlayerIDs])
-      
-      expect(actualPlayerIDsSet).toStrictEqual(expectedPlayerIDsSet)
+      const testClubID: string = getCompletelyRandomClubID(
+        fcGen,
+        testBaseEntities,
+      );
 
-      const testGetClubBestStarting11FromSaveWithDEFAULT433 = getClubBestStarting11FromSave(DEFAULTMATCHCOMPOSITION)
-      
-      const actualBestStarting11: Record<string, Array<number>> = testGetClubBestStarting11FromSaveWithDEFAULT433([testSave, testClubID])
+      const actualPlayerSkills: Record<
+        string,
+        Array<number>
+      > = getClubPlayerSkillsFromSave([testSave, testClubID]);
 
-      const expectedComposition: Record<string, number> = zipObject(Object.values(PositionGroup), DEFAULTMATCHCOMPOSITION)
-      const getActualComposition = flowAsync(Object.keys, countBy(getPlayerPositionGroupFromID))
-      const actualComposition: Record<string, number> = getActualComposition(actualBestStarting11)
-      expect(actualComposition).toStrictEqual(expectedComposition)
-      
-      
-    }
+      const [actualPlayerIDs]: [Array<string>, Array<Array<number>>] =
+        flowAsync(Object.entries, zipAll)(actualPlayerSkills);
+
+      const expectedPlayerIDs = getClubSquadFromSave([testSave, testClubID]);
+
+      const [actualPlayerIDsSet, expectedPlayerIDsSet] =
+        convertArrayOfArraysToArrayOfSets([actualPlayerIDs, expectedPlayerIDs]);
+
+      expect(actualPlayerIDsSet).toStrictEqual(expectedPlayerIDsSet);
+    },
   );
 
+  test.prop([
+    fc.integer({ min: 2000, max: 2100 }),
+    fc.string(),
+    fc.tuple(
+      fc.integer({ min: 1, max: 1 }),
+      fc.integer({ min: 1, max: 2 }),
+      fc.integer({ min: 1, max: 20 }),
+    ),
+    fc.gen(),
+  ])(
+    "getClubBestStarting11FromSave, getClubBestStarting11ForAGroupOfMatchupsWithDefaultCompFromSave",
+    async (
+      testSeason,
+      testPlayerName,
+      testCountriesDomesticsLeaguesClubsCount,
+      fcGen,
+    ) => {
+      const testSave: Save = await createTestSave(fcGen, [
+        testPlayerName,
+        testSeason,
+        testCountriesDomesticsLeaguesClubsCount,
+      ]);
+      const testBaseEntities: BaseEntities =
+        await fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
+        );
+
+      const testClubID: string = getCompletelyRandomClubID(
+        fcGen,
+        testBaseEntities,
+      );
+
+      const testGetClubBestStarting11FromSaveWithDEFAULT433 =
+        getClubBestStarting11FromSave(DEFAULTMATCHCOMPOSITION);
+
+      const actualBestStartingEleven: Record<
+        string,
+        Array<number>
+      > = testGetClubBestStarting11FromSaveWithDEFAULT433([
+        testSave,
+        testClubID,
+      ]);
+
+      const expectedComposition: Record<string, number> = zipObject(
+        Object.values(PositionGroup),
+        DEFAULTMATCHCOMPOSITION,
+      );
+
+      const actualComposition: Record<string, number> = getActualComposition(
+        actualBestStartingEleven,
+      );
+      expect(actualComposition).toStrictEqual(expectedComposition);
+
+      const testMatchUps: Array<[string, string]> =
+        defaultGetAListOfRandomMatches([fcGen, testBaseEntities]);
+
+      const actualBestStartingElevens: Array<
+        [Record<string, Array<number>>, Record<string, Array<number>>]
+      > = await getClubBestStarting11ForAGroupOfMatchupsWithDefaultCompFromSave(
+        testSave,
+        testMatchUps,
+      );
+
+      const expectedPlayersCount: number =
+        DEFAULTTESTMATCHES * DEFAULTPLAYERSPERTESTMATCHES;
+      const actualPlayersCount: number =
+        getActualPlayerIDsCountsFromStartingElevens(actualBestStartingElevens);
+      expect(actualPlayersCount).toEqual(expectedPlayersCount);
+    },
+  );
 });

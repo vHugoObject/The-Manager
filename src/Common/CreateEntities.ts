@@ -7,7 +7,7 @@ import {
   zipWith,
   chunk,
   flatten,
-  curry
+  curry,
 } from "lodash/fp";
 import { PositionGroup } from "../Players/PlayerTypes";
 import { BaseEntity, BaseEntities, Entity } from "./CommonTypes";
@@ -39,7 +39,8 @@ export const getTotalPlayersToGenerateBasedOnGivenComposition = curry(
   },
 );
 
-export const getTotalPlayersToGenerateUsingBaseComposition = getTotalPlayersToGenerateBasedOnGivenComposition(BASECLUBCOMPOSITION, 0)
+export const getTotalPlayersToGenerateUsingBaseComposition =
+  getTotalPlayersToGenerateBasedOnGivenComposition(BASECLUBCOMPOSITION, 0);
 
 export const createPlayerIDsForClubs = async (
   clubs: Array<Array<Array<BaseEntity>>>,
@@ -49,14 +50,14 @@ export const createPlayerIDsForClubs = async (
   return flowAsync(
     getTotalPlayersToGenerateUsingBaseComposition,
     map(
-      ([positionGroup, length, ]: [PositionGroup, number, number]): Array<
+      ([positionGroup, length]: [PositionGroup, number, number]): Array<
         Array<string>
       > => {
         return chunk(
           length / totalClubs,
           Array.from(
             { length },
-            (_, index: number): string => `${positionGroup}_${index}`
+            (_, index: number): string => `${positionGroup}_${index}`,
           ),
         );
       },
@@ -69,14 +70,19 @@ export const createPlayerIDsForClubs = async (
 export const createEntities = async (
   baseEntities: BaseEntities,
 ): Promise<Record<string, Entity>> => {
-  const baseEntitiesPlayers: Array<Array<string>> =
-    await flowAsync(getBaseEntitiesClubs, createPlayerIDsForClubs)(baseEntities);
+  const baseEntitiesPlayers: Array<Array<string>> = await flowAsync(
+    getBaseEntitiesClubs,
+    createPlayerIDsForClubs,
+  )(baseEntities);
 
   return await flowAsync(
     updateAllPaths({
       countries: flowAsync(
         zipWith(
-          async (competitions: Array<BaseEntity>, [id, name]: BaseEntity): Promise<[string, Entity]> => {
+          async (
+            competitions: Array<BaseEntity>,
+            [id, name]: BaseEntity,
+          ): Promise<[string, Entity]> => {
             return [id, await createCountry(name, competitions)];
           },
           getBaseEntitiesDomesticLeagues(baseEntities),
@@ -84,9 +90,15 @@ export const createEntities = async (
       ),
       domesticLeagues: flowAsync(
         flattenCompetitions,
-        zipWith(async (clubs: Array<BaseEntity>, [id, name]: BaseEntity): Promise<[string, Entity]> => {
-          return [id, await createCompetition(name, clubs)];
-        }, flowAsync(getBaseEntitiesClubs, flattenCompetitions)(baseEntities)),
+        zipWith(
+          async (
+            clubs: Array<BaseEntity>,
+            [id, name]: BaseEntity,
+          ): Promise<[string, Entity]> => {
+            return [id, await createCompetition(name, clubs)];
+          },
+          flowAsync(getBaseEntitiesClubs, flattenCompetitions)(baseEntities),
+        ),
       ),
       clubs: flowAsync(
         flattenClubs,
