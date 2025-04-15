@@ -7,8 +7,8 @@ import {
   startsWith,
   pickBy,
   size,
+  pipe
 } from "lodash/fp";
-import { flowAsync } from "futil-js";
 import { Entity } from "../Common/CommonTypes";
 import { CountryArrayIndices } from "./CountryTypes";
 
@@ -21,11 +21,11 @@ export const getCountryName = property([CountryArrayIndices.Name]);
 export const getCountryDomesticLeagues = property(
   CountryArrayIndices.Competitions,
 );
-export const getCountryIDsCount = flowAsync(filterCountriesByID, size);
+export const getCountryIDsCount = pipe([filterCountriesByID, size]);
 
-export const createCountry = async (
+export const createCountry =  (
   name: string,
   competitions: Array<[string, string]>,
-): Promise<Entity> => {
-  return flowAsync(zipAll, initial, concat([name]))(competitions);
+): Entity => {
+  return pipe([zipAll, initial, concat([name])])(competitions);
 };

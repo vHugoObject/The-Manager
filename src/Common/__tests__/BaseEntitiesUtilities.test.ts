@@ -7,10 +7,10 @@ import {
   mapValues,
   sum,
   zipObject,
-  range,
   toString,
   last,
   toArray,
+  pipe
 } from "lodash/fp";
 import { flowAsync, updatePaths } from "futil-js";
 import { BaseEntities } from "../CommonTypes";
@@ -19,20 +19,18 @@ import {
   getRandomCountryIndex,
   getRandomDomesticLeagueIndex,
   getRandomClubIndex,
-} from "../testingUtilities";
+} from "../../TestingUtilities/index";
 import {
   getFirstLevelArrayLengths,
   getSecondLevelArrayLengths,
-} from "../CommonUtilities";
+} from "../ArrayUtilities";
 import { getCountryIDsCount } from "../../Countries/CountryUtilities";
 import { getClubIDsCount } from "../../Clubs/ClubUtilities";
 import { getDomesticLeagueIDsCount } from "../../Competitions/CompetitionUtilities";
 import {
   flattenCompetitions,
   flattenClubs,
-  getIDNumber,
   getBaseEntitiesCountryIDsAsSet,
-  getLastEntityIDNumber,
   getBaseEntitiesClubsCount,
   convertBaseCountriesToBaseEntities,
   getActualBaseEntitiesCount,
@@ -86,10 +84,10 @@ describe("BaseEntitiesUtilities", async () => {
         );
       const actualCountries: Set<string> =
         getBaseEntitiesCountryIDsAsSet(testBaseEntities);
-      const expectedSize: number = flowAsync(
+      const expectedSize: number = pipe([
         toArray,
         getCountryIDsCount,
-      )(actualCountries);
+      ])(actualCountries);
       expect(actualCountries.size).toEqual(expectedSize);
     },
   );
@@ -185,10 +183,10 @@ describe("BaseEntitiesUtilities", async () => {
       const actualDomesticLeagueIDs: Set<string> =
         getBaseEntitiesDomesticLeagueIDsAsSet(testBaseEntities);
 
-      const actualDomesticLeagueIDsCount: number = flowAsync(
+      const actualDomesticLeagueIDsCount: number = pipe([
         toArray,
         getDomesticLeagueIDsCount,
-      )(actualDomesticLeagueIDs);
+      ])(actualDomesticLeagueIDs);
       expect(actualDomesticLeagueIDs.size).toStrictEqual(
         actualDomesticLeagueIDsCount,
       );
@@ -233,10 +231,10 @@ describe("BaseEntitiesUtilities", async () => {
       const actualClubIDsAsSet: Set<string> =
         getBaseEntitiesClubIDsAsSet(testBaseEntities);
 
-      const actualClubIDsCount: number = flowAsync(
+      const actualClubIDsCount: number = pipe([
         toArray,
         getClubIDsCount,
-      )(actualClubIDsAsSet);
+      ])(actualClubIDsAsSet);
       expect(actualClubIDsAsSet.size).toStrictEqual(actualClubIDsCount);
     },
   );
@@ -288,10 +286,10 @@ describe("BaseEntitiesUtilities", async () => {
           randomCountryIndex,
         );
 
-      const actualDomesticLeagueIDsCount: number = flowAsync(
+      const actualDomesticLeagueIDsCount: number = pipe([
         toArray,
         getDomesticLeagueIDsCount,
-      )(actualDomesticLeagueIDs);
+      ])(actualDomesticLeagueIDs);
       expect(actualDomesticLeagueIDs.size).toEqual(
         actualDomesticLeagueIDsCount,
       );
@@ -392,11 +390,11 @@ describe("BaseEntitiesUtilities", async () => {
           testCountriesLeaguesClubs,
         );
 
-      const expectedClubsCount: number = flowAsync(
+      const expectedClubsCount: number = pipe([
         map(last),
         flattenClubs,
         size,
-      )(testCountriesLeaguesClubs);
+      ])(testCountriesLeaguesClubs);
 
       const actualClubsCount = getBaseEntitiesClubsCount(testBaseEntities);
       expect(actualClubsCount).toEqual(expectedClubsCount);
@@ -447,10 +445,10 @@ describe("BaseEntitiesUtilities", async () => {
           testBaseEntities,
           randomDomesticLeagueIndex,
         );
-      const actualClubIDsCount: number = flowAsync(
+      const actualClubIDsCount: number = pipe([
         toArray,
         getClubIDsCount,
-      )(actualClubIDs);
+      ])(actualClubIDs);
       expect(actualClubIDs.size).toEqual(actualClubIDsCount);
     },
   );
@@ -516,58 +514,9 @@ describe("BaseEntitiesUtilities", async () => {
     },
   );
 
-  test.prop([
-    fc
-      .tuple(fc.integer(), fc.nat())
-      .chain(([testIDNumber, testSeason]: [number, number]) => {
-        return fc.oneof(
-          fc.constant(`Country_${testIDNumber}`),
-          fc.constant(`DomesticLeague_${testSeason}_${testIDNumber}`),
-          fc.constant(`Club_${testSeason}_${testIDNumber}`),
-          fc.constant(`Midfielder_${testIDNumber}`),
-          fc.constant(`Attacker_${testIDNumber}`),
-          fc.constant(`Defender_${testIDNumber}`),
-          fc.constant(`GoalKeeper_${testIDNumber}`),
-        );
-      }),
-  ])("getIDNumber", async (testEntityID) => {
-    const actualIDNumber: number = getIDNumber(testEntityID);
-    expect(actualIDNumber).toBeTypeOf("number");
-    flowAsync(toString, (actualNumber: string) =>
-      expect(testEntityID.includes(actualNumber)).toBeTruthy(),
-    )(actualIDNumber);
-  });
+  
 
-  test.prop([
-    fc
-      .tuple(
-        fc.constantFrom(
-          "Country",
-          "DomesticLeague",
-          "Club",
-          "Midfielder",
-          "GoalKeeper",
-          "Attacker",
-          "Defender",
-        ),
-        fc.integer({ min: 1, max: 1000 }),
-      )
-      .chain(([testEntityType, testEntityCount]: [string, number]) => {
-        return fc.tuple(
-          fc.constant(
-            map((testIDNumber: number) => `${testEntityType}_${testIDNumber}`)(
-              range(1, testEntityCount + 1),
-            ),
-          ),
-          fc.constant(testEntityCount),
-        );
-      }),
-  ])("getLastEntityIDNumber", async (testEntityIDsAndCount) => {
-    const [testEntityIDs, testCount]: [Array<string>, number] =
-      testEntityIDsAndCount;
-    const actualIDNumber: number = getLastEntityIDNumber(testEntityIDs);
-    expect(actualIDNumber).toEqual(testCount);
-  });
+  
 
   test.prop([
     fc.array(
@@ -598,13 +547,13 @@ describe("BaseEntitiesUtilities", async () => {
     ] = await Promise.all([
       flattenCompetitions(testDomesticLeagues),
       flattenClubs(testClubs),
-      flowAsync(
+      pipe([
         zipper,
         updatePaths({
           domesticLeagues: getTestBaseEntitiesDomesticLeaguesCount,
           clubs: getTestBaseEntitiesClubsCount,
         }),
-      )([testDomesticLeagues, testClubs]),
+      ])([testDomesticLeagues, testClubs]),
     ]);
 
     const actual: Record<string, number> = flowAsync(
@@ -667,11 +616,11 @@ describe("BaseEntitiesUtilities", async () => {
     async (testCountriesLeaguesClubs, testSeason) => {
       const zipper = zipObject(["countries", "domesticLeagues", "clubs"]);
 
-      const expectedCounts = flowAsync(
+      const expectedCounts = pipe([
         zipAll,
         zipper,
         getTestBaseEntitiesCount,
-      )(testCountriesLeaguesClubs);
+      ])(testCountriesLeaguesClubs);
 
       const actualBaseEntities: BaseEntities =
         await convertBaseCountriesToBaseEntities(

@@ -13,30 +13,33 @@ import {
   tail,
   take,
   takeRight,
+  pipe
 } from "lodash/fp";
 import {
   addOne,
   minusOne,
   multiplyByTwo,
   half,
-  lastTwoArrayValues,
-  firstTwoArrayValues,
-  modularArithmetic,
+  simpleModularArithmetic,
   modularAddition,
-} from "./CommonUtilities";
-import { flowAsync } from "futil-js";
+} from "./MathUtilities"
+import {
+  lastTwoArrayValues,
+  firstTwoArrayValues,  
+} from "./ArrayUtilities";
+
 
 export const totalRoundRobinRounds = minusOne;
-export const totalDoubleRoundRobinRounds = flowAsync(minusOne, multiplyByTwo);
+export const totalDoubleRoundRobinRounds = pipe([minusOne, multiplyByTwo]);
 export const matchesPerRoundOfRoundRobin = half;
-export const totalRoundRobinMatches = flowAsync(
+export const totalRoundRobinMatches = pipe([
   over([totalRoundRobinRounds, matchesPerRoundOfRoundRobin]),
   spread(multiply),
-);
-export const totalDoubleRoundRobinMatches = flowAsync(
+]);
+export const totalDoubleRoundRobinMatches = pipe([
   totalRoundRobinMatches,
   multiplyByTwo,
-);
+]);
 
 export const firstWeekOfRoundRobinWithEvenNumberClubs = (
   clubs: number,
@@ -44,19 +47,19 @@ export const firstWeekOfRoundRobinWithEvenNumberClubs = (
   const adjustedRangeMax = multiplyByTwo(clubs) - 1;
   return [
     clubs,
-    flowAsync(
+    pipe([
       half,
       range(1),
       map((currentNum: number): [number, number] => {
         // check 2n+1
         const matchup = [
-          modularArithmetic(add(-currentNum), adjustedRangeMax, clubs),
+          simpleModularArithmetic(add(-currentNum), adjustedRangeMax, clubs),
           modularAddition(adjustedRangeMax, currentNum),
         ];
         return currentNum % 2 == 0 ? reverse(matchup) : matchup;
       }),
       concat([[0, 1]]),
-    )(clubs),
+    ])(clubs),
   ];
 };
 
@@ -70,21 +73,21 @@ export const everyWeekAfterFirstWeekofRoundRobin = ([clubs, firstRound]: [
       modularAddition(adjustedClubsCount - addOne(club) - 1, club),
     ),
   );
-  return flowAsync(
+  return pipe([
     range(1),
     reduce(
       (rounds: Array<Array<number>>, _: number) => {
-        const [firstMatch, allOtherMatches] = flowAsync(
+        const [firstMatch, allOtherMatches] = pipe([
           last,
           over([head, tail]),
-        )(rounds);
+        ])(rounds);
         return concat(rounds, [
           concat(
             [
-              flowAsync(
+              pipe([
                 map((num: number) => (num !== 0 ? num + 1 : num)),
                 reverse,
-              )(firstMatch),
+              ])(firstMatch),
             ],
             modularAdditionMapper(allOtherMatches),
           ),
@@ -92,31 +95,31 @@ export const everyWeekAfterFirstWeekofRoundRobin = ([clubs, firstRound]: [
       },
       [firstRound],
     ),
-  )(totalRoundRobinRounds(clubs));
+  ])(totalRoundRobinRounds(clubs));
 };
 
-export const roundRobinScheduler = flowAsync(
+export const roundRobinScheduler = pipe([
   firstWeekOfRoundRobinWithEvenNumberClubs,
   everyWeekAfterFirstWeekofRoundRobin,
-);
+]);
 
-export const doubleRoundRobinScheduler = flowAsync(
+export const doubleRoundRobinScheduler = pipe([
   roundRobinScheduler,
   (firstHalf: Array<Array<[number, number]>>): Array<Array<[number, number]>> =>
-    flowAsync(
-      flowAsync(
+    pipe([
+      pipe([
         lastTwoArrayValues,
         map(
           (round: Array<[number, number]>): Array<[number, number]> =>
-            flowAsync(
+            pipe([
               firstTwoArrayValues,
               map(reverse),
               concat(takeRight(round.length - 2, round)),
-            )(round),
+            ])(round),
         ),
-      ),
+      ]),
       concat(take(firstHalf.length - 2, firstHalf)),
-    )(firstHalf),
+    ])(firstHalf),
   (matches: Array<Array<[number, number]>>): Array<Array<[number, number]>> =>
-    flowAsync(map(map(reverse)), concat(matches))(matches),
-);
+    pipe([map(map(reverse)), concat(matches)])(matches),
+]);

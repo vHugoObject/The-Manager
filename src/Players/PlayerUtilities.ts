@@ -19,14 +19,14 @@ import {
   last,
   mean,
   reverse,
+  pipe
 } from "lodash/fp";
-import { flowAsync } from "futil-js";
 import { PositionGroup } from "./PlayerTypes";
 import { BaseEntities, Entity } from "../Common/CommonTypes";
 import { PLAYERBIODATABYPOSITION } from "./PlayerBioConstants";
 import {
-  PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION,
-  PLAYERSKILLSANDPHYSICALDATARANDOMPLUSORMINUS,
+  PLAYERSKILLSPHYSICALCONTRACTRANGESBYPOSITION,
+  PLAYERSKILLSPHYSICALCONTRACTRANDOMPLUSORMINUS,
 } from "./PlayerDataConstants";
 import {
   FIRSTNAMES,
@@ -38,9 +38,9 @@ import {
   boundedModularAddition,
   mapModularIncreasersWithTheSameAverageStep,
   mapModularIncreasersWithDifferentStepsForARange,
-  convertListOfListsToListOfRanges,
   getRandomNumberInRanges,
   getTotalPlayersToGenerateBasedOnGivenComposition,
+  getCountOfItemsFromArrayForPredicate
 } from "../Common/index";
 
 export const getPlayerPositionGroupFromID = property([0]);
@@ -55,6 +55,8 @@ export const isPlayerID = overSome([
   isMidfielderID,
   isAttackerID,
 ]);
+
+export const getAttackerIDCount = getCountOfItemsFromArrayForPredicate(isAttackerID)
 
 export const filterGoalkeepersByID = filter(isGoalkeeperID);
 export const filterDefendersByID = filter(isDefenderID);
@@ -81,12 +83,12 @@ export const groupPlayersByPosition = over([
   pickAttackers,
 ]);
 
-export const sortPlayersByRatings = flowAsync(
+export const sortPlayersByRatings = pipe([
   Object.entries,
-  sortBy(flowAsync(last, mean)),
+  sortBy(pipe([last, mean])),
   reverse,
   Object.fromEntries,
-);
+]);
 
 export const runModularIncreasersModularlyOverARangeOfPlayers = (
   [startingRange, modularIncreasers]: [Array<number>, Array<Function>],
@@ -96,7 +98,7 @@ export const runModularIncreasersModularlyOverARangeOfPlayers = (
     startingRange.length,
   );
 
-  return flowAsync(
+  return pipe([
     reduce(
       (
         [playerData, currentRange, indexToUpdate]: [
@@ -120,14 +122,14 @@ export const runModularIncreasersModularlyOverARangeOfPlayers = (
       [[], startingRange, 0],
     ),
     first,
-  )(range(startingIndex, startingIndex + count));
+  ])(range(startingIndex, startingIndex + count));
 };
 
 export const runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers = (
   [startingRange, modularIncreasers]: [Array<number>, Array<Function>],
   [positionGroup, count, startingIndex]: [PositionGroup, number, number],
 ): Array<[string, Array<number>]> => {
-  return flowAsync(
+  return pipe([
     reduce(
       (
         [playerData, currentRange]: [
@@ -151,20 +153,20 @@ export const runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers = (
       [[], startingRange],
     ),
     first,
-  )(range(startingIndex, startingIndex + count));
+  ])(range(startingIndex, startingIndex + count));
 };
 
 export const generateDataForAGroupOfPlayersByAveragingModularIncreases = curry(
-  async (
+   (
     [ranges, plusOrMinus]: [Array<[number, number]>, number],
     [positionGroup, count, startingIndex]: [PositionGroup, number, number],
   ): Promise<Array<[string, Array<number>]>> => {
-    const [modularIncreasers, minOfRangesOnly] = await flowAsync(
+    const [modularIncreasers, minOfRangesOnly] = pipe([
       over([
         mapModularIncreasersWithTheSameAverageStep([plusOrMinus, count]),
         map(first),
       ]),
-    )(ranges);
+    ])(ranges);
 
     return runModularIncreasersModularlyOverARangeOfPlayers(
       [minOfRangesOnly, modularIncreasers],
@@ -175,11 +177,11 @@ export const generateDataForAGroupOfPlayersByAveragingModularIncreases = curry(
 
 export const generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers =
   curry(
-    async (
+     (
       [ranges, increasers]: [Array<[number, number]>, Array<Function>],
       [positionGroup, count, startingIndex]: [PositionGroup, number, number],
     ): Promise<Array<[string, Array<number>]>> => {
-      const randomStarts: Array<number> = await getRandomNumberInRanges(ranges);
+      const randomStarts: Array<number> = getRandomNumberInRanges(ranges);
       return runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers(
         [randomStarts, increasers],
         [positionGroup, count, startingIndex],
@@ -187,20 +189,20 @@ export const generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncre
     },
   );
 
-export const generateSkillsAndPhysicalDataForMultiplePositionGroups = flowAsync(
+export const generateSkillsPhysicalContractDataForMultiplePositionGroups = pipe([
   map(
-    async ([positionGroup, count, startingIndex]: [
+     ([positionGroup, count, startingIndex]: [
       PositionGroup,
       number,
       number,
     ]) => {
-      return await generateDataForAGroupOfPlayersByAveragingModularIncreases(
+      return generateDataForAGroupOfPlayersByAveragingModularIncreases(
         [
           property(
             [positionGroup],
-            PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION,
+            PLAYERSKILLSPHYSICALCONTRACTRANGESBYPOSITION,
           ),
-          PLAYERSKILLSANDPHYSICALDATARANDOMPLUSORMINUS,
+          PLAYERSKILLSPHYSICALCONTRACTRANDOMPLUSORMINUS,
         ],
         [positionGroup, count, startingIndex],
       );
@@ -208,16 +210,16 @@ export const generateSkillsAndPhysicalDataForMultiplePositionGroups = flowAsync(
   ),
   flatten,
   Object.fromEntries,
-);
+]);
 
-export const generatePlayerBioDataForMultiplePositionGroups = async (
+export const generatePlayerBioDataForMultiplePositionGroups =  (
   positionGroupCountStartingIndexTuples: Array<[PositionGroup, number, number]>,
 ): Promise<Array<[string, Array<number>]>> => {
   const namesAndCountriesRanges: Array<[number, number]> =
     convertListOfListsToListOfRanges([FIRSTNAMES, LASTNAMES, COUNTRYNAMES]);
-  return flowAsync(
+  return pipe([
     map(
-      async ([positionGroup, playerCount, startingIndex]: [
+       ([positionGroup, playerCount, startingIndex]: [
         PositionGroup,
         number,
         number,
@@ -240,41 +242,41 @@ export const generatePlayerBioDataForMultiplePositionGroups = async (
           boundedModularAddition([positionGroupRange, 1]),
         ]);
 
-        return await generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers(
+        return generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers(
           [ranges, increasers],
           [positionGroup, playerCount, startingIndex],
         );
       },
     ),
     flatten,
-  )(positionGroupCountStartingIndexTuples);
+  ])(positionGroupCountStartingIndexTuples);
 };
 
 // can't export getClubs and flattenClubs?
-export const generatePlayerSkillsAndPhysicalDataForListOfClubs = async (
+export const generatePlayerSkillsPhysicalContractDataForListOfClubs =  (
   startingIndex: number,
   entities: BaseEntities,
 ) => {
-  return flowAsync(
+  return pipe([
     getBaseEntitiesClubsCount,
     getTotalPlayersToGenerateBasedOnGivenComposition(
       BASECLUBCOMPOSITION,
       startingIndex,
     ),
-    generateSkillsAndPhysicalDataForMultiplePositionGroups,
-  )(entities);
+    generateSkillsPhysicalContractDataForMultiplePositionGroups,
+  ])(entities);
 };
 
-export const generatePlayerBioDataForListOfClubs = async (
+export const generatePlayerBioDataForListOfClubs = (
   startingIndex: number,
   entities: BaseEntities,
 ) => {
-  return flowAsync(
+  return pipe([
     getBaseEntitiesClubsCount,
     getTotalPlayersToGenerateBasedOnGivenComposition(
       BASECLUBCOMPOSITION,
       startingIndex,
     ),
     generatePlayerBioDataForMultiplePositionGroups,
-  )(entities);
+  ])(entities);
 };

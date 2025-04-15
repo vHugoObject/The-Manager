@@ -6,27 +6,29 @@ import {
   over,
   size,
   flattenDepth,
-  last,
   property,
-  split,
   first,
   multiply,
   map,
   flatten,
   sum,
   curry,
+  pipe
 } from "lodash/fp";
-import { flowAsync, updatePaths, mapIndexed } from "futil-js";
+import { updatePaths, mapIndexed } from "futil-js";
 import { DEFAULTSQUADSIZE } from "./Constants";
+import { minusOne } from "./MathUtilities"
 import {
   unflatten,
   transformNestedAsFlat,
   sliceUpArray,
   getFirstLevelArrayLengths,
   getSecondLevelArrayLengths,
-  minusOne,
   convertToSet,
-} from "./CommonUtilities";
+} from "./ArrayUtilities";
+import {
+  getLastIDNumberOutOfIDNameTuple
+} from "./IDUtilities";
 
 export const flattenCompetitions = flattenDepth(1);
 export const flattenClubs = flattenDepth(2);
@@ -37,83 +39,83 @@ export const getBaseEntitiesDomesticLeagues = property(["domesticLeagues"]);
 export const getBaseEntitiesClubs = property(["clubs"]);
 export const getBaseEntitiesPlayers = property(["players"]);
 
-export const getBaseEntitiesCountriesCount = flowAsync(
+export const getBaseEntitiesCountriesCount = pipe([
   getBaseEntitiesCountries,
   size,
-);
-export const getBaseEntitiesDomesticLeaguesCount = flowAsync(
+]);
+export const getBaseEntitiesDomesticLeaguesCount = pipe([
   getBaseEntitiesDomesticLeagues,
   flattenCompetitions,
   size,
-);
-export const getBaseEntitiesClubsCount = flowAsync(
+]);
+export const getBaseEntitiesClubsCount = pipe([
   getBaseEntitiesClubs,
   flattenClubs,
   size,
-);
+]);
 
-export const getBaseEntitiesCountryIDs = flowAsync(
+export const getBaseEntitiesCountryIDs = pipe([
   getBaseEntitiesCountries,
   zipAll,
   first,
-);
-export const getBaseEntitiesCountryIDsAsSet = flowAsync(
+]);
+export const getBaseEntitiesCountryIDsAsSet = pipe([
   getBaseEntitiesCountryIDs,
   convertToSet,
-);
+]);
 export const getBaseEntitiesCountryIDAtSpecificIndex = curry(
   (baseEntities: BaseEntities, index: string): string => {
-    return flowAsync(
+    return pipe([
       getBaseEntitiesCountries,
       property([index]),
       first,
-    )(baseEntities);
+    ])(baseEntities);
   },
 );
 
 export const getBaseEntitiesDomesticLeagueIDsForACountryIndex = curry(
   (baseEntities: BaseEntities, index: string): Set<string> => {
-    return flowAsync(
+    return pipe([
       getBaseEntitiesDomesticLeagues,
       property([index]),
       map(first),
-    )(baseEntities);
+    ])(baseEntities);
   },
 );
 
 export const getBaseEntitiesDomesticLeagueIDsForACountryIndexAsSet = curry(
   (baseEntities: BaseEntities, index: string): Set<string> => {
-    return flowAsync(
+    return pipe([
       getBaseEntitiesDomesticLeagueIDsForACountryIndex,
       convertToSet,
-    )(baseEntities, index);
+    ])(baseEntities, index);
   },
 );
 
-export const getBaseEntitiesDomesticLeagueIDsAsSet = flowAsync(
+export const getBaseEntitiesDomesticLeagueIDsAsSet = pipe([
   getBaseEntitiesDomesticLeagues,
   flattenCompetitions,
   map(first),
   convertToSet,
-);
+]);
 
-export const getBaseEntitiesClubIDsAsSet = flowAsync(
+export const getBaseEntitiesClubIDsAsSet = pipe([
   getBaseEntitiesClubs,
   flattenClubs,
   map(first),
   convertToSet,
-);
+]);
 
 export const getBaseEntitiesDomesticLeagueIDAtSpecificIndex = curry(
   (
     baseEntities: BaseEntities,
     countryDomesticLeagueIndicesTuple: [string, string],
   ): string => {
-    return flowAsync(
+    return pipe([
       getBaseEntitiesDomesticLeagues,
       property(countryDomesticLeagueIndicesTuple),
       first,
-    )(baseEntities);
+    ])(baseEntities);
   },
 );
 
@@ -122,11 +124,11 @@ export const getBaseEntitiesClubIDsForADomesticLeagueIndex = curry(
     baseEntities: BaseEntities,
     countryDomesticLeagueIndexTuple: [string, string],
   ): Set<string> => {
-    return flowAsync(
+    return pipe([
       getBaseEntitiesClubs,
       property(countryDomesticLeagueIndexTuple),
       map(first),
-    )(baseEntities);
+    ])(baseEntities);
   },
 );
 
@@ -135,10 +137,10 @@ export const getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet = curry(
     baseEntities: BaseEntities,
     countryDomesticLeagueIndexTuple: [string, string],
   ): Set<string> => {
-    return flowAsync(
+    return pipe([
       getBaseEntitiesClubIDsForADomesticLeagueIndex,
       convertToSet,
-    )(baseEntities, countryDomesticLeagueIndexTuple);
+    ])(baseEntities, countryDomesticLeagueIndexTuple);
   },
 );
 
@@ -147,11 +149,11 @@ export const getBaseEntitiesClubIDAtSpecificIndex = curry(
     baseEntities: BaseEntities,
     countryDomesticLeagueClubIndicesTuple: [string, string, string],
   ): string => {
-    return flowAsync(
+    return pipe([
       getBaseEntitiesClubs,
       property(countryDomesticLeagueClubIndicesTuple),
       first,
-    )(baseEntities);
+    ])(baseEntities);
   },
 );
 
@@ -171,9 +173,6 @@ const transformClubs = transformNestedAsFlat([
   getClubsSliceLengths,
   unflatten,
 ]);
-
-export const getIDNumber = flowAsync(split("_"), last, parseInt);
-export const getLastEntityIDNumber = flowAsync(last, getIDNumber);
 
 export const convertBaseCountriesToBaseEntities = curry(
   async (
@@ -198,27 +197,24 @@ export const convertBaseCountriesToBaseEntities = curry(
         ]),
       ),
     };
-    return await flowAsync(
+    return await pipe([
       zipAll,
       zipObject(["countries", "domesticLeagues", "clubs"]),
-      flowAsync(updatePaths(updater)),
-    )(baseCountries);
+      pipe([updatePaths(updater)]),
+    ])(baseCountries);
   },
 );
 
-export const getLastIDNumberOutOfIDNameTuple = flowAsync(
-  last,
-  first,
-  getIDNumber,
-);
-export const getTotalActualDomesticLeagues = flowAsync(
+
+
+export const getTotalActualDomesticLeagues = pipe([
   flattenCompetitions,
   getLastIDNumberOutOfIDNameTuple,
-);
-export const getTotalActualClubs = flowAsync(
+]);
+export const getTotalActualClubs = pipe([
   flattenClubs,
   getLastIDNumberOutOfIDNameTuple,
-);
+]);
 
 export const getExpectedLastID = ([
   expectedPosition,
@@ -235,31 +231,31 @@ export const getActualBaseEntitiesCount = updatePaths({
   clubs: getTotalActualClubs,
 });
 
-export const getTestBaseEntitiesDomesticLeaguesCount = flowAsync(
+export const getTestBaseEntitiesDomesticLeaguesCount = pipe([
   map(size),
   sum,
-);
-export const getTestBaseEntitiesClubsCount = flowAsync(
+]);
+export const getTestBaseEntitiesClubsCount = pipe([
   map(map(size)),
   flatten,
   sum,
-);
+]);
 export const getTestBaseEntitiesCount = updatePaths({
   countries: size,
   domesticLeagues: getTestBaseEntitiesDomesticLeaguesCount,
   clubs: getTestBaseEntitiesClubsCount,
 });
 
-export const getExpectedPlayersCount = flowAsync(
+export const getExpectedPlayersCount = pipe([
   getBaseEntitiesClubs,
   flattenClubs,
   size,
   multiply(DEFAULTSQUADSIZE),
-);
+]);
 
-export const getExpectedEntitiesSansPlayerCount: number = flowAsync(
+export const getExpectedEntitiesSansPlayerCount = pipe([
   getTestBaseEntitiesCount,
   Object.values,
   flatten,
   sum,
-);
+]);

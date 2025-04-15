@@ -5,40 +5,40 @@ export enum PositionGroup {
   Attacker = "1",
 }
 
-export enum PlayerBioArrayIndices {
-  FirstName,
-  LastName,
-  NationalTeam,
-  Position,
-  PositionGroup,
+export enum PLAYERBIOINDICES {
+  FirstName="0",
+  LastName="1",
+  NationalTeam="2",
+  Position="3",
+  PositionGroup="4",
 }
 
-export enum PLAYERSKILLSANDPHYSICALDATAKEYS {
-  Tackling,
-  Passing,
-  Shooting,
-  Dribbling,
+export enum PLAYERSKILLSPHYSICALCONTRACTINDICES {
+  Tackling="0",
+  Passing="1",
+  Shooting="2",
+  Dribbling="3",
 
-  Marking,
-  Vision,
-  Strength,
+  Marking="4",
+  Vision="5",
+  Strength="6",
 
-  AttackingWorkRate,
-  DefendingWorkRate,
-  PositionalAwareness,
-  SprintSpeed,
-  Agility,
+  AttackingWorkRate="7",
+  DefendingWorkRate="8",
+  PositionalAwareness="9",
+  SprintSpeed="10",
+  Agility="11",
 
-  GKPositioning,
-  GKDiving,
-  GKHandling,
-  GKReflexes,
+  GKPositioning="12",
+  GKDiving="13",
+  GKHandling="14",
+  GKReflexes="15",
 
-  Height,
-  Weight,
-  Age,
-  YearsLeftOnContract,
-  Wages,
+  Height="16",
+  Weight="17",
+  Age="18",
+  YearsLeftOnContract="19",
+  Wages="20",
 }
 
 export enum ALLPOSITIONS {

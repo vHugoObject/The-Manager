@@ -9,11 +9,10 @@ import {
   zipWith,
   map,
   flatten,
-  chunk,
   overEvery,
   isString,
+  pipe
 } from "lodash/fp";
-import { flowAsync } from "futil-js";
 import { Entity } from "../Common/CommonTypes";
 import { ClubArrayIndices } from "./ClubTypes";
 import { Save } from "../StorageUtilities/SaveTypes";
@@ -40,29 +39,29 @@ export const pickClubs = pickBy((_: Entity, entityID: string) =>
 );
 export const getClubName = property([ClubArrayIndices.Name]);
 export const getClubSquad = property([ClubArrayIndices.Squad]);
-export const getClubIDsCount = flowAsync(filterByStringAndClubID, size);
+export const getClubIDsCount = pipe([filterByStringAndClubID, size]);
 
-export const createClub = async (
+export const createClub =  (
   name: string,
   squad: Array<string>,
-): Promise<Entity> => {
+): Entity => {
   return [name, squad];
 };
 
-export const getClubSquadFromSave = flowAsync(
+export const getClubSquadFromSave = pipe([
   getEntityFromSaveEntities,
   getClubSquad,
-);
+]);
 
 export const getClubPlayerSkillsFromSave = ([save, clubID]: [
   Save,
   string,
 ]): Record<string, Array<number>> => {
-  return flowAsync(
+  return pipe([
     getClubSquadFromSave,
     (players: Array<string>) => [save, players],
     getGroupOfPlayerSkillsFromSave,
-  )([save, clubID]);
+  ])([save, clubID]);
 };
 
 export const getClubBestStarting11FromSave = curry(
@@ -70,7 +69,7 @@ export const getClubBestStarting11FromSave = curry(
     composition: Array<number>,
     [save, clubID]: [Save, string],
   ): Record<string, Array<number>> => {
-    return flowAsync(
+    return pipe([
       getClubPlayerSkillsFromSave,
       groupPlayersByPosition,
       map(sortPlayersByRatings),
@@ -79,16 +78,16 @@ export const getClubBestStarting11FromSave = curry(
           positionCount: number,
           positionPlayers: Array<Record<string, Array<number>>>,
         ): Array<Record<string, Array<number>>> => {
-          return flowAsync(
+          return pipe([
             Object.entries,
             take(positionCount),
-          )(positionPlayers);
+          ])(positionPlayers);
         },
         composition,
       ),
       flatten,
       Object.fromEntries,
-    )([save, clubID]);
+    ])([save, clubID]);
   },
 );
 

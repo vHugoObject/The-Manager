@@ -3,16 +3,13 @@ import { test, fc } from "@fast-check/vitest";
 import {
   zipAll,
   map,
-  flatten,
   sum,
   min,
   max,
   over,
   size,
   add,
-  multiply,
-  first,
-  last,
+  multiply, 
 } from "lodash/fp";
 import { flowAsync } from "futil-js";
 import { PositionGroup } from "../PlayerTypes";
@@ -23,39 +20,26 @@ import {
   getExpectedPlayersCount,
   boundedModularAddition,
   getAverageModularStepForRangeOfData,
-  splitIDOnUnderscores,
-  getExpectedLastID
+  getExpectedLastID,
+  getSumOfFlattenedArray
 } from "../../Common/index";
-import { fakerToArb } from "../../Common/testingUtilities";
-import {
-  getPlayerPositionGroupFromID,
-  filterGoalkeepersByID,
-  filterMidfieldersByID,
-  filterAttackersByID,
-  filterDefendersByID,
+import { fakerToArb } from "../../TestingUtilities/index";
+import {  
   generateDataForAGroupOfPlayersByAveragingModularIncreases,
   generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers,
   runModularIncreasersModularlyOverARangeOfPlayers,
   runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers,
-  generateSkillsAndPhysicalDataForMultiplePositionGroups,
-  generatePlayerSkillsAndPhysicalDataForListOfClubs,
+  generateSkillsPhysicalContractDataForMultiplePositionGroups,
+  generatePlayerSkillsPhysicalContractDataForListOfClubs,
   generatePlayerBioDataForMultiplePositionGroups,
   generatePlayerBioDataForListOfClubs,
   sortPlayersByRatings
 } from "../PlayerUtilities";
 
 describe("Player utilities tests", async () => {
-  const POSITIONGROUPSLIST = Object.values(PositionGroup)
-  const getActualPositionGroupSet = flowAsync(map(getPlayerPositionGroupFromID), convertToSet)
-        const splitFirstPlayerIDIntoAList = flowAsync(first, splitIDOnUnderscores)
-      
 
-  const getActualPositionCountStartingIndexTuplesSet = flowAsync(over([filterGoalkeepersByID, filterMidfieldersByID, filterAttackersByID, filterDefendersByID]),
-	map((players: Array<string>): [string, number, number] => {
-	  const [playerPosition, playerIndex] = splitFirstPlayerIDIntoAList(players)
-	  return [playerPosition, size(players), parseInt(playerIndex)]	  
-	}), convertToSet)
-
+  export const POSITIONGROUPSLIST = Object.values(PositionGroup)
+  
   test.prop([
     fc.integer({min: 5, max: 25})
       .chain((totalTestSkills: number) => {
@@ -73,13 +57,12 @@ describe("Player utilities tests", async () => {
     }
   );
 
-
     
   test.prop([
     fc.dictionary(fc.constantFrom(
         ...POSITIONGROUPSLIST
     ),
-      fc.array(fc.nat({max: 100}), {minLength: })
+      fc.array(fc.nat({max: }), {minLength: })
     )
   ])(
     "getPositionBreakdownOfRecordOfPlayers",
@@ -152,10 +135,7 @@ describe("Player utilities tests", async () => {
       const actualPositionGroupSet: Set<string> = getActualPositionGroupSet(actualPlayersIDs)
       expect(actualPositionGroupSet).toStrictEqual(expectedPositionGroupSet)
 
-      const sumOfActualPlayerDataValues: number = flowAsync(
-	flatten,
-        sum,
-      )(actualPlayerDataValues);
+      const sumOfActualPlayerDataValues: number = getSumOfFlattenedArray(actualPlayerDataValues);
 
       const expectedStartingRangeMultipliedByPlayerCount = flowAsync(
         sum,
@@ -234,10 +214,7 @@ describe("Player utilities tests", async () => {
       const actualPositionGroupSet: Set<string> = getActualPositionGroupSet(actualPlayersIDs)
       expect(actualPositionGroupSet).toStrictEqual(expectedPositionGroupSet)
 
-      const sumOfActualPlayerDataValues: number = flowAsync(
-	flatten,
-        sum,
-      )(actualPlayerDataValues);
+      const sumOfActualPlayerDataValues: number = getSumOfFlattenedArray(actualPlayerDataValues);
 
       const expectedStartingRangeMultipliedByPlayerCount = flowAsync(
         sum,
@@ -285,10 +262,7 @@ describe("Player utilities tests", async () => {
         );
 
       const [, actualPlayerDataValues] = zipAll(actualPlayers);
-      const sumOfActualPlayerDataValues: number = flowAsync(
-	flatten,
-        sum,
-      )(actualPlayerDataValues);
+      const sumOfActualPlayerDataValues: number = getSumOfFlattenedArray(actualPlayerDataValues);
 
 
       const [sumOfExpectedMinOfSkillRanges, sumOfExpectedMaxOfSkillRanges] =
@@ -341,10 +315,7 @@ describe("Player utilities tests", async () => {
         );
 
       const [, actualPlayerDataValues] = zipAll(actualPlayers);
-      const sumOfActualPlayerDataValues: number = flowAsync(
-	flatten,
-        sum,
-      )(actualPlayerDataValues);
+      const sumOfActualPlayerDataValues: number = getSumOfFlattenedArray(actualPlayerDataValues);
 
       const [sumOfExpectedMinOfSkillRanges, sumOfExpectedMaxOfSkillRanges] =
         flowAsync(
@@ -386,7 +357,7 @@ describe("Player utilities tests", async () => {
       ),
     ),
   ])(
-    "generateSkillsAndPhysicalDataForMultiplePositionGroups",
+    "generateSkillsPhysicalContractDataForMultiplePositionGroups",
     async (testPositionCountStartingIndexTuples) => {
 
       const expectedPositionCountStartingIndexTuplesSet = convertToSet(testPositionCountStartingIndexTuples);
@@ -394,7 +365,7 @@ describe("Player utilities tests", async () => {
       const actualPlayers: Record<
         string,
         Entity
-      > = await generateSkillsAndPhysicalDataForMultiplePositionGroups(
+      > = await generateSkillsPhysicalContractDataForMultiplePositionGroups(
         testPositionCountStartingIndexTuples,
       );
 
@@ -407,10 +378,7 @@ describe("Player utilities tests", async () => {
       expect(actualPositionCountStartingIndexTuplesSet).toStrictEqual(expectedPositionCountStartingIndexTuplesSet)
 
 
-      const sumOfActualPlayerDataValues: number = flowAsync(
-	flatten,
-        sum,
-      )(actualPlayerDataValues);
+      const sumOfActualPlayerDataValues: number = getSumOfFlattenedArray(actualPlayerDataValues);
 
       expect(sumOfActualPlayerDataValues).toBeGreaterThan(0);
     },
@@ -459,10 +427,7 @@ describe("Player utilities tests", async () => {
       expect(actualPositionCountStartingIndexTuplesSet).toStrictEqual(expectedPositionCountStartingIndexTuplesSet)
 
   
-      const sumOfActualPlayerDataValues: number = flowAsync(
-	flatten,
-        sum,
-      )(actualPlayerDataValues);
+      const sumOfActualPlayerDataValues: number = getSumOfFlattenedArray(actualPlayerDataValues);
 
       expect(sumOfActualPlayerDataValues).toBeGreaterThan(0);
     },
@@ -497,7 +462,7 @@ describe("Player utilities tests", async () => {
       );
     }),
   ])(
-    "generatePlayerSkillsAndPhysicalDataForListOfClubs",
+    "generatePlayerSkillsPhysicalContractDataForListOfClubs",
     async (testSeason, testStartingIndex, testCountriesLeaguesClubs) => {
       const testBaseEntities: BaseEntities =
         await convertBaseCountriesToBaseEntities(
@@ -511,7 +476,7 @@ describe("Player utilities tests", async () => {
       const actualPlayers: Record<
         string,
         Entity
-      > = await generatePlayerSkillsAndPhysicalDataForListOfClubs(
+      > = await generatePlayerSkillsPhysicalContractDataForListOfClubs(
         testStartingIndex,
         testBaseEntities,
       );

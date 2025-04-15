@@ -8,6 +8,7 @@ import {
   chunk,
   flatten,
   curry,
+  pipe
 } from "lodash/fp";
 import { PositionGroup } from "../Players/PlayerTypes";
 import { BaseEntity, BaseEntities, Entity } from "./CommonTypes";
@@ -42,12 +43,13 @@ export const getTotalPlayersToGenerateBasedOnGivenComposition = curry(
 export const getTotalPlayersToGenerateUsingBaseComposition =
   getTotalPlayersToGenerateBasedOnGivenComposition(BASECLUBCOMPOSITION, 0);
 
+
 export const createPlayerIDsForClubs = async (
   clubs: Array<Array<Array<BaseEntity>>>,
 ): Promise<Array<Array<string>>> => {
-  const totalClubs: number = flowAsync(flattenClubs, size)(clubs);
+  const totalClubs: number = pipe([flattenClubs, size])(clubs);
 
-  return flowAsync(
+  return pipe([
     getTotalPlayersToGenerateUsingBaseComposition,
     map(
       ([positionGroup, length]: [PositionGroup, number, number]): Array<
@@ -64,7 +66,7 @@ export const createPlayerIDsForClubs = async (
     ),
     zipAll,
     map(flatten),
-  )(totalClubs);
+  ])(totalClubs);
 };
 
 export const createEntities = async (
@@ -77,41 +79,41 @@ export const createEntities = async (
 
   return await flowAsync(
     updateAllPaths({
-      countries: flowAsync(
+      countries: pipe([
         zipWith(
-          async (
+           (
             competitions: Array<BaseEntity>,
             [id, name]: BaseEntity,
-          ): Promise<[string, Entity]> => {
-            return [id, await createCountry(name, competitions)];
+          ): [string, Entity] => {
+            return [id, createCountry(name, competitions)];
           },
           getBaseEntitiesDomesticLeagues(baseEntities),
         ),
-      ),
-      domesticLeagues: flowAsync(
+      ]),
+      domesticLeagues: pipe([
         flattenCompetitions,
         zipWith(
-          async (
+           (
             clubs: Array<BaseEntity>,
             [id, name]: BaseEntity,
-          ): Promise<[string, Entity]> => {
-            return [id, await createCompetition(name, clubs)];
+          ): [string, Entity] => {
+            return [id, createCompetition(name, clubs)];
           },
           flowAsync(getBaseEntitiesClubs, flattenCompetitions)(baseEntities),
         ),
-      ),
-      clubs: flowAsync(
+      ]),
+      clubs: pipe([
         flattenClubs,
         zipWith(
-          async (
+           (
             players: Array<string>,
             [id, name]: BaseEntity,
-          ): Promise<[string, Entity]> => {
-            return [id, await createClub(name, players)];
+          ): [string, Entity] => {
+            return [id, createClub(name, players)];
           },
           baseEntitiesPlayers,
         ),
-      ),
+      ]),
       players: async (): Promise<Array<[string, Array<number>]>> => {
         return await generatePlayerBioDataForListOfClubs(0, baseEntities);
       },

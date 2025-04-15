@@ -11,14 +11,14 @@ const POSITIONSECONDARYSKILLSRANGE: [number, number] = [25, 75];
 const BASICSKILLSRANGE: [number, number] = [25, 99];
 const OTHERSKILLSRANGE: [number, number] = [25, 50];
 
-export const PLAYERSKILLSANDPHYSICALDATARANDOMPLUSORMINUS: number = 5;
+export const PLAYERSKILLSPHYSICALCONTRACTRANDOMPLUSORMINUS: number = 5;
 
 // https://gist.github.com/mstn/5f75651100556dbe30e405691471afe3
 type FixedSizeArray<N extends number, T, M extends string = "0"> = {
   readonly [k in M]: any;
 } & { length: N } & ReadonlyArray<T>;
 
-export const PLAYERSKILLSANDPHYSICALDATARANGESBYPOSITION: Record<
+export const PLAYERSKILLSPHYSICALCONTRACTRANGESBYPOSITION: Record<
   PositionGroup,
   FixedSizeArray<21, [number, number]>
 > = {

@@ -18,7 +18,7 @@ describe("Competition Utilities tests", async () => {
       maxLength: 50,
     }),
   ])("createCompetition", async (testCompetitionName, testClubs) => {
-    const actualCompetition: Entity = await createCompetition(
+    const actualCompetition: Entity = createCompetition(
       testCompetitionName,
       testClubs,
     );

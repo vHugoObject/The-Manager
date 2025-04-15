@@ -21,7 +21,7 @@ describe("Country Utilities tests", async () => {
       { minLength: 3, maxLength: 8 },
     ),
   ])("createCountry", async (testCountryName, testCompetitions) => {
-    const actualCountry: Entity = await createCountry(
+    const actualCountry: Entity = createCountry(
       testCountryName,
       testCompetitions,
     );

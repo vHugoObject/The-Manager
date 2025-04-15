@@ -9,8 +9,7 @@ import {
   flatMapDeep,
   map,
   size,
-  flatten,
-  uniq,
+  pipe
 } from "lodash/fp";
 import { flowAsync } from "futil-js";
 import { PositionGroup } from "../../Players/PlayerTypes";
@@ -19,16 +18,12 @@ import { Save } from "../../StorageUtilities/SaveTypes";
 import {
   fakerToArb,
   createTestSave,
-  convertBaseCountriesToBaseEntities,
   convertArrayOfArraysToArrayOfSets,
-  defaultGetAListOfRandomMatches,
   DEFAULTTESTMATCHES,
   DEFAULTPLAYERSPERTESTMATCHES,
-  DEFAULTSQUADSIZE,
-  getFirstLevelArrayLengthsAsSet,
   fastCheckTestBaseEntitiesGenerator,
   getCompletelyRandomClubID,
-} from "../../Common/index";
+} from "../../TestingUtilities/index";
 import { DEFAULTMATCHCOMPOSITION } from "../ClubConstants";
 import { getPlayerPositionGroupFromID } from "../../Players/PlayerUtilities";
 import {
@@ -42,14 +37,14 @@ import {
 } from "../ClubUtilities";
 
 describe("Club Utilities tests", async () => {
-  const getActualComposition = flowAsync(
+  const getActualComposition = pipe([
     Object.keys,
     countBy(getPlayerPositionGroupFromID),
-  );
-  const getActualPlayerIDsCountsFromStartingElevens = flowAsync(
+  ]);
+  const getActualPlayerIDsCountsFromStartingElevens = pipe([
     flatMapDeep(map(Object.keys)),
     size,
-  );
+  ]);
   test.prop([
     fakerToArb((faker) => faker.company.name()),
     fc.array(fc.uuid(), {
@@ -57,7 +52,7 @@ describe("Club Utilities tests", async () => {
       maxLength: 25,
     }),
   ])("createClub", async (testClubName, testPlayers) => {
-    const actualClub: Entity = await createClub(testClubName, testPlayers);
+    const actualClub: Entity = createClub(testClubName, testPlayers);
 
     const [actualClubName, actualClubSquad] = over([getClubName, getClubSquad])(
       actualClub,

@@ -2,7 +2,7 @@ import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import { flowAsync } from "futil-js";
 import { range, rangeStep, map, flatten, size, sum } from "lodash/fp";
-import { convertToSet } from "../CommonUtilities";
+import { convertToSet } from "../ArrayUtilities";
 import {
   roundRobinScheduler,
   totalRoundRobinMatches,

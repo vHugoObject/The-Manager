@@ -1,20 +1,10 @@
 import { describe, expect } from "vitest";
 import { test, fc } from "@fast-check/vitest";
-import { BaseEntities } from "../CommonTypes";
+import { BaseEntities } from "../../Common/CommonTypes";
 import { BaseCountries } from "../../Countries/CountryTypes";
-import { Save } from "../../StorageUtilities/SaveTypes";
-import { property, first, over, size, flatten, multiply } from "lodash/fp";
-import { flowAsync } from "futil-js";
-import {
-  getUserName,
-  getCurrentSeason,
-} from "../../StorageUtilities/SaveUtilities";
+import { property, first, over, size, flatten, multiply, pipe } from "lodash/fp";
 import { isClubID } from "../../Clubs/ClubUtilities";
 import { isDomesticLeagueID } from "../../Competitions/CompetitionUtilities";
-import {
-  getFirstLevelArrayLengths,
-  getSecondLevelArrayLengths,
-} from "../CommonUtilities";
 import {
   getBaseEntitiesCountriesCount,
   getBaseEntitiesDomesticLeagueIDsAsSet,
@@ -26,9 +16,12 @@ import {
   getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet,
   getBaseEntitiesClubIDsAsSet,
   getTestBaseEntitiesCount,
-} from "../BaseEntitiesUtilities";
+  getFirstLevelArrayLengths,
+  getSecondLevelArrayLengths
+} from "../../Common/index";
+import { fakerToArb } from "../TestDataGenerationUtilities"
+import { convertArraysToSetsAndAssertStrictEqual } from "../ArrayTestingUtilities"
 import {
-  fakerToArb,
   fastCheckTestBaseCountriesGenerator,
   fastCheckTestCountriesGenerator,
   fastCheckTestDomesticLeaguesGenerator,
@@ -43,15 +36,14 @@ import {
   getCompletelyRandomDomesticLeagueID,
   getRandomClubIndexFromSpecificCountryDomesticLeagueIndex,
   getCompletelyRandomClubID,
-  convertArraysToSetsAndAssert,
   getCompletelyRandomClubIDAndDomesticLeagueID,
   fastCheckTestBaseEntitiesGenerator,
   getAListOfRandomClubIDs,
-  getAListOfRandomMatches,
-  createTestSave,
-} from "../testingUtilities";
+  getAListOfRandomMatches,  
+} from "../TestEntityGenerationUtilities";
 
 describe("testingUtilities tests", async () => {
+  
   test.prop([
     fc
       .tuple(
@@ -119,7 +111,7 @@ describe("testingUtilities tests", async () => {
         getClubsPerDomesticLeaguesCountFromBaseCountries,
       ])(testCountriesDomesticsLeaguesClubs);
 
-      convertArraysToSetsAndAssert([
+      convertArraysToSetsAndAssertStrictEqual([
         [actualCountriesCount],
         [expectedCountriesCount],
         actualDomesticLeaguesPerCountryCount,
@@ -155,7 +147,7 @@ describe("testingUtilities tests", async () => {
       const [actualCountriesCount, actualDomesticLeaguesPerCountryCounts] =
         over([size, getFirstLevelArrayLengths])(actualTestDomesticLeagues);
 
-      convertArraysToSetsAndAssert([
+      convertArraysToSetsAndAssertStrictEqual([
         actualDomesticLeaguesPerCountryCounts,
         [expectedDomesticLeaguesPerCountryCounts],
       ]);
@@ -192,12 +184,12 @@ describe("testingUtilities tests", async () => {
       ] = over([
         size,
         getFirstLevelArrayLengths,
-        flowAsync(getSecondLevelArrayLengths, flatten),
+	getSecondLevelArrayLengths
       ])(actualTestClubs);
 
       expect(actualCountriesCount).toEqual(expectedCountriesCount);
 
-      convertArraysToSetsAndAssert([
+      convertArraysToSetsAndAssertStrictEqual([
         actualDomesticLeaguesPerCountryCounts,
         [expectedDomesticLeaguesPerCountryCount],
         actualClubsPerDomesticLeaguesCount,
@@ -228,6 +220,7 @@ describe("testingUtilities tests", async () => {
       );
     },
   );
+  
 
   test.prop([
     fc.integer({ min: 2000, max: 2100 }),
@@ -259,10 +252,10 @@ describe("testingUtilities tests", async () => {
           expectedCountriesCount,
           expectedDomesticLeaguesPerCountryCount,
         ),
-        clubs: flowAsync(
+        clubs: pipe([
           multiply(expectedDomesticLeaguesPerCountryCount),
           multiply(expectedCountriesCount),
-        )(expectedClubsPerDomesticLeaguesCount),
+        ])(expectedClubsPerDomesticLeaguesCount),
       };
       expect(actualBaseEntitiesCount).toStrictEqual(expectedEntitiesCount);
     },
@@ -318,11 +311,11 @@ describe("testingUtilities tests", async () => {
       const actualRandomDomesticLeagueIndex: [string, string] =
         getRandomDomesticLeagueIndex(fcGen, testBaseEntities);
 
-      const actualRandomDomesticLeagueID: string = flowAsync(
+      const actualRandomDomesticLeagueID: string = pipe([
         getBaseEntitiesDomesticLeagues,
         property(actualRandomDomesticLeagueIndex),
         first,
-      )(testBaseEntities);
+      ])(testBaseEntities);
 
       expect(isDomesticLeagueID(actualRandomDomesticLeagueID)).toBeTruthy();
     },
@@ -348,11 +341,11 @@ describe("testingUtilities tests", async () => {
       const actualRandomClubIndex: [string, string, string] =
         getRandomClubIndex(fcGen, testBaseEntities);
 
-      const actualRandomClubID: string = flowAsync(
+      const actualRandomClubID: string = pipe([
         getBaseEntitiesClubs,
         property(actualRandomClubIndex),
         first,
-      )(testBaseEntities);
+      ])(testBaseEntities);
 
       expect(isClubID(actualRandomClubID)).toBeTruthy();
     },
@@ -608,35 +601,4 @@ describe("testingUtilities tests", async () => {
     },
   );
 
-  test.prop([
-    fc.integer({ min: 2000, max: 2100 }),
-    fc.string(),
-    fc.tuple(
-      fc.integer({ min: 1, max: 2 }),
-      fc.integer({ min: 1, max: 2 }),
-      fc.integer({ min: 1, max: 2 }),
-    ),
-    fc.gen(),
-  ])(
-    "createTestSave",
-    async (
-      testSeason,
-      testPlayerName,
-      testCountriesDomesticsLeaguesClubsCount,
-      fcGen,
-    ) => {
-      const actualTestSave: Save = await createTestSave(fcGen, [
-        testPlayerName,
-        testSeason,
-        testCountriesDomesticsLeaguesClubsCount,
-      ]);
-      const [actualUserName, actualCurrentSeason] = over([
-        getUserName,
-        getCurrentSeason,
-      ])(actualTestSave);
-
-      expect(actualUserName).toBe(testPlayerName);
-      expect(actualCurrentSeason).toBe(testSeason);
-    },
-  );
 });
