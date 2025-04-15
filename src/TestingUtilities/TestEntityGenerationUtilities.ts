@@ -2,10 +2,6 @@ import {
   curry,
   concat,
   property,
-  map,
-  first,
-  last,
-  size,
   times,
   multiply,
   chunk,
@@ -29,9 +25,7 @@ import {
   convertBaseCountriesToBaseEntities,
   getBaseEntitiesClubIDsForADomesticLeagueIndex,
   getBaseEntitiesDomesticLeagueIDAtSpecificIndex,
-  getBaseEntitiesClubIDAtSpecificIndex,
-  flattenCompetitions,
-  flattenClubs,
+  getBaseEntitiesClubIDAtSpecificIndex
 } from "../Common/index";
 
 export const DEFAULTTESTCOUNTRIES: number = 2;
@@ -43,19 +37,6 @@ export const DEFAULTPLAYERSPERTESTMATCHES: number = 22;
 
 
 
-
-
-export const getCountriesCountFromBaseCountries = pipe([map(first), size]);
-export const getDomesticLeaguesPerCountryCountFromBaseCountries = pipe([
-  map(property([1])),
-  getFirstLevelArrayLengths,
-  flattenCompetitions,
-]);
-export const getClubsPerDomesticLeaguesCountFromBaseCountries = pipe([
-  map(last),
-  getSecondLevelArrayLengths,
-  flattenClubs,
-]);
 
 export const fastCheckTestCountriesGenerator = (
   fcGen: fc.GeneratorValue,

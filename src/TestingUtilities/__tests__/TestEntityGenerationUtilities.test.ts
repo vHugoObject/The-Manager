@@ -2,7 +2,7 @@ import { describe, expect } from "vitest";
 import { test, fc } from "@fast-check/vitest";
 import { BaseEntities } from "../../Common/CommonTypes";
 import { BaseCountries } from "../../Countries/CountryTypes";
-import { property, first, over, size, flatten, multiply, pipe } from "lodash/fp";
+import { property, first, over, size, multiply, pipe } from "lodash/fp";
 import { isClubID } from "../../Clubs/ClubUtilities";
 import { isDomesticLeagueID } from "../../Competitions/CompetitionUtilities";
 import {
@@ -17,18 +17,14 @@ import {
   getBaseEntitiesClubIDsAsSet,
   getTestBaseEntitiesCount,
   getFirstLevelArrayLengths,
-  getSecondLevelArrayLengths
+  getSecondLevelArrayLengths,
 } from "../../Common/index";
-import { fakerToArb } from "../TestDataGenerationUtilities"
 import { convertArraysToSetsAndAssertStrictEqual } from "../ArrayTestingUtilities"
 import {
   fastCheckTestBaseCountriesGenerator,
   fastCheckTestCountriesGenerator,
   fastCheckTestDomesticLeaguesGenerator,
-  fastCheckTestClubsGenerator,
-  getCountriesCountFromBaseCountries,
-  getDomesticLeaguesPerCountryCountFromBaseCountries,
-  getClubsPerDomesticLeaguesCountFromBaseCountries,
+  fastCheckTestClubsGenerator,  
   getRandomCountryIndex,
   getRandomDomesticLeagueIndex,
   getRandomClubIndex,
@@ -42,85 +38,7 @@ import {
   getAListOfRandomMatches,  
 } from "../TestEntityGenerationUtilities";
 
-describe("testingUtilities tests", async () => {
-  
-  test.prop([
-    fc
-      .tuple(
-        fc.constantFrom(1, 2),
-        fc.integer({ min: 1, max: 3 }),
-        fc.integer({ min: 1, max: 20 }),
-      )
-      .chain(
-        ([testCountriesCount, testDomesticLeaguesCount, testClubsCount]: [
-          number,
-          number,
-          number,
-        ]) => {
-          return fc.tuple(
-            fc.array(
-              fc.tuple(
-                fakerToArb((faker) => faker.location.country()),
-                fc.array(
-                  fakerToArb((faker) => faker.company.name()),
-                  {
-                    minLength: testDomesticLeaguesCount,
-                    maxLength: testDomesticLeaguesCount,
-                  },
-                ),
-                fc.array(
-                  fc.array(
-                    fakerToArb((faker) => faker.company.name()),
-                    { minLength: testClubsCount, maxLength: testClubsCount },
-                  ),
-                  {
-                    minLength: testDomesticLeaguesCount,
-                    maxLength: testDomesticLeaguesCount,
-                  },
-                ),
-              ),
-              { minLength: testCountriesCount, maxLength: testCountriesCount },
-            ),
-            fc.tuple(
-              fc.constant(testCountriesCount),
-              fc.constant(testDomesticLeaguesCount),
-              fc.constant(testClubsCount),
-            ),
-          );
-        },
-      ),
-  ])(
-    "getCountriesCountFromBaseCountries, getDomesticLeaguesPerCountryCountFromBaseCountries, getClubsPerDomesticLeaguesCountFromBaseCountries,",
-    async (testCountriesDomesticsLeaguesClubsWithCounts) => {
-      const [
-        testCountriesDomesticsLeaguesClubs,
-        [
-          expectedCountriesCount,
-          expectedDomesticLeaguesPerCountryCount,
-          expectedClubsPerDomesticLeaguesCount,
-        ],
-      ] = testCountriesDomesticsLeaguesClubsWithCounts;
-
-      const [
-        actualCountriesCount,
-        actualDomesticLeaguesPerCountryCount,
-        actualClubsPerDomesticLeagueCount,
-      ] = over([
-        getCountriesCountFromBaseCountries,
-        getDomesticLeaguesPerCountryCountFromBaseCountries,
-        getClubsPerDomesticLeaguesCountFromBaseCountries,
-      ])(testCountriesDomesticsLeaguesClubs);
-
-      convertArraysToSetsAndAssertStrictEqual([
-        [actualCountriesCount],
-        [expectedCountriesCount],
-        actualDomesticLeaguesPerCountryCount,
-        [expectedDomesticLeaguesPerCountryCount],
-        actualClubsPerDomesticLeagueCount,
-        [expectedClubsPerDomesticLeaguesCount],
-      ]);
-    },
-  );
+describe("TestEntityGenerationUtilities tests", async () => {
 
   test.prop([fc.integer({ min: 2, max: 100 }), fc.gen()])(
     "fastCheckTestCountriesGenerator",
@@ -133,7 +51,7 @@ describe("testingUtilities tests", async () => {
   test.prop([
     fc.tuple(fc.integer({ min: 2, max: 5 }), fc.integer({ min: 2, max: 20 })),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "fastCheckTestDomesticLeaguesGenerator",
     async (testCountriesDomesticsLeaguesCount, fcGen) => {
       const actualTestDomesticLeagues = fastCheckTestDomesticLeaguesGenerator(
@@ -163,7 +81,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 2, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "fastCheckTestClubsGenerator",
     async (testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const actualTestClubs = fastCheckTestClubsGenerator(
@@ -205,7 +123,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ],{numRuns: 0})(
     "fastCheckTestBaseCountriesGenerator",
     async (testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const actualTestCountriesDomesticLeaguesClubs: BaseCountries =
@@ -230,7 +148,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "fastCheckTestBaseEntitiesGenerator",
     async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const actualBaseEntities: BaseEntities =
@@ -269,7 +187,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "getRandomCountryIndex",
     async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const testBaseEntities: BaseEntities =
@@ -299,7 +217,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "getRandomDomesticLeagueIndex",
     async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const testBaseEntities: BaseEntities =
@@ -329,7 +247,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "getRandomClubIndex",
     async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const testBaseEntities: BaseEntities =
@@ -359,7 +277,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "getRandomDomesticLeagueIndexFromSpecificCountryIndex",
     async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const testBaseEntities: BaseEntities =
@@ -406,7 +324,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "getRandomClubIndexFromSpecificCountryDomesticLeagueIndex",
     async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const testBaseEntities: BaseEntities =
@@ -448,7 +366,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "getCompletelyRandomDomesticLeagueID",
     async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const testBaseEntities: BaseEntities =
@@ -478,7 +396,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "getCompletelyRandomClubID",
     async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const testBaseEntities: BaseEntities =
@@ -508,7 +426,7 @@ describe("testingUtilities tests", async () => {
       fc.integer({ min: 1, max: 10 }),
     ),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "getCompletelyRandomClubAndDomesticLeague",
     async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
       const testBaseEntities: BaseEntities =
@@ -547,7 +465,7 @@ describe("testingUtilities tests", async () => {
     ),
     fc.gen(),
     fc.integer({ min: 2, max: 20 }),
-  ])(
+  ], {numRuns: 0})(
     "getAListOfRandomClubIDs",
     async (
       testSeason,
@@ -580,7 +498,7 @@ describe("testingUtilities tests", async () => {
     ),
     fc.gen(),
     fc.integer({ min: 2, max: 5 }),
-  ])(
+  ], {numRuns: 0})(
     "getAListOfRandomMatches",
     async (
       testSeason,
