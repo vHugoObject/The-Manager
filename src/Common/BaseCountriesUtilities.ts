@@ -15,6 +15,7 @@ import { flattenCompetitions,
 } from "./BaseEntitiesUtilities";
 
 export const getCountriesCountFromBaseCountries = pipe([map(first), size]);
+
 export const getDomesticLeaguesPerCountryCountFromBaseCountries = pipe([
   map(property([1])),
   getFirstLevelArrayLengths,

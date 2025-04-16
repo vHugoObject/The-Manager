@@ -12,11 +12,9 @@ import {
 import { fc } from "@fast-check/vitest";
 import { BaseEntities } from "../Common/CommonTypes";
 import { BaseCountries } from "../Countries/CountryTypes";
-import { fastCheckNonSpaceCharacterGenerator } from "./TestDataGenerationUtilities"
+import {  fastCheckNLengthUniqueStringArrayGenerator } from "./TestDataGenerationUtilities"
 import { fastCheckRandomObjectKey } from "./RecordTestingUtilities"
 import {
-  getFirstLevelArrayLengths,
-  getSecondLevelArrayLengths,
   sortByIdentity,
   getBaseEntitiesCountries,
   getBaseEntitiesDomesticLeagues,
@@ -38,14 +36,8 @@ export const DEFAULTPLAYERSPERTESTMATCHES: number = 22;
 
 
 
-export const fastCheckTestCountriesGenerator = (
-  fcGen: fc.GeneratorValue,
-  countriesCount: number,
-): Array<string> =>
-  fcGen(fc.array, fc.string(), {
-    minLength: countriesCount,
-    maxLength: countriesCount,
-  });
+export const fastCheckTestCountriesGenerator = fastCheckNLengthUniqueStringArrayGenerator
+  
 
 export const fastCheckTestDomesticLeaguesGenerator = (
   fcGen: fc.GeneratorValue,
@@ -53,7 +45,7 @@ export const fastCheckTestDomesticLeaguesGenerator = (
 ): Array<Array<string>> => {
   return pipe([
     multiply(countriesCount),
-    times(() => fastCheckNonSpaceCharacterGenerator(fcGen)),
+    fastCheckNLengthUniqueStringArrayGenerator(fcGen),
     chunk(competitionsPerCountryCount),
   ])(competitionsPerCountryCount);
 };
@@ -69,7 +61,7 @@ export const fastCheckTestClubsGenerator = (
   return pipe([
     multiply(competitionsPerCountryCount),
     multiply(clubsPerDomesticLeaguesCount),
-    times(() => fastCheckNonSpaceCharacterGenerator(fcGen)),
+    fastCheckNLengthUniqueStringArrayGenerator(fcGen),
     chunk(clubsPerDomesticLeaguesCount),
     chunk(competitionsPerCountryCount),
   ])(countriesCount);
@@ -102,14 +94,14 @@ export const fastCheckTestBaseCountriesGenerator = (
   ]);
 };
 
-export const fastCheckTestBaseEntitiesGenerator = async (
+export const fastCheckTestBaseEntitiesGenerator = (
   [testSeason, testCountriesDomesticsLeaguesClubsCount]: [
     number,
     [number, number, number],
   ],
   fcGen: fc.GeneratorValue,
-): Promise<BaseEntities> => {
-  return await pipe([
+): BaseEntities => {
+  return pipe([
     fastCheckTestBaseCountriesGenerator,
     convertBaseCountriesToBaseEntities(testSeason),
   ])(testCountriesDomesticsLeaguesClubsCount, fcGen);
@@ -157,6 +149,7 @@ export const getRandomClubIndex = (
     concat(randomClubIndex),
   ])(testBaseEntities);
 };
+
 
 export const getRandomDomesticLeagueIndexFromSpecificCountryIndex = curry(
   (

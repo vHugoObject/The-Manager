@@ -1,138 +1,83 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import {
-  map,
-  zipAll,
-  size,
-  mapValues,
-  sum,
   zipObject,
   toString,
-  last,
   toArray,
-  pipe
+  pipe,
+  multiply
 } from "lodash/fp";
-import { flowAsync, updatePaths } from "futil-js";
+import { BaseCountries } from "../../Countries/CountryTypes"
 import { BaseEntities } from "../CommonTypes";
 import {
-  fakerToArb,
   getRandomCountryIndex,
   getRandomDomesticLeagueIndex,
   getRandomClubIndex,
+  fastCheckTestBaseEntitiesGenerator,
+  fastCheckTestBaseCountriesGenerator
 } from "../../TestingUtilities/index";
-import {
-  getFirstLevelArrayLengths,
-  getSecondLevelArrayLengths,
-} from "../ArrayUtilities";
-import { getCountryIDsCount } from "../../Countries/CountryUtilities";
 import { getClubIDsCount } from "../../Clubs/ClubUtilities";
 import { getDomesticLeagueIDsCount } from "../../Competitions/CompetitionUtilities";
 import {
-  flattenCompetitions,
-  flattenClubs,
   getBaseEntitiesCountryIDsAsSet,
   getBaseEntitiesClubsCount,
   convertBaseCountriesToBaseEntities,
-  getActualBaseEntitiesCount,
+  getTestBaseEntitiesCount,
   getBaseEntitiesDomesticLeagueIDsAsSet,
-  getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet,
   getBaseEntitiesDomesticLeagueIDsForACountryIndexAsSet,
+  getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet,
+  getBaseEntitiesDomesticLeagueIDsForACountryIndex,
   getBaseEntitiesCountryIDAtSpecificIndex,
   getBaseEntitiesDomesticLeagueIDAtSpecificIndex,
   getBaseEntitiesClubIDAtSpecificIndex,
-  getTestBaseEntitiesDomesticLeaguesCount,
-  getTestBaseEntitiesClubsCount,
-  getTestBaseEntitiesCount,
   getBaseEntitiesClubIDsAsSet,
 } from "../BaseEntitiesUtilities";
 
 describe("BaseEntitiesUtilities", async () => {
   test.prop([
     fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2).chain((testDomesticLeaguesCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 2 },
-      );
-    }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
+    ),
+    fc.gen(),
   ])(
     "getBaseEntitiesCountryIDsAsSet",
-    async (testSeason, testCountriesLeaguesClubs) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
+      const [expectedCountriesCount] = testCountriesDomesticsLeaguesClubsCount
+      const testBaseEntities: BaseEntities = fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
         );
       const actualCountries: Set<string> =
-        getBaseEntitiesCountryIDsAsSet(testBaseEntities);
-      const expectedSize: number = pipe([
-        toArray,
-        getCountryIDsCount,
-      ])(actualCountries);
-      expect(actualCountries.size).toEqual(expectedSize);
+            getBaseEntitiesCountryIDsAsSet(testBaseEntities);
+      
+      expect(actualCountries.size).toEqual(expectedCountriesCount);
     },
   );
 
   test.prop([
-    fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2).chain((testDomesticLeaguesCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 3 },
-      );
-    }),
-    fc.gen(),
+   fc.integer({ min: 2000, max: 2100 }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
+    ),
+    fc.gen()
   ])(
     "getBaseEntitiesCountryIDAtSpecificIndex",
-    async (testSeason, testCountriesLeaguesClubs, fcGen) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
+      const testBaseEntities: BaseEntities = fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
         );
 
       const randomCountryIndex: string = getRandomCountryIndex(
         fcGen,
         testBaseEntities,
       );
+      
       const actualCountryID: string = getBaseEntitiesCountryIDAtSpecificIndex(
         testBaseEntities,
         toString(randomCountryIndex),
@@ -146,207 +91,121 @@ describe("BaseEntitiesUtilities", async () => {
   );
 
   test.prop([
-    fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2).chain((testDomesticLeaguesCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 3 },
-      );
-    }),
+   fc.integer({ min: 2000, max: 2100 }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
+    ),
+    fc.gen()
   ])(
     "getBaseEntitiesDomesticLeagueIDsAsSet",
-    async (testSeason, testCountriesLeaguesClubs) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
+      const [expectedCountriesCount, expectedDomesticLeaguesPerCountryCount] = testCountriesDomesticsLeaguesClubsCount
+      const expectedDomesticLeagueIDsCount: number = multiply(expectedCountriesCount, expectedDomesticLeaguesPerCountryCount)
+      const testBaseEntities: BaseEntities = fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
+      );
+      
       const actualDomesticLeagueIDs: Set<string> =
         getBaseEntitiesDomesticLeagueIDsAsSet(testBaseEntities);
 
-      const actualDomesticLeagueIDsCount: number = pipe([
-        toArray,
-        getDomesticLeagueIDsCount,
-      ])(actualDomesticLeagueIDs);
-      expect(actualDomesticLeagueIDs.size).toStrictEqual(
-        actualDomesticLeagueIDsCount,
-      );
-    },
+      expect(actualDomesticLeagueIDs.size).toEqual(expectedDomesticLeagueIDsCount)
+      
+    }
   );
 
   test.prop([
     fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2).chain((testDomesticLeaguesCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 3 },
-      );
-    }),
-  ])(
-    "getBaseEntitiesClubIDsAsSet",
-    async (testSeason, testCountriesLeaguesClubs) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
-      const actualClubIDsAsSet: Set<string> =
-        getBaseEntitiesClubIDsAsSet(testBaseEntities);
-
-      const actualClubIDsCount: number = pipe([
-        toArray,
-        getClubIDsCount,
-      ])(actualClubIDsAsSet);
-      expect(actualClubIDsAsSet.size).toStrictEqual(actualClubIDsCount);
-    },
-  );
-
-  test.prop([
-    fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2).chain((testDomesticLeaguesCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 3 },
-      );
-    }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
+    ),
     fc.gen(),
   ])(
-    "getBaseEntitiesDomesticLeagueIDsForACountryIndexAsSet",
-    async (testSeason, testCountriesLeaguesClubs, fcGen) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
+    "getBaseEntitiesClubIDsAsSet",
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
 
-      const randomCountryIndex: string = getRandomCountryIndex(
+      const [expectedCountriesCount, expectedDomesticLeaguesPerCountryCount, expectedClubsPerDomesticLeaguesCount] = testCountriesDomesticsLeaguesClubsCount
+      
+      const expectedClubIDsCount: number = pipe([multiply(expectedCountriesCount), multiply(expectedDomesticLeaguesPerCountryCount)])(expectedClubsPerDomesticLeaguesCount)
+      
+      const testBaseEntities: BaseEntities = fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
+      );
+      
+      const actualClubIDs: Set<string> =
+            getBaseEntitiesClubIDsAsSet(testBaseEntities);
+      const actualClubIDsCount: number = pipe([toArray, getClubIDsCount])(actualClubIDs)
+      expect(actualClubIDsCount).toEqual(expectedClubIDsCount)
+    },
+  );
+
+  test.prop([
+    fc.integer({ min: 2000, max: 2100 }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
+    ),
+    fc.gen(),
+  ])(
+    "getBaseEntitiesDomesticLeagueIDsForACountryIndex",
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
+
+      const testBaseEntities: BaseEntities = fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
+      );
+      const [,expectedDomesticLeaguesPerCountryCount,] = testCountriesDomesticsLeaguesClubsCount
+      const testRandomCountryIndex: string = getRandomCountryIndex(
         fcGen,
         testBaseEntities,
       );
-      const actualDomesticLeagueIDs: Set<string> =
-        getBaseEntitiesDomesticLeagueIDsForACountryIndexAsSet(
+      const actualDomesticLeagueIDs: Array<string> =
+        getBaseEntitiesDomesticLeagueIDsForACountryIndex(
           testBaseEntities,
-          randomCountryIndex,
+	  testRandomCountryIndex
         );
-
-      const actualDomesticLeagueIDsCount: number = pipe([
-        toArray,
-        getDomesticLeagueIDsCount,
-      ])(actualDomesticLeagueIDs);
-      expect(actualDomesticLeagueIDs.size).toEqual(
-        actualDomesticLeagueIDsCount,
-      );
+      const actualDomesticLeagueIDsCount: number = getDomesticLeagueIDsCount(actualDomesticLeagueIDs)
+      expect(actualDomesticLeagueIDsCount).toEqual(expectedDomesticLeaguesPerCountryCount)
     },
   );
 
   test.prop([
     fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2).chain((testDomesticLeaguesCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 3 },
-      );
-    }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
+    ),
     fc.gen(),
   ])(
     "getBaseEntitiesDomesticLeagueIDAtSpecificIndex",
-    async (testSeason, testCountriesLeaguesClubs, fcGen) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
+      const testBaseEntities: BaseEntities = fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
+      );
 
-      const randomDomesticLeagueIndex: [string, string] =
-        getRandomDomesticLeagueIndex(fcGen, testBaseEntities);
+      const testDomesticLeagueIndex: [string, string] =
+            getRandomDomesticLeagueIndex(fcGen, testBaseEntities);
+      
       const actualDomesticLeagueID: string =
         getBaseEntitiesDomesticLeagueIDAtSpecificIndex(
           testBaseEntities,
-          randomDomesticLeagueIndex,
+          testDomesticLeagueIndex,
         );
 
-      const [expectedDomesticLeagueIndex]: [string, string] =
-        randomDomesticLeagueIndex;
+      const [expectedCountryIndexOfDomesticLeague]: [string, string] =
+        testDomesticLeagueIndex;
       const expectedDomesticLeagueIDsSet: Set<string> =
         getBaseEntitiesDomesticLeagueIDsForACountryIndexAsSet(
           testBaseEntities,
-          expectedDomesticLeagueIndex,
+          expectedCountryIndexOfDomesticLeague,
         );
       expect(
         expectedDomesticLeagueIDsSet.has(actualDomesticLeagueID),
@@ -355,88 +214,48 @@ describe("BaseEntitiesUtilities", async () => {
   );
 
   test.prop([
-    fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2, 3, 4, 5).chain((testCompetitionsCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testCompetitionsCount,
-              maxLength: testCompetitionsCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testCompetitionsCount,
-              maxLength: testCompetitionsCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 5 },
-      );
-    }),
+   fc.integer({ min: 2000, max: 2100 }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
+    ),
+    fc.gen(),
   ])(
     "getBaseEntitiesClubsCount",
-    async (testSeason, testCountriesLeaguesClubs) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
 
-      const expectedClubsCount: number = pipe([
-        map(last),
-        flattenClubs,
-        size,
-      ])(testCountriesLeaguesClubs);
+      const [expectedCountriesCount, expectedDomesticLeaguesPerCountryCount, expectedClubsPerDomesticLeaguesCount] = testCountriesDomesticsLeaguesClubsCount
+
+      const expectedClubsCount: number = pipe([multiply(expectedCountriesCount), multiply(expectedDomesticLeaguesPerCountryCount)])(expectedClubsPerDomesticLeaguesCount)
+      
+      const testBaseEntities: BaseEntities = fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
+      );
 
       const actualClubsCount = getBaseEntitiesClubsCount(testBaseEntities);
+      
       expect(actualClubsCount).toEqual(expectedClubsCount);
     },
   );
 
   test.prop([
-    fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2).chain((testDomesticLeaguesCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 3 },
-      );
-    }),
+   fc.integer({ min: 2000, max: 2100 }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
+    ),
     fc.gen(),
   ])(
     "getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet",
-    async (testSeason, testCountriesLeaguesClubs, fcGen) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
+
+      const testBaseEntities: BaseEntities = fastCheckTestBaseEntitiesGenerator(
+          [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
+      );
 
       const randomDomesticLeagueIndex: [string, string] =
         getRandomDomesticLeagueIndex(fcGen, testBaseEntities);
@@ -454,182 +273,75 @@ describe("BaseEntitiesUtilities", async () => {
   );
 
   test.prop([
-    fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2).chain((testDomesticLeaguesCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 3 },
-      );
-    }),
+   fc.integer({ min: 2000, max: 2100 }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
+    ),
     fc.gen(),
   ])(
     "getBaseEntitiesClubIDAtSpecificIndex",
-    async (testSeason, testCountriesLeaguesClubs, fcGen) => {
-      const testBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
-          testSeason,
-          testCountriesLeaguesClubs,
-        );
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
+      
+      const testBaseEntities: BaseEntities = fastCheckTestBaseEntitiesGenerator(
+        [testSeason, testCountriesDomesticsLeaguesClubsCount],
+          fcGen,
+      );
 
-      const randomClubIndex: [string, string, string] = getRandomClubIndex(
+      const testClubIndex: [string, string, string] = getRandomClubIndex(
         fcGen,
         testBaseEntities,
       );
 
       const actualClubID: string = getBaseEntitiesClubIDAtSpecificIndex(
         testBaseEntities,
-        randomClubIndex,
+        testClubIndex,
       );
-      const [randomCountryIndex, randomDomesticLeagueIndex]: [
+      const [expectedCountryIndex, expectedDomesticLeagueIndex]: [
         string,
         string,
         string,
-      ] = randomClubIndex;
+      ] = testClubIndex;
+      
       const expectedDomesticLeagueClubsIDSet: Set<string> =
         getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet(testBaseEntities, [
-          randomCountryIndex,
-          randomDomesticLeagueIndex,
+          expectedCountryIndex,
+          expectedDomesticLeagueIndex,
         ]);
 
       expect(expectedDomesticLeagueClubsIDSet.has(actualClubID)).toBeTruthy();
+      
     },
   );
 
-  
-
-  
 
   test.prop([
-    fc.array(
-      fc.array(
-        fc.tuple(fc.string(), fc.string({ minLength: 4, maxLength: 6 })),
-        {
-          minLength: 2,
-        },
-      ),
-      { minLength: 2 },
+   fc.integer({ min: 2000, max: 2100 }),
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 10 }),
     ),
-    fc.array(
-      fc.array(
-        fc.array(
-          fc.tuple(fc.string(), fc.string({ minLength: 4, maxLength: 6 })),
-          { minLength: 2 },
-        ),
-        { minLength: 2 },
-      ),
-      { minLength: 2 },
-    ),
-  ])("flatteners", async (testDomesticLeagues, testClubs) => {
-    const zipper = zipObject(["domesticLeagues", "clubs"]);
-    const [actualCompetitions, actualClubs, expected]: [
-      Array<[string, string]>,
-      Array<[string, string]>,
-      Record<string, number>,
-    ] = await Promise.all([
-      flattenCompetitions(testDomesticLeagues),
-      flattenClubs(testClubs),
-      pipe([
-        zipper,
-        updatePaths({
-          domesticLeagues: getTestBaseEntitiesDomesticLeaguesCount,
-          clubs: getTestBaseEntitiesClubsCount,
-        }),
-      ])([testDomesticLeagues, testClubs]),
-    ]);
-
-    const actual: Record<string, number> = flowAsync(
-      zipper,
-      mapValues(size),
-    )([actualCompetitions, actualClubs]);
-
-    expect(actual).toStrictEqual(expected);
-  });
-
-  test.prop([
-    fc.array(fc.array(fc.tuple(fc.string(), fc.string()), { minLength: 2 }), {
-      minLength: 2,
-    }),
-    fc.array(
-      fc.array(fc.array(fc.tuple(fc.string(), fc.string()), { minLength: 2 }), {
-        minLength: 2,
-      }),
-      { minLength: 2 },
-    ),
-  ])("getLevelLengths", async (testDomesticLeagues, testClubs) => {
-    const zipper = zipObject(["domesticLeagues", "clubs"]);
-
-    const [
-      expectedDomesticLeagues,
-      expectedClubs,
-      actualDomesticLeagues,
-      actualClubs,
-    ]: Array<number> = await Promise.all([
-      await flowAsync(flattenCompetitions, size)(testDomesticLeagues),
-      await flowAsync(flattenClubs, size)(testClubs),
-      await flowAsync(getFirstLevelArrayLengths, sum)(testDomesticLeagues),
-      await flowAsync(getSecondLevelArrayLengths, sum)(testClubs),
-    ]);
-
-    const [actual, expected]: [Record<string, number>, Record<string, number>] =
-      map(zipper)([
-        [actualDomesticLeagues, actualClubs],
-        [expectedDomesticLeagues, expectedClubs],
-      ]);
-
-    expect(actual).toStrictEqual(expected);
-  });
-
-  test.prop([
-    fc.array(
-      fc.tuple(
-        fc.string(),
-        fc.array(fc.string(), { minLength: 5, maxLength: 10 }),
-        fc.array(fc.array(fc.string(), { minLength: 2 }), {
-          minLength: 20,
-          maxLength: 40,
-        }),
-      ),
-      { minLength: 5, maxLength: 15 },
-    ),
-    fc.integer({ min: 2000, max: 2100 }),
+    fc.gen(),
   ])(
     "convertBaseCountriesToBaseEntities",
-    async (testCountriesLeaguesClubs, testSeason) => {
-      const zipper = zipObject(["countries", "domesticLeagues", "clubs"]);
+    async (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
 
-      const expectedCounts = pipe([
-        zipAll,
-        zipper,
-        getTestBaseEntitiesCount,
-      ])(testCountriesLeaguesClubs);
+      const testBaseCountries: BaseCountries = fastCheckTestBaseCountriesGenerator(testCountriesDomesticsLeaguesClubsCount, fcGen)
+      const [expectedCountriesCount, expectedDomesticLeaguesPerCountryCount, expectedClubsPerDomesticLeaguesCount] = testCountriesDomesticsLeaguesClubsCount
+      const expectedDomesticLeaguesCount: number = multiply(expectedCountriesCount, expectedDomesticLeaguesPerCountryCount)
+      const expectedClubsCount: number = pipe([multiply(expectedCountriesCount), multiply(expectedDomesticLeaguesPerCountryCount)])(expectedClubsPerDomesticLeaguesCount)
+      
+      const expectedCountsObject = zipObject(["countries", "domesticLeagues", "clubs"], [expectedCountriesCount, expectedDomesticLeaguesCount, expectedClubsCount]);
 
       const actualBaseEntities: BaseEntities =
-        await convertBaseCountriesToBaseEntities(
+         convertBaseCountriesToBaseEntities(
           testSeason,
-          testCountriesLeaguesClubs,
+          testBaseCountries,
         );
-      const actualCounts = getActualBaseEntitiesCount(actualBaseEntities);
-
-      expect(actualCounts).toStrictEqual(expectedCounts);
+      const actualCountsObject: Record<string, number> = getTestBaseEntitiesCount(actualBaseEntities);
+      expect(actualCountsObject).toStrictEqual(expectedCountsObject);
     },
   );
 });

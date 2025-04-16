@@ -8,16 +8,11 @@ import {
   flattenDepth,
   property,
   first,
-  multiply,
   map,
-  flatten,
-  sum,
   curry,
   pipe
 } from "lodash/fp";
 import { updatePaths, mapIndexed } from "futil-js";
-import { DEFAULTSQUADSIZE } from "./Constants";
-import { minusOne } from "./MathUtilities"
 import {
   unflatten,
   transformNestedAsFlat,
@@ -25,10 +20,11 @@ import {
   getFirstLevelArrayLengths,
   getSecondLevelArrayLengths,
   convertToSet,
+  zipAndGetFirstArray
 } from "./ArrayUtilities";
-import {
-  getLastIDNumberOutOfIDNameTuple
-} from "./IDUtilities";
+import { getCountryIDsCount } from "../Countries/CountryUtilities"
+import { getDomesticLeagueIDsCount } from "../Competitions/CompetitionUtilities"
+import { getClubIDsCount } from "../Clubs/ClubUtilities"
 
 export const flattenCompetitions = flattenDepth(1);
 export const flattenClubs = flattenDepth(2);
@@ -74,7 +70,7 @@ export const getBaseEntitiesCountryIDAtSpecificIndex = curry(
 );
 
 export const getBaseEntitiesDomesticLeagueIDsForACountryIndex = curry(
-  (baseEntities: BaseEntities, index: string): Set<string> => {
+  (baseEntities: BaseEntities, index: string): Array<string> => {
     return pipe([
       getBaseEntitiesDomesticLeagues,
       property([index]),
@@ -175,10 +171,10 @@ const transformClubs = transformNestedAsFlat([
 ]);
 
 export const convertBaseCountriesToBaseEntities = curry(
-  async (
+   (
     season: number,
     baseCountries: Array<BaseCountry>,
-  ): Promise<BaseEntities> => {
+  ): BaseEntities => {
     const updater = {
       countries: mapIndexed((countryName: string, index: number) => [
         `Country_${index + 1}`,
@@ -197,7 +193,7 @@ export const convertBaseCountriesToBaseEntities = curry(
         ]),
       ),
     };
-    return await pipe([
+    return pipe([
       zipAll,
       zipObject(["countries", "domesticLeagues", "clubs"]),
       pipe([updatePaths(updater)]),
@@ -207,55 +203,23 @@ export const convertBaseCountriesToBaseEntities = curry(
 
 
 
-export const getTotalActualDomesticLeagues = pipe([
-  flattenCompetitions,
-  getLastIDNumberOutOfIDNameTuple,
-]);
-export const getTotalActualClubs = pipe([
-  flattenClubs,
-  getLastIDNumberOutOfIDNameTuple,
-]);
-
-export const getExpectedLastID = ([
-  expectedPosition,
-  expectedCount,
-  expectedStartingIndex,
-]: [string, number, number]) =>
-  `${expectedPosition}_${minusOne(expectedStartingIndex + expectedCount)}`;
-
-export const getExpectedLastIDsForMultiplePositions = map(getExpectedLastID);
-
-export const getActualBaseEntitiesCount = updatePaths({
-  countries: getLastIDNumberOutOfIDNameTuple,
-  domesticLeagues: getTotalActualDomesticLeagues,
-  clubs: getTotalActualClubs,
-});
-
 export const getTestBaseEntitiesDomesticLeaguesCount = pipe([
-  map(size),
-  sum,
+  flattenCompetitions,
+  zipAndGetFirstArray,
+  getDomesticLeagueIDsCount
 ]);
 export const getTestBaseEntitiesClubsCount = pipe([
-  map(map(size)),
-  flatten,
-  sum,
+  flattenClubs,
+  zipAndGetFirstArray,
+  getClubIDsCount
 ]);
+
 export const getTestBaseEntitiesCount = updatePaths({
-  countries: size,
+  countries: getCountryIDsCount,
   domesticLeagues: getTestBaseEntitiesDomesticLeaguesCount,
   clubs: getTestBaseEntitiesClubsCount,
 });
 
-export const getExpectedPlayersCount = pipe([
-  getBaseEntitiesClubs,
-  flattenClubs,
-  size,
-  multiply(DEFAULTSQUADSIZE),
-]);
 
-export const getExpectedEntitiesSansPlayerCount = pipe([
-  getTestBaseEntitiesCount,
-  Object.values,
-  flatten,
-  sum,
-]);
+
+
