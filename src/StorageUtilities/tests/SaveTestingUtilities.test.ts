@@ -1,12 +1,9 @@
 import { describe, expect } from "vitest";
 import { test, fc } from "@fast-check/vitest";
-import { over } from "lodash/fp"
-import { Save } from "../SaveTypes"
-import {
-  getUserName,
-  getCurrentSeason,
-} from "../SaveUtilities";
-import { createTestSave } from "../SaveTestingUtilities"
+import { over } from "lodash/fp";
+import { Save } from "../SaveTypes";
+import { getUserName, getCurrentSeason } from "../SaveUtilities";
+import { createTestSave } from "../SaveTestingUtilities";
 
 describe("SaveTestingUtilities test suite", async () => {
   test.prop([
@@ -40,5 +37,4 @@ describe("SaveTestingUtilities test suite", async () => {
       expect(actualCurrentSeason).toBe(testSeason);
     },
   );
-  
-})
+});

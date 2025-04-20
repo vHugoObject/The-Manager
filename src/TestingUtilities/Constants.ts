@@ -1,1 +1,1 @@
-export const NONSPACESCHARACTERRANGE: [number, number] = [27, 94]
+export const NONSPACESCHARACTERRANGE: [number, number] = [27, 94];

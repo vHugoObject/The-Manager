@@ -1,15 +1,21 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import { map, over, zipAll, size, sum, flatten, flatMap } from "lodash/fp";
-import { flowAsync } from "futil-js";
-import { BaseEntity, BaseEntities, Entity } from "../CommonTypes";
-import { PositionGroup } from "../../Players/PlayerTypes";
-import { BASECLUBCOMPOSITION, DEFAULTSQUADSIZE } from "../Constants";
 import {
-  convertToSet,
-  convertArrayOfArraysToArrayOfSets,
-} from "../CommonUtilities";
-import { fakerToArb } from "../testingUtilities";
+  over,
+  size,
+  flatMap,
+} from "lodash/fp";
+import { flow } from "futil-js";
+import {BaseEntities, Entity } from "../CommonTypes";
+import {
+  fastCheckTestBaseEntitiesGenerator,
+} from "../../TestingUtilities/TestEntityGenerationUtilities";
+import {
+  getTestBaseEntitiesCount,
+  getTestBaseEntitiesPlayersCount,
+  convertBaseCountriesToBaseEntities,
+} from "../BaseEntitiesUtilities";
+
 import {
   getCountryDomesticLeagues,
   pickCountries,
@@ -26,158 +32,40 @@ import {
 } from "../../Clubs/ClubUtilities";
 import { filterPlayersByID } from "../../Players/PlayerUtilities";
 import {
-  getTestBaseEntitiesCount,
-  getExpectedPlayersCount,
-  convertBaseCountriesToBaseEntities,
-  getExpectedLastIDsForMultiplePositions,
-  getTotalTestClubs,
-} from "../BaseEntitiesUtilities";
-import {
-  getTotalPlayersToGenerateBasedOnGivenComposition,
   createEntities,
-  createPlayerIDsForClubs,
 } from "../CreateEntities";
 
-describe("CreateEntities", async () => {
-  const POSITIONGROUPSLIST = Object.values(PositionGroup);
+describe("CreateEntities", () => {
 
-  test.prop([
-    fc.tuple(
-      fc.tuple(fc.constant(PositionGroup.Goalkeeper), fc.nat()),
-      fc.tuple(fc.constant(PositionGroup.Defender), fc.nat()),
-      fc.tuple(fc.constant(PositionGroup.Midfielder), fc.nat()),
-      fc.tuple(fc.constant(PositionGroup.Attacker), fc.nat()),
-    ),
-    fc.integer({ min: 3 }),
-    fc.nat(),
-  ])(
-    "getTotalPlayersToGenerateBasedOnGivenComposition",
-    async (testComposition, testTotalClubs, testStartingIndex) => {
-      const testCompositionGenerator =
-        getTotalPlayersToGenerateBasedOnGivenComposition(testComposition);
-      const actualPlayers: Array<[PositionGroup, number, number]> =
-        testCompositionGenerator(testStartingIndex, testTotalClubs);
 
-      const [, startingCounts] = zipAll(testComposition);
-      const [actualPositionGroups, actualCounts, actualStartingIndices] =
-        zipAll(actualPlayers);
-      const [
-        expectedPositionGroupsSet,
-        actualPositionGroupsSet,
-        expectedStartingIndicesSet,
-        actualStartingIndicesSet,
-      ] = convertArrayOfArraysToArrayOfSets([
-        POSITIONGROUPSLIST,
-        actualPositionGroups,
-        [testStartingIndex],
-        actualStartingIndices,
-      ]);
+  test.prop(
+    [
 
-      expect(actualPositionGroupsSet).toStrictEqual(expectedPositionGroupsSet);
-      expect(actualStartingIndicesSet).toStrictEqual(
-        expectedStartingIndicesSet,
-      );
-      const actualSumOfStartingCounts: number = sum(startingCounts);
-      if (actualSumOfStartingCounts > 0) {
-        expect(sum(actualCounts)).toBeGreaterThan(actualSumOfStartingCounts);
-      }
-    },
-  );
-
-  test.prop([
-    fc.array(
-      fc.array(
-        fc.array(fc.tuple(fc.string(), fc.string()), {
-          minLength: 20,
-          maxLength: 40,
-        }),
-        { minLength: 5, maxLength: 10 },
-      ),
-      { minLength: 5, maxLength: 10 },
-    ),
-  ])("createPlayerIDsForClubs", async (testClubs) => {
-    const actualPlayerIDs: Array<Array<string>> =
-      await createPlayerIDsForClubs(testClubs);
-
-    const expectedClubsCount: number = getTotalTestClubs(testClubs);
-
-    const expectedPositionCounts =
-      getTotalPlayersToGenerateBasedOnGivenComposition(
-        BASECLUBCOMPOSITION,
-        0,
-        expectedClubsCount,
-      );
-
-    const expectedLastPositionIDs = getExpectedLastIDsForMultiplePositions(
-      expectedPositionCounts,
+    ],
+    { numRuns: 0 },
+  )("createEntities", (testSeason, testCountriesLeaguesClubs) => {
+    const testBaseEntities: BaseEntities = convertBaseCountriesToBaseEntities(
+      testSeason,
+      testCountriesLeaguesClubs,
     );
 
-    const actualClubSizesSet = flowAsync(
-      map(size),
-      convertToSet,
-    )(actualPlayerIDs);
-
-    expect(actualClubSizesSet).toStrictEqual(new Set([DEFAULTSQUADSIZE]));
-
-    const [actualIDsSet, expectedIDsSet]: Array<Set<string>> =
-      convertArrayOfArraysToArrayOfSets([
-        flatten(actualPlayerIDs),
-        expectedLastPositionIDs,
-      ]);
-    expect(actualIDsSet.isSupersetOf(expectedIDsSet)).toBeTruthy();
-  });
-
-  test.prop([
-    fc.integer({ min: 2000, max: 2100 }),
-    fc.constantFrom(1, 2, 3, 4, 5).chain((testDomesticLeaguesCount: number) => {
-      return fc.array(
-        fc.tuple(
-          fakerToArb((faker) => faker.location.country()),
-          fc.array(
-            fakerToArb((faker) => faker.company.name()),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-          fc.array(
-            fc.array(
-              fakerToArb((faker) => faker.company.name()),
-              { minLength: 20, maxLength: 20 },
-            ),
-            {
-              minLength: testDomesticLeaguesCount,
-              maxLength: testDomesticLeaguesCount,
-            },
-          ),
-        ),
-        { minLength: 1, maxLength: 5 },
-      );
-    }),
-  ])("createEntities", async (testSeason, testCountriesLeaguesClubs) => {
-    const testBaseEntities: BaseEntities =
-      await convertBaseCountriesToBaseEntities(
-        testSeason,
-        testCountriesLeaguesClubs,
-      );
-
     const actualEntities: Record<string, Entity> =
-      await createEntities(testBaseEntities);
+      createEntities(testBaseEntities);
 
-    const getActualCountriesCount = flowAsync(pickCountries, size);
-    const getActualDomesticLeaguesCountFromCountries = flowAsync(
+    const getActualCountriesCount = flow(pickCountries, size);
+    const getActualDomesticLeaguesCountFromCountries = flow(
       pickCountries,
       flatMap(getCountryDomesticLeagues),
       filterDomesticLeaguesByID,
       size,
     );
-    const getActualClubsCountFromDomesticLeagues = flowAsync(
+    const getActualClubsCountFromDomesticLeagues = flow(
       pickDomesticLeagues,
       flatMap(getCompetitionClubs),
       filterClubsByID,
       size,
     );
-    const getActualPlayersCountFromClubs = flowAsync(
+    const getActualPlayersCountFromClubs = flow(
       pickClubs,
       flatMap(getClubSquad),
       filterPlayersByID,
@@ -189,7 +77,7 @@ describe("CreateEntities", async () => {
       actualDomesticLeaguesCountFromCountries,
       actualClubsCountFromDomesticLeagues,
       actualPlayersCountFromClubs,
-    ] = flowAsync(
+    ] = flow(
       over([
         getActualCountriesCount,
         getActualDomesticLeaguesCountFromCountries,

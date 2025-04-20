@@ -1,22 +1,14 @@
 import { flowAsync, updateAllPaths } from "futil-js";
 import {
-  multiply,
-  map,
-  zipAll,
-  size,
+  pipe,
   zipWith,
-  chunk,
-  flatten,
-  curry,
-  pipe
+  flatten
 } from "lodash/fp";
-import { PositionGroup } from "../Players/PlayerTypes";
 import { BaseEntity, BaseEntities, Entity } from "./CommonTypes";
 import { createCountry } from "../Countries/CountryUtilities";
 import { createCompetition } from "../Competitions/CompetitionUtilities";
 import { createClub } from "../Clubs/ClubUtilities";
-import { generatePlayerBioDataForListOfClubs } from "../Players/PlayerUtilities";
-import { BASECLUBCOMPOSITION } from "./Constants";
+import { generatePlayerBioDataForListOfClubs, createPlayerIDsForClubs } from "../Players/PlayerUtilities";
 import {
   flattenCompetitions,
   flattenClubs,
@@ -24,51 +16,7 @@ import {
   getBaseEntitiesClubs,
 } from "./BaseEntitiesUtilities";
 
-export const getTotalPlayersToGenerateBasedOnGivenComposition = curry(
-  (
-    composition: Array<[PositionGroup, number]>,
-    startingIndex: number,
-    totalClubs: number,
-  ): Array<[PositionGroup, number, number]> => {
-    return map(
-      ([positionGroup, count]: [PositionGroup, number]): [
-        PositionGroup,
-        number,
-        number,
-      ] => [positionGroup, multiply(count, totalClubs), startingIndex],
-    )(composition);
-  },
-);
-
-export const getTotalPlayersToGenerateUsingBaseComposition =
-  getTotalPlayersToGenerateBasedOnGivenComposition(BASECLUBCOMPOSITION, 0);
-
-
-export const createPlayerIDsForClubs = async (
-  clubs: Array<Array<Array<BaseEntity>>>,
-): Promise<Array<Array<string>>> => {
-  const totalClubs: number = pipe([flattenClubs, size])(clubs);
-
-  return pipe([
-    getTotalPlayersToGenerateUsingBaseComposition,
-    map(
-      ([positionGroup, length]: [PositionGroup, number, number]): Array<
-        Array<string>
-      > => {
-        return chunk(
-          length / totalClubs,
-          Array.from(
-            { length },
-            (_, index: number): string => `${positionGroup}_${index}`,
-          ),
-        );
-      },
-    ),
-    zipAll,
-    map(flatten),
-  ])(totalClubs);
-};
-
+// accepts a transformers object
 export const createEntities = async (
   baseEntities: BaseEntities,
 ): Promise<Record<string, Entity>> => {
@@ -81,7 +29,7 @@ export const createEntities = async (
     updateAllPaths({
       countries: pipe([
         zipWith(
-           (
+          (
             competitions: Array<BaseEntity>,
             [id, name]: BaseEntity,
           ): [string, Entity] => {
@@ -93,7 +41,7 @@ export const createEntities = async (
       domesticLeagues: pipe([
         flattenCompetitions,
         zipWith(
-           (
+          (
             clubs: Array<BaseEntity>,
             [id, name]: BaseEntity,
           ): [string, Entity] => {
@@ -105,7 +53,7 @@ export const createEntities = async (
       clubs: pipe([
         flattenClubs,
         zipWith(
-           (
+          (
             players: Array<string>,
             [id, name]: BaseEntity,
           ): [string, Entity] => {

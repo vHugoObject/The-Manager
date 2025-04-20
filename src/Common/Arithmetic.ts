@@ -13,13 +13,19 @@ import {
   mean,
   spread,
   reverse,
-  pipe
+  pipe,
+  last,
+  divide,
+  reduce,
+  concat,
+  size,
+  sortBy,
 } from "lodash/fp";
-import { accumulate } from "./ArrayUtilities"
 
 
-
-
+export const zipDivide = zipWith(divide);
+export const spreadZipDivide = spread(zipDivide);
+export const spreadDivide = spread(divide);
 export const addOne = add(1);
 export const minusOne = add(-1);
 export const multiplyByTwo = multiply(2);
@@ -27,11 +33,31 @@ export const divideByTwo = multiply(1 / 2);
 export const half = multiply(1 / 2);
 export const convertIntegerToPercentage = multiply(0.01);
 export const convertIntegersToPercentages = map(convertIntegerToPercentage);
-export const addMinusOne = curry((intOne: number, intTwo: number) => pipe([add, minusOne])(intOne, intTwo))
-export const addPlusOne = curry((intOne: number, intTwo: number) => pipe([add, addOne])(intOne, intTwo))
-export const spreadThenSubtract = spread(subtract)
+export const addMinusOne = curry((intOne: number, intTwo: number) =>
+  pipe([add, minusOne])(intOne, intTwo),
+);
+export const addPlusOne = curry((intOne: number, intTwo: number) =>
+  pipe([add, addOne])(intOne, intTwo),
+);
+export const spreadThenSubtract = spread(subtract);
 
-export const reverseThenSpreadSubtract = pipe([reverse, spreadThenSubtract])
+export const reverseThenSpreadSubtract = pipe([reverse, spreadThenSubtract]);
+
+export const accumulate = curry(
+  <T>([func, initial]: [Function, T], array: Array<T>): Array<T> => {
+    return reduce(
+      (previous: Array<T>, current: any): Array<T> => {
+        return concat(previous, func(current, last(previous) || initial));
+      },
+      [],
+      array,
+    );
+  },
+);
+
+export const getRunningSumOfList = accumulate([add, 0]);
+export const multiplyAccumulate = accumulate([multiply, 1]);
+export const spreadMultiply = pipe([multiplyAccumulate, last]);
 
 export const normalizePercentages = (
   percentages: Array<number>,
@@ -62,9 +88,6 @@ export const weightedMean = curry(
   },
 );
 
-
-export const getRunningSumOfList = accumulate([add, 0]);
-export const multiplyAccumulate = accumulate([multiply, 1]);
 
 export const weightedRandom = <T>([weights, items]: [
   number[],
@@ -103,7 +126,6 @@ export const simpleModularArithmetic = curry(
   },
 );
 
-
 export const modularAddition = simpleModularArithmetic(addOne);
 export const modularSubtraction = simpleModularArithmetic(minusOne);
 
@@ -125,7 +147,7 @@ export const boundedModularAddition = curry(
 );
 
 export const mapModularIncreasersWithTheSameAverageStep = curry(
-   (
+  (
     [plusOrMinus, playerCount]: [number, number],
     ranges: Array<[number, number]>,
   ) => {
@@ -147,7 +169,6 @@ export const mapModularIncreasersWithDifferentStepsForARange = curry(
     })(ranges);
   },
 );
-
 
 export const getRandomNumberInRange = ([min, max]: [
   number,
@@ -184,9 +205,15 @@ export const getRunningSumOfListOfTuples = curry(
   },
 );
 
-
 export const getUndadjustedAverageStepForASetOfModularRanges = pipe([
-    map(([min, max]: [number, number]) => addOne(max - min)),
-    mean,
-    Math.ceil,
-  ]);
+  map(([min, max]: [number, number]) => addOne(max - min)),
+  mean,
+  Math.ceil,
+]);
+
+export const getLengthOfLinearRange = pipe([
+  reverseThenSpreadSubtract,
+  minusOne,
+]);
+
+

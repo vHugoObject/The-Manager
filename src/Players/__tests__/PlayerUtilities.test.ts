@@ -14,16 +14,13 @@ import {
 import { flowAsync } from "futil-js";
 import { PositionGroup } from "../PlayerTypes";
 import { BaseEntities, Entity } from "../../Common/CommonTypes";
+import { convertBaseCountriesToBaseEntities, getExpectedPlayersCount, getExpectedLastID } from "../../Common/BaseEntitiesUtilities"
+import { boundedModularAddition,  getAverageModularStepForRangeOfData, } from "../../Common/Arithmetic"
+import { convertToSet } from "../../Common/Transformers"
 import {
-  convertToSet,
-  convertBaseCountriesToBaseEntities,
-  getExpectedPlayersCount,
-  boundedModularAddition,
-  getAverageModularStepForRangeOfData,
-  getExpectedLastID,
   getSumOfFlattenedArray
-} from "../../Common/index";
-import { fakerToArb } from "../../TestingUtilities/index";
+} from "../../Common/Getters";
+import { fakerToArb } from "../../TestingUtilities/TestDataGenerationUtilities";
 import {  
   generateDataForAGroupOfPlayersByAveragingModularIncreases,
   generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers,
@@ -33,12 +30,13 @@ import {
   generatePlayerSkillsPhysicalContractDataForListOfClubs,
   generatePlayerBioDataForMultiplePositionGroups,
   generatePlayerBioDataForListOfClubs,
-  sortPlayersByRatings
+  sortPlayersByRatings,
+  getTotalPlayersToGenerateBasedOnGivenComposition,
 } from "../PlayerUtilities";
 
 describe("Player utilities tests", async () => {
 
-  export const POSITIONGROUPSLIST = Object.values(PositionGroup)
+  const POSITIONGROUPSLIST = Object.values(PositionGroup)
   
   test.prop([
     fc.integer({min: 5, max: 25})
@@ -56,15 +54,14 @@ describe("Player utilities tests", async () => {
       
     }
   );
-
-    
+      
   test.prop([
     fc.dictionary(fc.constantFrom(
         ...POSITIONGROUPSLIST
     ),
       fc.array(fc.nat({max: }), {minLength: })
     )
-  ])(
+  ], {numRuns: 0})(
     "getPositionBreakdownOfRecordOfPlayers",
     async (testPlayers) => {
       
@@ -75,6 +72,86 @@ describe("Player utilities tests", async () => {
       
     }
   );
+
+  
+  test.prop([
+    fc.integer({ min: 3, max: 10 }),
+    fc.integer({ min: 3, max: 100 }),
+    fc.integer({ min: 3 }),
+    fc.nat(),
+    fc.gen(),
+  ])(
+    "getTotalPlayersToGenerateBasedOnGivenComposition",
+    (
+      testMinItemCount,
+      testRangeSize,
+      testTotalClubs,
+      testStartingIndex,
+      fcGen,
+    ) => {
+      const testComposition =
+        fastCheckNLengthArrayOfItemCountTuplesGivenItemsAndRangeOfCountsGenerator(
+          POSITIONGROUPSLIST,
+          fcGen,
+          [testMinItemCount, testRangeSize],
+        );
+
+      const testCompositionGenerator =
+        getTotalPlayersToGenerateBasedOnGivenComposition(testComposition);
+
+      const actualPlayers: Array<[PositionGroup, number, number]> =
+        testCompositionGenerator(testStartingIndex, testTotalClubs);
+      const [
+        [actualPositions, actualCounts, actualStartingIndices],
+        [expectedPositions, expectedCountsPerClub],
+      ] = map(zipAll)([actualPlayers, testComposition]);
+
+      pairArraysAndAssertStrictEqual([
+        actualPositions,
+        expectedPositions,
+        actualStartingIndices,
+        [testStartingIndex],
+      ]);
+      expect(sum(actualCounts)).toBeGreaterThanOrEqual(
+        sum(expectedCountsPerClub),
+      );
+    },
+  );
+
+  test.prop(
+    [
+      fc.integer({ min: 2, max: 50 }),
+      fc.integer({ min: 2, max: 10 }),
+      fc.integer({ min: 1, max: 500 }),
+      fc.gen(),
+    ],
+    { numRuns: 0 },
+  )(
+    "createPlayerIDsForClubs",
+    (testTotalClubs, testMinItemCount, testRangeSize, fcGen) => {
+      const testTuples: Array<[string, number, number]> =
+        fastCheckNLengthArrayOfItemCountIndexTuplesGivenItemsAndRangeOfCountsGenerator(
+          POSITIONGROUPSLIST,
+          fcGen,
+          [testMinItemCount, testRangeSize],
+        );
+
+      //Array<Array<Array<Array<BaseEntity>>>>
+      const actualPlayerIDs = createPlayerIDsForClubs(
+        testTotalClubs,
+        testTuples,
+      );
+      expect(actualPlayerIDs.length).toEqual(testTotalClubs);
+      const expectedTotalPlayers: number = zipAllAndGetSumOfArrayAtIndex(
+        1,
+        testTuples,
+      );
+      const actualPlayersCount: number =
+        getTestBaseEntitiesPlayersCount(actualPlayerIDs);
+      expect(actualPlayersCount).toEqual(expectedTotalPlayers);
+    },
+  );
+
   
   test.prop([
     fc

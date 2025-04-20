@@ -11,17 +11,12 @@ import {
   flatten,
   overEvery,
   isString,
-  pipe
+  pipe,
 } from "lodash/fp";
 import { Entity } from "../Common/CommonTypes";
 import { ClubArrayIndices } from "./ClubTypes";
 import { Save } from "../StorageUtilities/SaveTypes";
-import { DEFAULTMATCHCOMPOSITION } from "./ClubConstants";
-import {
-  transformNestedAsFlat,
-  getFirstLevelArrayLengths,
-  sliceUpArray,
-} from "../Common/index";
+import { DEFAULTMATCHCOMPOSITION } from "./Constants";
 import {
   getEntityFromSaveEntities,
   getGroupOfPlayerSkillsFromSave,
@@ -39,12 +34,9 @@ export const pickClubs = pickBy((_: Entity, entityID: string) =>
 );
 export const getClubName = property([ClubArrayIndices.Name]);
 export const getClubSquad = property([ClubArrayIndices.Squad]);
-export const getClubIDsCount = pipe([filterByStringAndClubID, size]);
+export const getClubIDsCount = pipe([filterClubsByID, size]);
 
-export const createClub =  (
-  name: string,
-  squad: Array<string>,
-): Entity => {
+export const createClub = (name: string, squad: Array<string>): Entity => {
   return [name, squad];
 };
 
@@ -78,10 +70,7 @@ export const getClubBestStarting11FromSave = curry(
           positionCount: number,
           positionPlayers: Array<Record<string, Array<number>>>,
         ): Array<Record<string, Array<number>>> => {
-          return pipe([
-            Object.entries,
-            take(positionCount),
-          ])(positionPlayers);
+          return pipe([Object.entries, take(positionCount)])(positionPlayers);
         },
         composition,
       ),
@@ -100,14 +89,5 @@ export const getClubBestStarting11ForAGroupOfMatchupsWithDefaultCompFromSave =
   ): Promise<
     Array<[Record<string, Array<number>>, Record<string, Array<number>>]>
   > => {
-    return await transformNestedAsFlat([
-      flatten,
-      getFirstLevelArrayLengths,
-      sliceUpArray,
-    ])(
-      map((clubID: string) =>
-        getClubBestStarting11FromSaveWithDefault433([save, clubID]),
-      ),
-      matchups,
-    );
+
   };

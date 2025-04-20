@@ -1,7 +1,7 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import { sum, zipAll } from "lodash/fp";
-import { convertArrayOfArraysToArrayOfSets } from "../../Common/index";
+import { convertArrayOfArraysToArrayOfSets } from "../../Common/Transformers";
 import {
   generateTestOutfieldPlayersComposition,
   generateTestComposition,

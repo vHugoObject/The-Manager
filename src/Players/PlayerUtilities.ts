@@ -19,7 +19,8 @@ import {
   last,
   mean,
   reverse,
-  pipe
+  pipe,
+  multiply
 } from "lodash/fp";
 import { PositionGroup } from "./PlayerTypes";
 import { BaseEntities, Entity } from "../Common/CommonTypes";
@@ -32,16 +33,21 @@ import {
   FIRSTNAMES,
   LASTNAMES,
   COUNTRYNAMES,
+} from "../Common/Names"
+import {
   modularAddition,
-  BASECLUBCOMPOSITION,
-  getBaseEntitiesClubsCount,
   boundedModularAddition,
   mapModularIncreasersWithTheSameAverageStep,
   mapModularIncreasersWithDifferentStepsForARange,
-  getRandomNumberInRanges,
-  getTotalPlayersToGenerateBasedOnGivenComposition,
-  getCountOfItemsFromArrayForPredicate
-} from "../Common/index";
+  getRandomNumberInRanges
+} from "../Common/Arithmetic"
+import { getBaseEntitiesClubsCount } from "../Common/BaseEntitiesUtilities"
+import { BASECLUBCOMPOSITION } from "../Clubs/Constants"
+import {   
+  getCountOfItemsFromArrayForPredicate,
+} from "../Common/Getters";
+
+
 
 export const getPlayerPositionGroupFromID = property([0]);
 
@@ -56,7 +62,17 @@ export const isPlayerID = overSome([
   isAttackerID,
 ]);
 
-export const getAttackerIDCount = getCountOfItemsFromArrayForPredicate(isAttackerID)
+export const getAttackerIDsCount =
+  getCountOfItemsFromArrayForPredicate(isAttackerID);
+export const getDefenderIDsCount =
+  getCountOfItemsFromArrayForPredicate(isDefenderID);
+export const getMidfielderIDsCount =
+  getCountOfItemsFromArrayForPredicate(isMidfielderID);
+export const getGoalkeeperIDsCount =
+  getCountOfItemsFromArrayForPredicate(isGoalkeeperID);
+
+export const getPlayerIDsCount =
+  getCountOfItemsFromArrayForPredicate(isPlayerID);
 
 export const filterGoalkeepersByID = filter(isGoalkeeperID);
 export const filterDefendersByID = filter(isDefenderID);
@@ -89,6 +105,35 @@ export const sortPlayersByRatings = pipe([
   reverse,
   Object.fromEntries,
 ]);
+
+export const getTotalPlayersToGenerateBasedOnGivenComposition = curry(
+  (
+    composition: Array<[PositionGroup, number]>,
+    startingIndex: number,
+    totalClubs: number,
+  ): Array<[PositionGroup, number, number]> => {
+    return map(
+      ([positionGroup, count]: [PositionGroup, number]): [
+        PositionGroup,
+        number,
+        number,
+      ] => [positionGroup, multiply(count, totalClubs), startingIndex],
+    )(composition);
+  })
+
+
+
+
+export const getTotalPlayersToGenerateUsingBaseComposition =
+  getTotalPlayersToGenerateBasedOnGivenComposition(BASECLUBCOMPOSITION, 0);
+
+export const createPlayerIDsForClubs = (
+  totalClubs: number,
+  positionCountIndexTuples: Array<[string, number, number]>,
+) => {
+  
+};
+
 
 export const runModularIncreasersModularlyOverARangeOfPlayers = (
   [startingRange, modularIncreasers]: [Array<number>, Array<Function>],
@@ -157,7 +202,7 @@ export const runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers = (
 };
 
 export const generateDataForAGroupOfPlayersByAveragingModularIncreases = curry(
-   (
+  (
     [ranges, plusOrMinus]: [Array<[number, number]>, number],
     [positionGroup, count, startingIndex]: [PositionGroup, number, number],
   ): Promise<Array<[string, Array<number>]>> => {
@@ -177,7 +222,7 @@ export const generateDataForAGroupOfPlayersByAveragingModularIncreases = curry(
 
 export const generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers =
   curry(
-     (
+    (
       [ranges, increasers]: [Array<[number, number]>, Array<Function>],
       [positionGroup, count, startingIndex]: [PositionGroup, number, number],
     ): Promise<Array<[string, Array<number>]>> => {
@@ -189,37 +234,39 @@ export const generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncre
     },
   );
 
-export const generateSkillsPhysicalContractDataForMultiplePositionGroups = pipe([
-  map(
-     ([positionGroup, count, startingIndex]: [
-      PositionGroup,
-      number,
-      number,
-    ]) => {
-      return generateDataForAGroupOfPlayersByAveragingModularIncreases(
-        [
-          property(
-            [positionGroup],
-            PLAYERSKILLSPHYSICALCONTRACTRANGESBYPOSITION,
-          ),
-          PLAYERSKILLSPHYSICALCONTRACTRANDOMPLUSORMINUS,
-        ],
-        [positionGroup, count, startingIndex],
-      );
-    },
-  ),
-  flatten,
-  Object.fromEntries,
-]);
+export const generateSkillsPhysicalContractDataForMultiplePositionGroups = pipe(
+  [
+    map(
+      ([positionGroup, count, startingIndex]: [
+        PositionGroup,
+        number,
+        number,
+      ]) => {
+        return generateDataForAGroupOfPlayersByAveragingModularIncreases(
+          [
+            property(
+              [positionGroup],
+              PLAYERSKILLSPHYSICALCONTRACTRANGESBYPOSITION,
+            ),
+            PLAYERSKILLSPHYSICALCONTRACTRANDOMPLUSORMINUS,
+          ],
+          [positionGroup, count, startingIndex],
+        );
+      },
+    ),
+    flatten,
+    Object.fromEntries,
+  ],
+);
 
-export const generatePlayerBioDataForMultiplePositionGroups =  (
+export const generatePlayerBioDataForMultiplePositionGroups = (
   positionGroupCountStartingIndexTuples: Array<[PositionGroup, number, number]>,
 ): Promise<Array<[string, Array<number>]>> => {
   const namesAndCountriesRanges: Array<[number, number]> =
     convertListOfListsToListOfRanges([FIRSTNAMES, LASTNAMES, COUNTRYNAMES]);
   return pipe([
     map(
-       ([positionGroup, playerCount, startingIndex]: [
+      ([positionGroup, playerCount, startingIndex]: [
         PositionGroup,
         number,
         number,
@@ -253,7 +300,7 @@ export const generatePlayerBioDataForMultiplePositionGroups =  (
 };
 
 // can't export getClubs and flattenClubs?
-export const generatePlayerSkillsPhysicalContractDataForListOfClubs =  (
+export const generatePlayerSkillsPhysicalContractDataForListOfClubs = (
   startingIndex: number,
   entities: BaseEntities,
 ) => {
@@ -280,3 +327,4 @@ export const generatePlayerBioDataForListOfClubs = (
     generatePlayerBioDataForMultiplePositionGroups,
   ])(entities);
 };
+

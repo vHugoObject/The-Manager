@@ -7,7 +7,7 @@ import {
   startsWith,
   pickBy,
   size,
-  pipe
+  pipe,
 } from "lodash/fp";
 import { Entity } from "../Common/CommonTypes";
 import { CountryArrayIndices } from "./CountryTypes";
@@ -23,7 +23,7 @@ export const getCountryDomesticLeagues = property(
 );
 export const getCountryIDsCount = pipe([filterCountriesByID, size]);
 
-export const createCountry =  (
+export const createCountry = (
   name: string,
   competitions: Array<[string, string]>,
 ): Entity => {

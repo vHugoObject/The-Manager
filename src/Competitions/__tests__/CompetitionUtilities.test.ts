@@ -1,8 +1,8 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import { zipAll, over } from "lodash/fp";
-import { fakerToArb } from "../../Common/testingUtilities";
-import { convertArrayOfArraysToArrayOfSets } from "../../Common/CommonUtilities";
+import { fakerToArb } from "../../TestingUtilities/TestDataGenerationUtilities";
+import { convertArrayOfArraysToArrayOfSets } from "../../Common/Transformers";
 import { Entity } from "../../Common/CommonTypes";
 import {
   createCompetition,

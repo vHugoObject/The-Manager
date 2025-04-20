@@ -10,25 +10,47 @@ import {
   first,
   map,
   curry,
-  pipe
+  pipe,
+  last,
 } from "lodash/fp";
 import { updatePaths, mapIndexed } from "futil-js";
+import { getFirstLevelArrayLengths,
+  getSecondLevelArrayLengths
+} from "./Getters"
+import { convertToSet } from "./Transformers"
+import { zipAllAndGetFirstArray } from "./Zippers"
 import {
   unflatten,
   transformNestedAsFlat,
   sliceUpArray,
-  getFirstLevelArrayLengths,
-  getSecondLevelArrayLengths,
-  convertToSet,
-  zipAndGetFirstArray
-} from "./ArrayUtilities";
-import { getCountryIDsCount } from "../Countries/CountryUtilities"
-import { getDomesticLeagueIDsCount } from "../Competitions/CompetitionUtilities"
-import { getClubIDsCount } from "../Clubs/ClubUtilities"
+} from "./Transformers";
+import { getCountryIDsCount } from "../Countries/CountryUtilities";
+import { getDomesticLeagueIDsCount } from "../Competitions/CompetitionUtilities";
+import { getClubIDsCount } from "../Clubs/ClubUtilities";
+import { getPlayerIDsCount } from "../Players/PlayerUtilities";
 
 export const flattenCompetitions = flattenDepth(1);
 export const flattenClubs = flattenDepth(2);
 export const flattenPlayers = flattenDepth(3);
+
+export const getCountriesCountFromBaseCountries = pipe([map(first), size]);
+
+export const getDomesticLeaguesPerCountryCountFromBaseCountries = pipe([
+  map(property([1])),
+  getFirstLevelArrayLengths,
+  flattenCompetitions,
+]);
+export const getClubsPerDomesticLeaguesCountFromBaseCountries = pipe([
+  map(last),
+  getSecondLevelArrayLengths,
+  flattenClubs,
+]);
+
+export const getCountriesDomesticLeaguesAndClubsCounts = over([
+  getCountriesCountFromBaseCountries,
+  getDomesticLeaguesPerCountryCountFromBaseCountries,
+  getClubsPerDomesticLeaguesCountFromBaseCountries,
+]);
 
 export const getBaseEntitiesCountries = property(["countries"]);
 export const getBaseEntitiesDomesticLeagues = property(["domesticLeagues"]);
@@ -61,11 +83,9 @@ export const getBaseEntitiesCountryIDsAsSet = pipe([
 ]);
 export const getBaseEntitiesCountryIDAtSpecificIndex = curry(
   (baseEntities: BaseEntities, index: string): string => {
-    return pipe([
-      getBaseEntitiesCountries,
-      property([index]),
-      first,
-    ])(baseEntities);
+    return pipe([getBaseEntitiesCountries, property([index]), first])(
+      baseEntities,
+    );
   },
 );
 
@@ -133,10 +153,10 @@ export const getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet = curry(
     baseEntities: BaseEntities,
     countryDomesticLeagueIndexTuple: [string, string],
   ): Set<string> => {
-    return pipe([
-      getBaseEntitiesClubIDsForADomesticLeagueIndex,
-      convertToSet,
-    ])(baseEntities, countryDomesticLeagueIndexTuple);
+    return pipe([getBaseEntitiesClubIDsForADomesticLeagueIndex, convertToSet])(
+      baseEntities,
+      countryDomesticLeagueIndexTuple,
+    );
   },
 );
 
@@ -171,10 +191,7 @@ const transformClubs = transformNestedAsFlat([
 ]);
 
 export const convertBaseCountriesToBaseEntities = curry(
-   (
-    season: number,
-    baseCountries: Array<BaseCountry>,
-  ): BaseEntities => {
+  (season: number, baseCountries: Array<BaseCountry>): BaseEntities => {
     const updater = {
       countries: mapIndexed((countryName: string, index: number) => [
         `Country_${index + 1}`,
@@ -201,17 +218,22 @@ export const convertBaseCountriesToBaseEntities = curry(
   },
 );
 
-
-
 export const getTestBaseEntitiesDomesticLeaguesCount = pipe([
   flattenCompetitions,
-  zipAndGetFirstArray,
-  getDomesticLeagueIDsCount
+  zipAllAndGetFirstArray,
+  getDomesticLeagueIDsCount,
 ]);
+
 export const getTestBaseEntitiesClubsCount = pipe([
   flattenClubs,
-  zipAndGetFirstArray,
-  getClubIDsCount
+  zipAllAndGetFirstArray,
+  getClubIDsCount,
+]);
+
+export const getTestBaseEntitiesPlayersCount = pipe([
+  flattenPlayers,
+  zipAllAndGetFirstArray,
+  getPlayerIDsCount,
 ]);
 
 export const getTestBaseEntitiesCount = updatePaths({
@@ -219,7 +241,3 @@ export const getTestBaseEntitiesCount = updatePaths({
   domesticLeagues: getTestBaseEntitiesDomesticLeaguesCount,
   clubs: getTestBaseEntitiesClubsCount,
 });
-
-
-
-

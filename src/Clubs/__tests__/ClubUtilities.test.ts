@@ -2,29 +2,22 @@ import { describe, expect } from "vitest";
 import { test, fc } from "@fast-check/vitest";
 import {
   over,
-  multiply,
   zipAll,
   zipObject,
   countBy,
   flatMapDeep,
   map,
   size,
-  pipe
+  pipe,
 } from "lodash/fp";
 import { flowAsync } from "futil-js";
 import { PositionGroup } from "../../Players/PlayerTypes";
 import { Entity, BaseEntities } from "../../Common/CommonTypes";
 import { Save } from "../../StorageUtilities/SaveTypes";
 import {
-  fakerToArb,
-  createTestSave,
-  convertArrayOfArraysToArrayOfSets,
-  DEFAULTTESTMATCHES,
-  DEFAULTPLAYERSPERTESTMATCHES,
-  fastCheckTestBaseEntitiesGenerator,
-  getCompletelyRandomClubID,
-} from "../../TestingUtilities/index";
-import { DEFAULTMATCHCOMPOSITION } from "../ClubConstants";
+  fakerToArb
+} from "../../TestingUtilities/TestDataGenerationUtilities";
+import { DEFAULTMATCHCOMPOSITION } from "../Constants";
 import { getPlayerPositionGroupFromID } from "../../Players/PlayerUtilities";
 import {
   createClub,

@@ -10,7 +10,7 @@ import {
   size,
   isString,
   overEvery,
-  pipe
+  pipe,
 } from "lodash/fp";
 import { CompetitionArrayIndices } from "./CompetitionTypes";
 import { Entity } from "../Common/CommonTypes";
@@ -31,7 +31,7 @@ export const getDomesticLeagueIDsCount = pipe([
 export const getCompetitionName = property([CompetitionArrayIndices.Name]);
 export const getCompetitionClubs = property(CompetitionArrayIndices.Clubs);
 
-export const createCompetition =  (
+export const createCompetition = (
   name: string,
   clubs: Array<[string, string]>,
 ): Entity => {

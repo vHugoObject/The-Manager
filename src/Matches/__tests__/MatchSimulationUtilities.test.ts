@@ -21,15 +21,11 @@ import {
 } from "../../Players/PlayerTypes";
 import { PlayerMatchStatisticsArrayIndices } from "../MatchTypes";
 import { POSSIBLEGOALS } from "../MatchConstants";
+import { getSumOfFlattenedList } from "../../Common/Arithmetic"
 import {
-  divideByTwo,
   convertObjectKeysIntoSet,
-  mapEmptyListsOverRecordValues,
-  countByIdentity,
-  getSumOfFlattenedList,
   convertListOfIntegersIntoListOfStrings,
-  fastCheckRandomNumber,
-} from "../../Common/index";
+} from "../../Common/Transformers";
 import {
   calculateMeanCategoryStrengthForPlayer,
   calculateMeanCategoryStrengthForGroupOfPlayers,

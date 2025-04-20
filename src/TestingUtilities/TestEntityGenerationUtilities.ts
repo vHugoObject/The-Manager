@@ -7,15 +7,15 @@ import {
   chunk,
   zipWith,
   zipAll,
-  pipe
+  pipe,
 } from "lodash/fp";
 import { fc } from "@fast-check/vitest";
 import { BaseEntities } from "../Common/CommonTypes";
 import { BaseCountries } from "../Countries/CountryTypes";
-import {  fastCheckNLengthUniqueStringArrayGenerator } from "./TestDataGenerationUtilities"
-import { fastCheckRandomObjectKey } from "./RecordTestingUtilities"
+import { fastCheckNLengthUniqueStringArrayGenerator } from "./TestDataGenerationUtilities";
+import { fastCheckRandomObjectKey } from "./RecordTestingUtilities";
+import { sortByIdentity } from "../Common/Transformers";
 import {
-  sortByIdentity,
   getBaseEntitiesCountries,
   getBaseEntitiesDomesticLeagues,
   getBaseEntitiesDomesticLeagueIDsForACountryIndex,
@@ -23,8 +23,8 @@ import {
   convertBaseCountriesToBaseEntities,
   getBaseEntitiesClubIDsForADomesticLeagueIndex,
   getBaseEntitiesDomesticLeagueIDAtSpecificIndex,
-  getBaseEntitiesClubIDAtSpecificIndex
-} from "../Common/index";
+  getBaseEntitiesClubIDAtSpecificIndex,
+} from "../Common/BaseEntitiesUtilities";
 
 export const DEFAULTTESTCOUNTRIES: number = 2;
 export const DEFAULTTESTCOMPETITIONSPERCOUNTRY: number = 5;
@@ -33,11 +33,8 @@ export const DEFAULTTESTCLUBSPERCOMPETITION: number = 20;
 export const DEFAULTTESTMATCHESCOUNT: number = 20;
 export const DEFAULTPLAYERSPERTESTMATCHES: number = 22;
 
-
-
-
-export const fastCheckTestCountriesGenerator = fastCheckNLengthUniqueStringArrayGenerator
-  
+export const fastCheckTestCountriesGenerator =
+  fastCheckNLengthUniqueStringArrayGenerator;
 
 export const fastCheckTestDomesticLeaguesGenerator = (
   fcGen: fc.GeneratorValue,
@@ -67,55 +64,61 @@ export const fastCheckTestClubsGenerator = (
   ])(countriesCount);
 };
 
-export const fastCheckTestBaseCountriesGenerator = (
-  [countriesCount, competitionsPerCountryCount, clubsPerDomesticLeaguesCount]: [
-    number,
-    number,
-    number,
-  ],
-  fcGen: fc.GeneratorValue,
-): BaseCountries => {
-  return pipe([
-    zipWith(
-      (func: Function, args) => {
-        return func(fcGen, args);
-      },
+export const fastCheckTestBaseCountriesGenerator = curry(
+  (
+    fcGen: fc.GeneratorValue,
+    [
+      countriesCount,
+      competitionsPerCountryCount,
+      clubsPerDomesticLeaguesCount,
+    ]: [number, number, number],
+  ): BaseCountries => {
+    return pipe([
+      zipWith(
+        (func: Function, args) => {
+          return func(fcGen, args);
+        },
+        [
+          fastCheckTestCountriesGenerator,
+          fastCheckTestDomesticLeaguesGenerator,
+          fastCheckTestClubsGenerator,
+        ],
+      ),
+      zipAll,
+    ])([
+      countriesCount,
+      [countriesCount, competitionsPerCountryCount],
       [
-        fastCheckTestCountriesGenerator,
-        fastCheckTestDomesticLeaguesGenerator,
-        fastCheckTestClubsGenerator,
+        countriesCount,
+        competitionsPerCountryCount,
+        clubsPerDomesticLeaguesCount,
       ],
-    ),
-    zipAll,
-  ])([
-    countriesCount,
-    [countriesCount, competitionsPerCountryCount],
-    [countriesCount, competitionsPerCountryCount, clubsPerDomesticLeaguesCount],
-  ]);
-};
+    ]);
+  },
+);
 
-export const fastCheckTestBaseEntitiesGenerator = (
-  [testSeason, testCountriesDomesticsLeaguesClubsCount]: [
-    number,
-    [number, number, number],
-  ],
-  fcGen: fc.GeneratorValue,
-): BaseEntities => {
-  return pipe([
-    fastCheckTestBaseCountriesGenerator,
-    convertBaseCountriesToBaseEntities(testSeason),
-  ])(testCountriesDomesticsLeaguesClubsCount, fcGen);
-};
-
+export const fastCheckTestBaseEntitiesGenerator = curry(
+  (
+    fcGen: fc.GeneratorValue,
+    [testSeason, testCountriesDomesticsLeaguesClubsCount]: [
+      number,
+      [number, number, number],
+    ],
+  ): BaseEntities => {
+    return pipe([
+      fastCheckTestBaseCountriesGenerator(fcGen),
+      convertBaseCountriesToBaseEntities(testSeason),
+    ])(testCountriesDomesticsLeaguesClubsCount);
+  },
+);
 
 export const getRandomCountryIndex = (
   fcGen: fc.GeneratorValue,
   testBaseEntities: BaseEntities,
 ): string => {
-  return pipe([
-    getBaseEntitiesCountries,
-    fastCheckRandomObjectKey(fcGen),
-  ])(testBaseEntities);
+  return pipe([getBaseEntitiesCountries, fastCheckRandomObjectKey(fcGen)])(
+    testBaseEntities,
+  );
 };
 
 export const getRandomDomesticLeagueIndex = (
@@ -149,7 +152,6 @@ export const getRandomClubIndex = (
     concat(randomClubIndex),
   ])(testBaseEntities);
 };
-
 
 export const getRandomDomesticLeagueIndexFromSpecificCountryIndex = curry(
   (
@@ -213,7 +215,10 @@ export const getCompletelyRandomClubIDAndDomesticLeagueID = (
     [randomCountryIndex, randomCompetitionIndex, randomClubIndex],
   );
 
-  return sortByIdentity([randomClubID, randomCompetitionID]) as [string, string];
+  return sortByIdentity([randomClubID, randomCompetitionID]) as [
+    string,
+    string,
+  ];
 };
 
 export const getAListOfRandomClubIDs = curry(
@@ -243,4 +248,3 @@ export const getAListOfRandomMatches = curry(
 export const defaultGetAListOfRandomMatches = getAListOfRandomMatches(
   DEFAULTTESTMATCHESCOUNT,
 );
-

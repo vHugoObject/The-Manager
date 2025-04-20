@@ -13,7 +13,7 @@ import {
   tail,
   take,
   takeRight,
-  pipe
+  pipe,
 } from "lodash/fp";
 import {
   addOne,
@@ -22,12 +22,8 @@ import {
   half,
   simpleModularArithmetic,
   modularAddition,
-} from "./MathUtilities"
-import {
-  lastTwoArrayValues,
-  firstTwoArrayValues,  
-} from "./ArrayUtilities";
-
+} from "./MathUtilities";
+import { getLastTwoArrayValues, getFirstTwoArrayValues } from "./Getters";
 
 export const totalRoundRobinRounds = minusOne;
 export const totalDoubleRoundRobinRounds = pipe([minusOne, multiplyByTwo]);
@@ -77,10 +73,9 @@ export const everyWeekAfterFirstWeekofRoundRobin = ([clubs, firstRound]: [
     range(1),
     reduce(
       (rounds: Array<Array<number>>, _: number) => {
-        const [firstMatch, allOtherMatches] = pipe([
-          last,
-          over([head, tail]),
-        ])(rounds);
+        const [firstMatch, allOtherMatches] = pipe([last, over([head, tail])])(
+          rounds,
+        );
         return concat(rounds, [
           concat(
             [
@@ -108,11 +103,11 @@ export const doubleRoundRobinScheduler = pipe([
   (firstHalf: Array<Array<[number, number]>>): Array<Array<[number, number]>> =>
     pipe([
       pipe([
-        lastTwoArrayValues,
+        getLastTwoArrayValues,
         map(
           (round: Array<[number, number]>): Array<[number, number]> =>
             pipe([
-              firstTwoArrayValues,
+              getFirstTwoArrayValues,
               map(reverse),
               concat(takeRight(round.length - 2, round)),
             ])(round),
