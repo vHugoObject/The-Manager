@@ -1,53 +1,355 @@
-import { describe, expect } from "vitest";
+import { describe, expect, assert } from "vitest";
 import { test, fc } from "@fast-check/vitest";
-import { property, first, over, size, multiply, pipe } from "lodash/fp";
-import { BaseEntities } from "../../Common/CommonTypes";
-import { BaseCountries } from "../../Countries/CountryTypes";
+import { zipAll, pipe, isEqual, multiply, over, size, sum, property, first } from "lodash/fp";
+import { BaseEntities, BaseCountries } from "../Types"
 import {
-  getBaseEntitiesCountriesCount,
+  getCountOfStringsFromArray,
+  getCountOfIntegersFromArray,
+  getCountOfUniqueStringsFromArray,
+  getCountOfUniqueIntegersFromArray,
+  getFirstLevelArrayLengths,
+  getCountOfItemsFromArrayForPredicate,
+  getSizeMinAndMaxOfArray,
+  getSizeOfCompactedAray,
+  getBaseEntitiesClubIDsAsSet,
   getBaseEntitiesDomesticLeagueIDsAsSet,
-  getBaseEntitiesDomesticLeagueIDsForACountryIndexAsSet,
-  getBaseEntitiesDomesticLeagues,
-  getBaseEntitiesClubs,
-  getBaseEntitiesDomesticLeagueIDAtSpecificIndex,
   getBaseEntitiesClubIDAtSpecificIndex,
   getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet,
-  getBaseEntitiesClubIDsAsSet,
+  getBaseEntitiesDomesticLeagueIDAtSpecificIndex,
+  getBaseEntitiesDomesticLeagueIDsForACountryIndexAsSet,
+  getBaseEntitiesClubs,
+  getBaseEntitiesDomesticLeagues,
+  isClubID,
+  isDomesticLeagueID,
+  getBaseEntitiesCountriesCount,
   getTestBaseEntitiesCount,
-} from "../../Common/BaseEntitiesUtilities";
+  getSecondLevelArrayLengths
+} from "../Getters";
 import {
-  getFirstLevelArrayLengths,
-  getSecondLevelArrayLengths,
-} from "../../Common/Getters";
-import { spreadMultiply } from "../../Common/Arithmetic";
-import { isDomesticLeagueID } from "../../Competitions/CompetitionUtilities";
-import { isClubID } from "../../Clubs/ClubUtilities";
-import { convertArraysToSetsAndAssertStrictEqual } from "../ArrayTestingUtilities";
+  spreadMultiply,
+  convertFlattenedArrayIntoSet,
+  convertCharacterIntoCharacterCode,
+  convertArrayOfArraysToArrayOfSets,
+  addOne, zipApply, zipAllAndGetMinOfArrayAtIndex } from "../Transformers"
+import { convertArraysToSetsAndAssertStrictEqual,
+  assertIntegerGreaterThanOrEqualMinAndLessThanMax } from "../Asserters";
 import {
-  fastCheckTestBaseCountriesGenerator,
-  fastCheckTestCountriesGenerator,
-  fastCheckTestDomesticLeaguesGenerator,
   fastCheckTestClubsGenerator,
-  getRandomCountryIndex,
-  getRandomDomesticLeagueIndex,
-  getRandomClubIndex,
-  getRandomDomesticLeagueIndexFromSpecificCountryIndex,
-  getCompletelyRandomDomesticLeagueID,
-  getRandomClubIndexFromSpecificCountryDomesticLeagueIndex,
-  getCompletelyRandomClubID,
-  getCompletelyRandomClubIDAndDomesticLeagueID,
+  fastCheckTestDomesticLeaguesGenerator,
+  fastCheckTestCountriesGenerator,
+  fastCheckTestBaseCountriesGenerator,
+  fastCheckRandomCharacterGenerator,
+  fastCheckRandomIntegerInRange,
+  fastCheckTestLinearRangeGenerator,
+  fastCheckNLengthUniqueIntegerArrayGenerator,
+  fastCheckNUniqueIntegersFromRangeAsArrayGenerator,
+  fastCheckNLengthUniqueStringArrayGenerator,
+  fastCheckNLengthArrayOfStringCountTuplesGenerator,
+  fastCheckTestLinearRangeWithMinimumGenerator,
+  fastCheckArrayOfNIntegerArraysGenerator,
+  fastCheckTestMixedArrayOfStringIDsGenerator,
+  fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator,
+  fastCheckNLengthArrayOfItemCountIndexTuplesGivenItemsAndRangeOfCountsGenerator,
+  fastCheckNLengthArrayOfItemCountTuplesGivenItemsAndRangeOfCountsGenerator,
+  fastCheckTestMixedArrayOfStringIDsGivenStringsGenerator,
+  generateTestComposition,
+  generateTestOutfieldPlayersComposition,
+  getAListOfRandomMatches,
   fastCheckTestBaseEntitiesGenerator,
   getAListOfRandomClubIDs,
-  getAListOfRandomMatches,
-} from "../TestEntityGenerationUtilities";
+  getCompletelyRandomClubIDAndDomesticLeagueID,
+  getCompletelyRandomClubID,
+  getCompletelyRandomDomesticLeagueID,
+  getRandomDomesticLeagueIndex,
+  getRandomClubIndexFromSpecificCountryDomesticLeagueIndex,
+  getRandomCountryIndex,
+  getRandomDomesticLeagueIndexFromSpecificCountryIndex,
+  getRandomClubIndex,
+} from "../TestDataGenerationUtilities";
 
-describe("TestEntityGenerationUtilities tests", () => {
+describe("TestDataGenerationUtilities test suite", () => {
+  const getActualStringIndexAndCountArray = pipe([
+    zipAll,
+    zipApply([
+      getCountOfStringsFromArray,
+      getCountOfIntegersFromArray,
+      getCountOfIntegersFromArray,
+    ]),
+  ]);
+  const getActualStringAndCountArray = pipe([
+    zipAll,
+    zipApply([getCountOfStringsFromArray, getCountOfIntegersFromArray]),
+    convertFlattenedArrayIntoSet,
+  ]);
+  test.prop([
+    fc.tuple(
+      fc.integer({ min: 1, max: 49 }),
+      fc.integer({ min: 50, max: 100 }),
+    ),
+    fc.gen(),
+  ])("fastCheckRandomIntegerInRange", (testRange, fcGen) => {
+    const actualInteger: number = fastCheckRandomIntegerInRange(
+      fcGen,
+      testRange,
+    );
+    assertIntegerGreaterThanOrEqualMinAndLessThanMax(testRange, actualInteger);
+  });
+
+  test.prop([
+    fc.tuple(
+      fc.integer({ min: 1, max: 49 }),
+      fc.integer({ min: 50, max: 100 }),
+    ),
+    fc.gen(),
+  ])("fastCheckRandomCharacterGenerator", (testUTFRange, fcGen) => {
+    const actualCharacter: string = fastCheckRandomCharacterGenerator(
+      testUTFRange,
+      fcGen,
+    );
+    const actualCharacterCode: number =
+      convertCharacterIntoCharacterCode(actualCharacter);
+    assertIntegerGreaterThanOrEqualMinAndLessThanMax(
+      testUTFRange,
+      actualCharacterCode,
+    );
+  });
+  
+
+
+  test.prop([fc.integer({ min: 2 }), fc.gen()])(
+    "fastCheckTestLinearRangeGenerator",
+    (testRangeSize, fcGen) => {
+      const actualLinearRange: [number, number] =
+        fastCheckTestLinearRangeGenerator(fcGen, testRangeSize);
+      const [actualRangeMin, actualRangeMax] = actualLinearRange;
+      const expectedRangeMax: number = addOne(actualRangeMin + testRangeSize);
+      assert.isNumber(actualRangeMin);
+      expect(actualRangeMax).toEqual(expectedRangeMax);
+    },
+  );
+
+  test.prop([fc.integer({ min: 2 }), fc.nat(), fc.gen()])(
+    "fastCheckTestLinearRangeWithMinimumGenerator",
+    (testRangeSize, testRangeMin, fcGen) => {
+      const actualLinearRange: [number, number] =
+        fastCheckTestLinearRangeWithMinimumGenerator(fcGen, [
+          testRangeMin,
+          testRangeSize,
+        ]);
+      const [actualRangeMin] = actualLinearRange;
+      expect(actualRangeMin).toBeGreaterThanOrEqual(testRangeMin);
+    },
+  );
+
+  test.prop([fc.integer({ min: 2, max: 1000 }), fc.gen()])(
+    "fastCheckNLengthUniqueIntegerArrayGenerator",
+    (testArraySize, fcGen) => {
+      const actualArray: Array<number> =
+        fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testArraySize);
+      const actualIntegerCount: number =
+        getCountOfUniqueIntegersFromArray(actualArray);
+      expect(actualIntegerCount).toEqual(testArraySize);
+    },
+  );
+
+  test.prop([
+    fc.integer({ min: 2, max: 1000 }),
+    fc.integer({ min: 2, max: 1000 }),
+    fc.gen(),
+  ])(
+    "fastCheckNUniqueIntegersFromRangeAsArrayGenerator",
+    (testArraySize, testRangeSize, fcGen) => {
+      const testRange: [number, number] = fastCheckTestLinearRangeGenerator(
+        fcGen,
+        testRangeSize,
+      );
+
+      const actualArray: Array<number> =
+        fastCheckNUniqueIntegersFromRangeAsArrayGenerator(fcGen, [
+          testRange,
+          testArraySize,
+        ]);
+
+      const [expectedMin, expectedMax] = testRange;
+
+      const [actualIntegerCount, actualMin, actualMax] =
+        getSizeMinAndMaxOfArray(actualArray);
+      expect(actualIntegerCount).toEqual(testArraySize);
+      expect(actualMin).toBeGreaterThanOrEqual(expectedMin);
+      expect(actualMax).toBeLessThanOrEqual(expectedMax);
+    },
+  );
+
+  test.prop([fc.integer({ min: 2, max: 1000 }), fc.gen()])(
+    "fastCheckNLengthUniqueStringArrayGenerator",
+    (testArraySize, fcGen) => {
+      const actualArray: Array<string> =
+        fastCheckNLengthUniqueStringArrayGenerator(fcGen, testArraySize);
+
+      const actualStringCount: number = getCountOfUniqueStringsFromArray(actualArray);
+      expect(actualStringCount).toEqual(testArraySize);
+    },
+  );
+
+  test.prop([fc.integer({ min: 2, max: 1000 }), fc.gen()])(
+    "fastCheckNLengthArrayOfStringCountTuplesGenerator",
+    (testArraySize, fcGen) => {
+      const actualArray: Array<[string, number]> =
+        fastCheckNLengthArrayOfStringCountTuplesGenerator(fcGen, testArraySize);
+
+      const actualStringAndCountArray: Array<number> =
+        getActualStringAndCountArray(actualArray);
+      convertArraysToSetsAndAssertStrictEqual([
+        actualStringAndCountArray,
+        [testArraySize],
+      ]);
+    },
+  );
+
+  test.prop([fc.integer({ min: 2, max: 1000 }), fc.gen()])(
+    "fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator",
+    (testArraySize, fcGen) => {
+      const actualArray: Array<[string, number, number]> =
+        fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator(
+          fcGen,
+          testArraySize,
+        );
+
+      const actualCounts: Array<number> =
+        getActualStringIndexAndCountArray(actualArray);
+
+      convertArraysToSetsAndAssertStrictEqual([actualCounts, [testArraySize]]);
+    },
+  );
+
+  test.prop([
+    fc.integer({ min: 2, max: 25 }),
+    fc.integer({ min: 2, max: 50 }),
+    fc.gen(),
+  ])(
+    "fastCheckArrayOfNIntegerArraysGenerator",
+    (testCountOfArrays, testSizeOfArrays, fcGen) => {
+      const actualArray: Array<Array<number>> =
+        fastCheckArrayOfNIntegerArraysGenerator(fcGen, [
+          testCountOfArrays,
+          testSizeOfArrays,
+        ]);
+      const actualArraySize: number = pipe([
+        getFirstLevelArrayLengths,
+        getCountOfItemsFromArrayForPredicate(isEqual(testSizeOfArrays)),
+      ])(actualArray);
+
+      expect(actualArraySize).toEqual(testCountOfArrays);
+    },
+  );
+
+  test.prop([
+    fc.integer({ min: 3, max: 10 }),
+    fc.integer({ min: 3, max: 10 }),
+    fc.integer({ min: 3, max: 100 }),
+    fc.gen(),
+  ])(
+    "fastCheckNLengthArrayOfItemCountTuplesGivenItemsAndRangeOfCountsGenerator",
+    (testStringCount, testMinItemCount, testRangeSize, fcGen) => {
+      const testStrings: Array<string> =
+        fastCheckNLengthUniqueStringArrayGenerator(fcGen, testStringCount);
+
+      const actualTuples: Array<[string, number]> =
+        fastCheckNLengthArrayOfItemCountTuplesGivenItemsAndRangeOfCountsGenerator(
+          testStrings,
+          fcGen,
+          [testMinItemCount, testRangeSize],
+        );
+
+      const actualStringAndCountArray: Array<number> =
+        getActualStringAndCountArray(actualTuples);
+      convertArraysToSetsAndAssertStrictEqual([
+        actualStringAndCountArray,
+        [testStringCount],
+      ]);
+    },
+  );
+
+  test.prop([
+    fc.integer({ min: 2, max: 10 }),
+    fc.integer({ min: 2, max: 10 }),
+    fc.integer({ min: 1, max: 100 }),
+    fc.gen(),
+  ])(
+    "fastCheckNLengthArrayOfItemCountIndexTuplesGivenItemsAndRangeOfCountsGenerator",
+    (testStringCount, testMinItemCount, testRangeSize, fcGen) => {
+      const testStrings: Array<string> =
+        fastCheckNLengthUniqueStringArrayGenerator(fcGen, testStringCount);
+
+      const actualTuples: Array<[string, number, number]> =
+        fastCheckNLengthArrayOfItemCountIndexTuplesGivenItemsAndRangeOfCountsGenerator(
+          testStrings,
+          fcGen,
+          [testMinItemCount, testRangeSize],
+        );
+
+      const actualStringIndexAndCountArray =
+        getActualStringIndexAndCountArray(actualTuples);
+
+      convertArraysToSetsAndAssertStrictEqual([
+        actualStringIndexAndCountArray,
+        [testStringCount],
+      ]);
+    },
+  );
+
+  test.prop([
+    fc.integer({ min: 2, max: 10 }),
+    fc.integer({ min: 2, max: 10 }),
+    fc.integer({ min: 1, max: 100 }),
+    fc.gen(),
+  ])(
+    "fastCheckTestMixedArrayOfStringIDsGivenStringsGenerator",
+    (testStringCount, testMinItemCount, testRangeSize, fcGen) => {
+      const testStrings: Array<string> =
+        fastCheckNLengthUniqueStringArrayGenerator(fcGen, testStringCount);
+
+      const [actualStringIDs, actualStringCountIndexTuples]: [
+        Array<string>,
+        Array<[string, number]>,
+      ] = fastCheckTestMixedArrayOfStringIDsGivenStringsGenerator(
+        testStrings,
+        fcGen,
+        [testMinItemCount, testRangeSize],
+      );
+
+      const actualMinOfCounts: number = zipAllAndGetMinOfArrayAtIndex(
+        1,
+        actualStringCountIndexTuples,
+      );
+      expect(actualMinOfCounts).toBeGreaterThanOrEqual(testMinItemCount);
+      const expectedMinimumSize = multiply(testMinItemCount, testStringCount);
+      expect(actualStringIDs.length).toBeGreaterThanOrEqual(
+        expectedMinimumSize,
+      );
+    },
+  );
+
+
+  test.prop([fc.integer({ min: 2, max: 10 }), fc.gen()])(
+    "fastCheckTestMixedArrayOfStringIDsGenerator",
+    (testArraySize, fcGen) => {
+      const [actualStringIDs, actualStringCountIndexTuples]: [
+        Array<string>,
+        Array<[string, number]>,
+      ] = fastCheckTestMixedArrayOfStringIDsGenerator(fcGen, testArraySize);
+      expect(actualStringCountIndexTuples.length).toEqual(testArraySize);
+      const actualSize: number = getSizeOfCompactedAray(actualStringIDs);
+      expect(actualSize).toBeGreaterThanOrEqual(testArraySize);
+    },
+  );
   test.prop([fc.integer({ min: 2, max: 100 }), fc.gen()])(
     "fastCheckTestCountriesGenerator",
     (testCountriesCount, fcGen) => {
       const actualTestCountries: Array<string> =
-        fastCheckTestCountriesGenerator(fcGen, testCountriesCount);
-      expect(actualTestCountries.length).toStrictEqual(testCountriesCount);
+            fastCheckTestCountriesGenerator(fcGen, testCountriesCount);
+      const actualCountriesCount = getCountOfUniqueStringsFromArray(actualTestCountries)
+      expect(actualCountriesCount).toEqual(testCountriesCount)
     },
   );
   test.prop([
@@ -304,6 +606,7 @@ describe("TestEntityGenerationUtilities tests", () => {
           testRandomCountryIndex,
         );
 
+
       expect(
         expectedDomesticLeagueIDsForTestCountryAsSet.has(
           actualRandomDomesticLeagueID,
@@ -511,9 +814,47 @@ describe("TestEntityGenerationUtilities tests", () => {
 
   test.prop([
     fc.array(fc.integer({ min: 1, max: 25 }), { minLength: 4, maxLength: 4 }),
-  ])("fastCheckGenerateTestPositionGroupIDs", async (testCounts) => {
-    const testPositionGroupCountTuples = zip(POSITIONGROUPSLIST, testCounts);
-    //expandStartingIndexAndCountIntoListOfStringIDs
-    const testMixedPositionGroupsArray = testPositionGroupCountTuples;
-  });
+  ])("fastCheckGenerateTestPositionGroupIDs",  (testCounts) => {});
+
+  test.prop([fc.gen()])(
+    "generateTestOutfieldPlayersComposition",
+     (fcGen) => {
+      const actualTestOutfieldPlayers: Array<number> =
+        generateTestOutfieldPlayersComposition(fcGen);
+      expect(actualTestOutfieldPlayers.length).toEqual(3);
+      expect(sum(actualTestOutfieldPlayers)).toEqual(10);
+    },
+  );
+
+  test.prop([fc.nat(), fc.gen()])(
+    "generateTestComposition",
+     (testStartingIndex, fcGen) => {
+      const actualComposition: Array<[number, number, number]> =
+         generateTestComposition(testStartingIndex, fcGen);
+      const [, actualPositionCounts, actualStartingIndices] =
+        zipAll(actualComposition);
+      const [actualStartingIndicesSet, expectedStartingIndicesSet] =
+        convertArrayOfArraysToArrayOfSets([
+          actualStartingIndices,
+          [testStartingIndex],
+        ]);
+      expect(sum(actualPositionCounts)).toEqual(11);
+      expect(actualStartingIndicesSet).toStrictEqual(
+        expectedStartingIndicesSet,
+      );
+    },
+  );
+
+  test.prop([fc.nat(), fc.gen()],{numRuns: 0})(
+    "generateTestStartingEleven",
+     (testStartingIndex, fcGen) => {
+      const actualTestStartingEleven: Record<
+        string,
+        Array<number>
+      > =  generateTestComposition(testStartingIndex, fcGen);
+      const actualTestStartingElevenKeys: Array<string> = Object.keys(
+        actualTestStartingEleven,
+      );
+    },
+  );
 });

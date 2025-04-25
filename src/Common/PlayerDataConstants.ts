@@ -1,4 +1,4 @@
-import { PositionGroup } from "./PlayerTypes";
+import { PositionGroup } from "./Types";
 
 const HEIGHTRANGE: [number, number] = [160, 200];
 const WEIGHTRANGE: [number, number] = [60, 100];

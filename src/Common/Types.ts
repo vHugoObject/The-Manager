@@ -1,8 +1,35 @@
+export type BaseEntity = [string, string];
+
+export interface BaseEntities {
+  countries: Array<BaseEntity>;
+  domesticLeagues: Array<Array<BaseEntity>>;
+  clubs: Array<Array<Array<BaseEntity>>>;
+  players?: Array<Array<Array<Array<BaseEntity>>>>;
+}
+
+export type Entity = Array<number | string | Array<string>>;
+
+export type BaseCountry = [string, Array<string>, Array<Array<string>>];
+export type BaseCountries = Array<BaseCountry>;
+
+export enum CountryArrayIndices {
+  Name,
+  Competitions,
+}
+export enum CompetitionArrayIndices {
+  Name,
+  Clubs,
+}
+export enum ClubArrayIndices {
+  Name,
+  Squad,
+}
+
 export enum PositionGroup {
-  Goalkeeper = "3",
+  Goalkeeper = "1",
   Defender = "2",
-  Midfielder = "0",
-  Attacker = "1",
+  Midfielder = "3",
+  Attacker = "4",
 }
 
 export enum PLAYERBIOINDICES {
@@ -84,4 +111,27 @@ export enum ATTACKINGSKILLS {
   SprintSpeed = "10",
   PositionalAwareness = "9",
   AttackingWorkRate = "7",
+}
+
+export interface SaveArguments {
+  Name: string;
+  UserMainDomesticLeagueID: string;
+  CurrentSeason: number;
+  UserClubID: string;
+  BaseEntities: BaseEntities;
+}
+
+export type SaveID = string | IDBValidKey;
+
+export interface Save {
+  Name: string;
+  UserMainDomesticLeagueID: string;
+  UserClubID: string;
+  SeasonsPlayed: number;
+  CurrentSeason: number;
+  CurrentDate: Date;
+  Entities: Record<string, Entity>;
+  EntitiesStatistics: Record<string, number>;
+  PlayerSkillsAndPhysicalData: Record<string, Record<string, number>>;
+  SaveID: SaveID;
 }

@@ -1,16 +1,6 @@
 import { chunk, forEach, pipe } from "lodash/fp";
 import { expect } from "vitest";
 import { convertArrayOfArraysToArrayOfSets } from "../Common/Transformers";
-import { fc } from "@fast-check/vitest";
-import { curry } from "lodash/fp";
-export const fastCheckRandomItemFromArray = curry(
-  <TValue>(
-    fcGen: fc.GeneratorValue,
-    testArray: Array<TValue>,
-  ): fc.Arbitrary<TValue> => {
-    return fcGen(fc.constantFrom, ...testArray);
-  },
-);
 
 export const pairArraysAndAssertStrictEqual = pipe([
   chunk(2),
@@ -22,4 +12,19 @@ export const pairArraysAndAssertStrictEqual = pipe([
 export const convertArraysToSetsAndAssertStrictEqual = pipe([
   convertArrayOfArraysToArrayOfSets,
   pairArraysAndAssertStrictEqual,
+]);
+
+export const assertIntegerGreaterThanOrEqualMinAndLessThanMax = (
+  [min, max]: [number, number],
+  integer: number,
+) => {
+  expect(integer).toBeGreaterThanOrEqual(min);
+  expect(integer).toBeLessThanOrEqual(max);
+};
+
+export const pairIntegersAndAssertEqual = pipe([
+  chunk(2),
+  forEach(([actual, expected]: [number, number]) => {
+    expect(actual).toEqual(expected);
+  }),
 ]);
