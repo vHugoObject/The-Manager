@@ -26,10 +26,10 @@ export enum ClubArrayIndices {
 }
 
 export enum PositionGroup {
-  Goalkeeper = "1",
+  Attacker = "0",
+  Midfielder = "1",
   Defender = "2",
-  Midfielder = "3",
-  Attacker = "4",
+  Goalkeeper = "3",
 }
 
 export enum PLAYERBIOINDICES {

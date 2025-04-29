@@ -1,7 +1,6 @@
 import {
   pipe,
   concat,
-  size,
   map,
   flatten,
   curry,
@@ -14,13 +13,10 @@ import {
   shuffle,
   reduce,
   sum,
-  slice,
-  flip,
   join,
   zipAll,
   zipObject,
   flattenDepth,
-  flatMapDepth,
   zipWith,
   initial,
   flatMap,
@@ -46,7 +42,7 @@ import {
   tail,
   update,
   sortBy,
-  partition
+  partition,
 } from "lodash/fp";
 import {
   addDays,
@@ -64,11 +60,7 @@ import {
   isEqual,
   getWeekOfMonth,
 } from "date-fns/fp";
-import {
-  mapIndexed,
-  updatePaths,
-  updateAllPaths
-} from "futil-js";
+import { mapIndexed, updatePaths, updateAllPaths } from "futil-js";
 import {
   BaseEntities,
   Entity,
@@ -81,7 +73,8 @@ import {
   DEFENDINGSKILLS,
   GOALKEEPINGSKILLS,
 } from "./Types";
-import { JANUARY,
+import {
+  JANUARY,
   FEBRUARY,
   AUGUST,
   JUNE,
@@ -91,21 +84,29 @@ import { JANUARY,
   U,
   HOMEEFFECT,
   DEFENSESTRENGTHBALANCE,
-  BASECLUBCOMPOSITION
+  BASECLUBCOMPOSITION,
+  DEFAULTSQUADSIZE,
+  PLAYERSPEROUTFIELDPOSITIONGROUP,
+  MAXPLAYERIDPREFIXPLUSONE,
 } from "./Constants";
-import { PLAYERBIODATABYPOSITION } from "./PlayerBioConstants"
-import { PLAYERSKILLSPHYSICALCONTRACTRANGESBYPOSITION,
-  PLAYERSKILLSPHYSICALCONTRACTRANDOMPLUSORMINUS } from "./PlayerDataConstants"
-import { FIRSTNAMES, LASTNAMES, COUNTRYNAMES } from "./Names"
-
-import { getFirstTwoArrayValues,
+import { PLAYERBIODATABYPOSITION } from "./PlayerBioConstants";
+import {
+  PLAYERSKILLSPHYSICALCONTRACTRANGESBYPOSITION,
+  PLAYERSKILLSPHYSICALCONTRACTRANDOMPLUSORMINUS,
+} from "./PlayerDataConstants";
+import { FIRSTNAMES, LASTNAMES, COUNTRYNAMES } from "./Names";
+import {
+  getFirstTwoArrayValues,
   getLastTwoArrayValues,
   isGoalkeeperID,
   getBaseEntitiesClubs,
   getBaseEntitiesDomesticLeagues,
   getBaseEntitiesClubsCount,
-  getTotalPlayersToGenerateBasedOnGivenComposition
-} from "./Getters"
+} from "./Getters";
+
+export const convertToSet = <T>(collection: Array<T>): Set<T> => {
+  return new Set(collection);
+};
 
 export const sortByIdentity = sortBy(identity);
 export const sortTuplesByFirstValueInTuple = sortBy(first);
@@ -113,8 +114,20 @@ export const sortTuplesByFirstValueInTuple = sortBy(first);
 export const flattenCompetitions = flattenDepth(1);
 export const flattenClubs = flattenDepth(2);
 
+export const createStringID = curry(
+  (string: string, idNumber: number): string =>
+    joinOnUnderscores([string, idNumber]),
+);
+
+const spreadCreateStringID = spread(createStringID);
+
+export const createStringIDWithSeason = curry(
+  (season: string, string: string, idNumber: number): string =>
+    joinOnUnderscores([string, idNumber, season]),
+);
+
 export const unfold = curry(
-  (unfolder: (index: number) => any, arraySize: number): Array<any> => {
+  <T>(unfolder: (index: number) => T, arraySize: number): Array<T> => {
     return Array.from({ length: arraySize }, (_, index: number) =>
       unfolder(index),
     );
@@ -129,10 +142,7 @@ export const unfoldItemCountTupleIntoArray = curry(
 
 export const unfoldStartingIndexAndCountIntoRange = curry(
   (startingIndex: number, count: number): Array<number> => {
-    return Array.from(
-      { length: count },
-      (_, index: number) => startingIndex + index,
-    );
+    return unfold(add(startingIndex), count);
   },
 );
 
@@ -163,13 +173,17 @@ export const unfoldBooleanCountTuplesIntoShuffledArrayOfBooleans = pipe([
   shuffle,
 ]);
 
+export const unfoldSingleStringStartingIndexAndCountTupleIntoArrayOfStringIDs =
+  curry(
+    (id: string, [startingIndex, count]: [number, number]): Array<string> => {
+      return unfold(pipe([add(startingIndex), createStringID(id)]), count);
+    },
+  );
+
 export const unfoldStringStartingIndexAndCountTuplesIntoArrayOfArrayOfStringIDs =
   (
     stringStartingIndexAndCountTuples: Array<[string, number, number]>,
   ): Array<Array<string>> => {
-    const createStringID = curry(
-      (string: string, idNumber: number) => `${string}_${idNumber}`,
-    );
     return pipe([
       map(([string, count, startingIndex]: [string, number, number]) => {
         return [pipe([add(startingIndex), createStringID(string)]), count];
@@ -197,53 +211,68 @@ export const unfoldStringStartingIndexAndCountTuplesIntoShuffledArrayOfStringIDs
     ])(stringStartingIndexAndCountTuples);
   };
 
-export const apply = <T>(func: (arg: T) => T, funcArg: T): T => {
-  return func(funcArg);
-};
+export const apply = <T>(func: (arg: T) => T, arg: T) => func(arg);
 
-export const spreadZipObject = spread(zipObject);
 export const zipApply = zipWith(apply);
 export const spreadZipApply = spread(zipApply);
+
+export const spreadZipObject = spread(zipObject);
 export const zipAdd = zipWith<number, number, number>(add);
 
 export const zipChunk = zipWith(chunk);
 export const spreadZipChunk = spread(zipChunk);
 
-export const zipAllAndGetInitial = pipe([zipAll, initial]);
-
-export const zipAllAndGetArrayAtIndex = curry(
-  (index: number, array: Array<Array<any>>) =>
-    pipe([zipAll, property(index)])(array),
-);
-export const zipAllAndGetMinOfArrayAtIndex = curry(
-  (index: number, array: Array<Array<any>>) =>
-    pipe([zipAllAndGetArrayAtIndex(index), min])(array),
-);
-export const zipAllAndGetSumOfArrayAtIndex = curry(
-  (index: number, array: Array<Array<any>>) =>
-    pipe([zipAllAndGetArrayAtIndex(index), sum])(array),
+export const zipAllAndTransformXArrayWithY = curry(
+  <T, V>(
+    [getter, transformer]: [(arg: Array<T>) => T, (arg: Array<T>) => V],
+    array: Array<Array<T>>,
+  ): V => {
+    return pipe([zipAll, getter, transformer])(array);
+  },
 );
 
-export const zipAllAndGetFirstArray = pipe([zipAll, first]);
-export const zipAllAndGetFirstArrayAsSet = pipe([
-  zipAllAndGetFirstArray,
-  <T>(collection: Array<T>): Set<T> => new Set(collection),
+export const zipAllAndGetFirstArray = zipAllAndTransformXArrayWithY([
+  first,
+  identity,
 ]);
-export const zipAllAndGetSumOfFirstArray = pipe([zipAllAndGetFirstArray, sum]);
-
-export const zipAllAndGetSumOfSecondArray = zipAllAndGetSumOfArrayAtIndex(1);
-
-export const zipAllAndGetLastArray = pipe([zipAll, last]);
-export const zipAllAndGetSumOfLastArray = pipe([zipAllAndGetLastArray, sum]);
-export const zipAllAndGetMinOfLastArray = pipe([zipAllAndGetLastArray, min]);
-export const zipAllAndGetLastArrayAsSet = pipe([
-  zipAllAndGetLastArray,
-  <T>(collection: Array<T>): Set<T> => new Set(collection),
+export const zipAllAndGetInitial = zipAllAndTransformXArrayWithY([
+  initial,
+  identity,
+]);
+export const zipAllAndGetSecondArray = zipAllAndTransformXArrayWithY([
+  property([1]),
+  identity,
+]);
+export const zipAllAndGetLastArray = zipAllAndTransformXArrayWithY([
+  last,
+  identity,
 ]);
 
-export const convertToSet = <T>(collection: Array<T>): Set<T> => {
-  return new Set(collection);
-};
+export const zipAllAndGetSumOfFirstArray = zipAllAndTransformXArrayWithY([
+  first,
+  sum,
+]);
+export const zipAllAndGetSumOfSecondArray = zipAllAndTransformXArrayWithY([
+  property([1]),
+  sum,
+]);
+export const zipAllAndGetSumOfLastArray = zipAllAndTransformXArrayWithY([
+  last,
+  sum,
+]);
+
+export const zipAllAndGetMinOfFirstArray = zipAllAndTransformXArrayWithY([
+  first,
+  min,
+]);
+export const zipAllAndGetMinOfSecondArray = zipAllAndTransformXArrayWithY([
+  property([1]),
+  min,
+]);
+export const zipAllAndGetMinOfLastArray = zipAllAndTransformXArrayWithY([
+  last,
+  min,
+]);
 
 export const convertConcatenatedArraysIntoSet = pipe([concat, convertToSet]);
 export const convertFlattenedArrayIntoSet = pipe([flatten, convertToSet]);
@@ -268,7 +297,7 @@ export const convertArrayIntoLinearRange = pipe([
   convertArrayOfStringsIntoArrayOfIntegers,
 ]);
 
-export const convertArrayOfArraysIntoArrayOfLinearRanges = map(
+export const foldArrayOfArraysIntoArrayOfLinearRanges = map(
   convertArrayIntoLinearRange,
 );
 
@@ -326,15 +355,7 @@ export const weightedMean = curry(
   (arrWeights: number[], arrValues: number[]): number => {
     return pipe([
       normalizePercentages,
-      over([
-        pipe([
-          zipWith((value: number, weight: number): number => {
-            return value * weight;
-          }, arrValues),
-          sum,
-        ]),
-        sum,
-      ]),
+      over([pipe([zipWith(multiply, arrValues), sum]), sum]),
       ([totalOfValues, totalOfWeights]: [number, number]) =>
         totalOfValues / totalOfWeights,
     ])(arrWeights);
@@ -368,6 +389,10 @@ export const getAverageModularStepForRangeOfData = (
   ])(ranges);
 };
 
+export const mod = curry(
+  (divisor: number, dividend: number): number => dividend % divisor,
+);
+
 export const simpleModularArithmetic = curry(
   (
     arithmeticFunction: (arg: number) => number,
@@ -381,7 +406,7 @@ export const simpleModularArithmetic = curry(
 export const modularAddition = simpleModularArithmetic(addOne);
 export const modularSubtraction = simpleModularArithmetic(minusOne);
 
-export const boundedModularAddition = curry(
+export const nonZeroBoundedModularAddition = curry(
   (
     [rangeMin, rangeMax]: [number, number],
     standardIncrease: number,
@@ -408,7 +433,7 @@ export const mapModularIncreasersWithTheSameAverageStep = curry(
       getAverageModularStepForRangeOfData(ranges, playerCount) +
       randomPlusOrMinus;
     return map((range: [number, number]) => {
-      return boundedModularAddition(range, step);
+      return nonZeroBoundedModularAddition(range, step);
     })(ranges);
   },
 );
@@ -417,7 +442,7 @@ export const mapModularIncreasersWithDifferentStepsForARange = curry(
   (playerCount: number, ranges: Array<[number, number]>) => {
     return map(([min, max]: [number, number]) => {
       const step: number = Math.ceil((max - min) / playerCount);
-      return boundedModularAddition([min, max], step);
+      return nonZeroBoundedModularAddition([min, max], step);
     })(ranges);
   },
 );
@@ -478,62 +503,38 @@ export const convertArrayOfIntegersIntoArrayOfCharacters = map(
   convertCharacterIntoCharacterCode,
 );
 
-export const sliceUpArray = curry(
-  <T>(arrayOfSliceLengths: Array<number>, array: Array<T>): Array<T> => {
-    return pipe([
-      reduce(
-        (
-          [slices, currentStartIndex]: [Array<any>, number],
-          currentSliceLength: number,
-        ) => {
-          return pipe([
-            sum,
-            (currentEndIndex: number) => [
-              concat(slices, [
-                slice(currentStartIndex, currentEndIndex, array),
-              ]),
-              currentEndIndex,
-            ],
-          ])([currentStartIndex, currentSliceLength]);
-        },
-        [[], 0],
-      ),
-      first,
-    ])(arrayOfSliceLengths);
-  },
-);
+export const createCountry = (
+  name: string,
+  competitions: Array<[string, string]>,
+): Entity => {
+  return pipe([zipAll, initial, concat([name])])(competitions);
+};
 
-export const unflatten = curry(
-  <T>(
-    arrayOfArraysOfSliceLengths: Array<Array<number>>,
-    array: Array<T>,
-  ): Array<T> => {
-    return reduce(flip(sliceUpArray), array)(arrayOfArraysOfSliceLengths);
-  },
-);
+export const createCompetition = (
+  name: string,
+  clubs: Array<[string, string]>,
+): Entity => {
+  return pipe([zipAll, initial, shuffle, concat([name])])(clubs);
+};
 
-export const transformNestedAsFlat = curry(
-  (
-    [flattener, sliceCounter, sliceCreator]: [Function, Function, Function],
-    transformer: Function,
-    nestedData: Array<any>,
-  ): Array<any> => {
-    const levels = sliceCounter(nestedData);
-    return pipe([flattener, transformer, sliceCreator(levels)])(nestedData);
-  },
-);
+export const createClub = (name: string, squad: Array<string>): Entity => {
+  return [name, squad];
+};
 
-const transformCompetitions = transformNestedAsFlat([
-  flattenDepth(1),
-  map(size),
-  sliceUpArray,
-]);
+export const createPlayerIDsForClubs = (totalClubs: number) => {
+  const adjuster = mod(DEFAULTSQUADSIZE);
+  const idTransformer = (index: number) =>
+    Math.floor(adjuster(index) / PLAYERSPEROUTFIELDPOSITIONGROUP) %
+    MAXPLAYERIDPREFIXPLUSONE;
 
-const transformClubs = transformNestedAsFlat([
-  flattenDepth(2),
-  over([pipe([flatMapDepth(map(size), 2)]), map(size)]),
-  unflatten,
-]);
+  return pipe([
+    multiply(DEFAULTSQUADSIZE),
+    unfold((index: number) =>
+      pipe([over([idTransformer, identity]), spreadCreateStringID])(index),
+    ),
+    chunk(DEFAULTSQUADSIZE),
+  ])(totalClubs);
+};
 
 export const convertBaseCountriesToBaseEntities = curry(
   (season: number, baseCountries: Array<BaseCountry>): BaseEntities => {
@@ -562,29 +563,6 @@ export const convertBaseCountriesToBaseEntities = curry(
     ])(baseCountries);
   },
 );
-
-export const createClub = (name: string, squad: Array<string>): Entity => {
-  return [name, squad];
-};
-
-export const createCompetition = (
-  name: string,
-  clubs: Array<[string, string]>,
-): Entity => {
-  return pipe([zipAll, initial, shuffle, concat([name])])(clubs);
-};
-
-export const createCountry = (
-  name: string,
-  competitions: Array<[string, string]>,
-): Entity => {
-  return pipe([zipAll, initial, concat([name])])(competitions);
-};
-
-export const createPlayerIDsForClubs = (
-  totalClubs: number,
-  positionCountIndexTuples: Array<[string, number, number]>,
-) => {};
 
 export const runModularIncreasersModularlyOverARangeOfPlayers = (
   [startingRange, modularIncreasers]: [Array<number>, Array<Function>],
@@ -714,7 +692,11 @@ export const generatePlayerBioDataForMultiplePositionGroups = (
   positionGroupCountStartingIndexTuples: Array<[PositionGroup, number, number]>,
 ): Promise<Array<[string, Array<number>]>> => {
   const namesAndCountriesRanges: Array<[number, number]> =
-    convertArrayOfArraysIntoArrayOfLinearRanges([FIRSTNAMES, LASTNAMES, COUNTRYNAMES]);
+    foldArrayOfArraysIntoArrayOfLinearRanges([
+      FIRSTNAMES,
+      LASTNAMES,
+      COUNTRYNAMES,
+    ]);
   return pipe([
     map(
       ([positionGroup, playerCount, startingIndex]: [
@@ -737,7 +719,7 @@ export const generatePlayerBioDataForMultiplePositionGroups = (
           );
         const increasers = concat(namesAndCountriesIncreasers, [
           identity,
-          boundedModularAddition([positionGroupRange, 1]),
+          nonZeroBoundedModularAddition([positionGroupRange, 1]),
         ]);
 
         return generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers(
@@ -852,9 +834,12 @@ export const createSave = ({
     Entities: createEntities(BaseEntities),
     EntitiesStatistics: {},
     PlayerSkillsAndPhysicalData:
-      generateSkillsPhysicalContractDataForMultiplePositionGroups(0, BaseEntities),
+      generateSkillsPhysicalContractDataForMultiplePositionGroups(
+        0,
+        BaseEntities,
+      ),
     SaveID: crypto.randomUUID(),
-  }
+  };
 };
 
 export const calculateMeanCategoryStrengthForPlayer = curry(
@@ -868,19 +853,19 @@ export const calculateMeanAttackingStrengthForPlayer =
 
 export const calculateMeanCategoryStrengthForGroupOfPlayers = curry(
   (skills: Array<string>, players: Array<[string, Array<number>]>): number => {
-    return pipe([
-      map(calculateMeanCategoryStrengthForPlayer(skills)),
-      mean,
-    ])(players);
+    return pipe([map(calculateMeanCategoryStrengthForPlayer(skills)), mean])(
+      players,
+    );
   },
 );
 
 export const calculateDefenseStrength = (
   playerSkills: Record<string, Array<number>>,
 ): number => {
-  const [DEFENDINGSKILLSASLIST, GOALKEEPINGSKILLSASLIST] = map(
-    (Object.values)
-  )([DEFENDINGSKILLS, GOALKEEPINGSKILLS]);
+  const [DEFENDINGSKILLSASLIST, GOALKEEPINGSKILLSASLIST] = map(Object.values)([
+    DEFENDINGSKILLS,
+    GOALKEEPINGSKILLS,
+  ]);
 
   return pipe(
     Object.entries,
@@ -901,7 +886,7 @@ export const calculateDefenseStrength = (
   )(playerSkills);
 };
 
-export const calculateAttackStrength =  (
+export const calculateAttackStrength = (
   playerSkills: Record<string, Array<number>>,
 ): number => {
   const ATTACKINGSKILLSASLIST = Object.values(ATTACKINGSKILLS);
@@ -953,10 +938,8 @@ export const weibullCDFGoals = curry(
 
 export const getBaseWeibullCDFGoals = weibullCDFGoals(SHAPE);
 
-export const weibullCDFGoalsList = (
-  clubStrength: number,
-): Array<number> => {
-  return  map(getBaseWeibullCDFGoals(clubStrength))(POSSIBLEGOALS)
+export const weibullCDFGoalsList = (clubStrength: number): Array<number> => {
+  return map(getBaseWeibullCDFGoals(clubStrength))(POSSIBLEGOALS);
 };
 
 export const calculateJointProbability = curry(
@@ -1003,11 +986,10 @@ export const createJointProbabilitiesMatrixForGoals = async ([
 
 export const generateMatchGoals = (
   startingElevenTuples: Array<[number, Record<string, Array<number>>]>,
-): 
-  [
-    [Record<string, Array<number>>, Record<string, Array<number>>],
-    [number, number],
-  ]  => {
+): [
+  [Record<string, Array<number>>, Record<string, Array<number>>],
+  [number, number],
+] => {
   const [, elevens] = zipAll(startingElevenTuples);
 
   return pipe([
@@ -1026,7 +1008,6 @@ export const assignRandomScorer = pipe([
   over([map(calculateMeanAttackingStrengthForPlayer), map(first)]),
   weightedRandom,
 ]);
-
 
 export const totalRoundRobinRounds = minusOne;
 export const totalDoubleRoundRobinRounds = pipe([minusOne, multiplyByTwo]);
@@ -1140,40 +1121,40 @@ export const getThirdSundayOfAugust = pipe([
   filter(
     overEvery([isSunday, (date: string) => isEqual(4, getWeekOfMonth(date))]),
   ),
-  first
+  first,
 ]);
 
 export const getLastDayOfAugust = pipe([
   convertIntegerYearToDate,
   addMonths(AUGUST),
-  lastDayOfMonth
+  lastDayOfMonth,
 ]);
 
 export const getLastDayOfJuneOfNextYear = pipe([
   convertIntegerYearToDate,
   addOneYear,
   addMonths(JUNE),
-  lastDayOfMonth
+  lastDayOfMonth,
 ]);
 
 export const getFirstMondayOfFebruaryOfNextYear = pipe([
   convertIntegerYearToDate,
   addOneYear,
   addMonths(FEBRUARY),
-  nextMonday
+  nextMonday,
 ]);
 
 export const getJuneFifteenOfNextYear = pipe([
   convertIntegerYearToDate,
   addOneYear,
   addMonths(JUNE),
-  addTwoWeeks
+  addTwoWeeks,
 ]);
 
 export const getStartOfNextYear = pipe([
   convertIntegerYearToDate,
   addOneYear,
-  startOfYear
+  startOfYear,
 ]);
 
 const defaultTransferWindows: Array<

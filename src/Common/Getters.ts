@@ -29,14 +29,15 @@ import {
   zipWith,
   zipAll,
   pickBy,
-  overEvery,
   startsWith,
   overSome,
   sortBy,
   reverse,
   mean,
-  multiply,
-  uniq
+  uniq,
+  isNumber,
+  tail,
+  partialRight,
 } from "lodash/fp";
 import { updatePaths } from "futil-js";
 import {
@@ -48,13 +49,20 @@ import {
   CompetitionArrayIndices,
   ClubArrayIndices,
 } from "./Types";
-import { BASECLUBCOMPOSITION, DEFAULTMATCHCOMPOSITION, CLUBSDEPTH, COMPETITIONSDEPTH, PLAYERSDEPTH } from "./Constants";
+import {
+  DEFAULTMATCHCOMPOSITION,
+  CLUBSDEPTH,
+  COMPETITIONSDEPTH,
+  PLAYERSDEPTH,
+} from "./Constants";
 
 export const isTrue = isEqual(true);
 export const isFalse = isEqual(false);
 
 export const countByIdentity = countBy(identity);
+export const countByStartsWith = countBy(startsWith);
 
+export const getFirstAndTailOfArray = over([first, tail]);
 export const getSizeMinAndMaxOfArray = over([size, min, max]);
 export const getSizeOfFlattenedArray = pipe([flatten, size]);
 
@@ -75,8 +83,8 @@ export const getLastTwoArrayValues = takeRight(2);
 export const getFirstTwoArrayValues = take(2);
 export const getSumOfFlattenedArray = pipe([flatten, sum]);
 
-export const getObjectKeysCount = pipe([Object.keys, size]);
-
+export const getCountOfObjectKeys = pipe([Object.keys, size]);
+export const getCountOfObjectValues = pipe([Object.values, size]);
 
 export const getPartsOfIDAsArray = split("_");
 export const getIDPrefix = pipe([getPartsOfIDAsArray, first]);
@@ -93,38 +101,54 @@ export const getCountsForASetOfIDPrefixes = (
   return pipe([countByIDPrefix, pick(idPrefixes)])(ids);
 };
 
-
 export const getCountOfItemsFromArrayForPredicateWithTransformation = curry(
-  <T>(transformation: (args: Array<T>) => any, predicate: (arg: T) => boolean, array: Array<T>): number => {
+  <T, V>(
+    transformation: (args: Array<T>) => V,
+    predicate: (arg: V) => boolean,
+    array: Array<T>,
+  ): number => {
     return pipe([filter(predicate), transformation, size])(array);
   },
 );
 
-export const getCountOfItemsFromArrayForPredicate = curry(getCountOfItemsFromArrayForPredicateWithTransformation(identity))
-export const getCountOfUniqueItemsFromArrayForPredicate = curry(getCountOfItemsFromArrayForPredicateWithTransformation(uniq))
-
+export const getCountOfItemsFromArrayForPredicate = curry(
+  getCountOfItemsFromArrayForPredicateWithTransformation(identity),
+);
+export const getCountOfUniqueItemsFromArrayForPredicate = curry(
+  getCountOfItemsFromArrayForPredicateWithTransformation(uniq),
+);
 
 export const getCountOfStringsFromArray =
-	     getCountOfItemsFromArrayForPredicate(isString);
+  getCountOfItemsFromArrayForPredicate(isString);
 export const getCountOfIntegersFromArray =
-	     getCountOfItemsFromArrayForPredicate(isInteger);
+  getCountOfItemsFromArrayForPredicate(isInteger);
+
+export const getCountOfNumbersFromArray =
+  getCountOfItemsFromArrayForPredicate(isNumber); // includes doubles
 export const getCountOfArraysFromArrays =
-	     getCountOfItemsFromArrayForPredicate(isArray);
+  getCountOfItemsFromArrayForPredicate(isArray);
 export const getCountOfBooleansFromArray =
-	     getCountOfItemsFromArrayForPredicate(isBoolean);
+  getCountOfItemsFromArrayForPredicate(isBoolean);
 export const getCountOfTrueFromArray =
-	     getCountOfItemsFromArrayForPredicate(isTrue)
+  getCountOfItemsFromArrayForPredicate(isTrue);
 export const getCountOfFalseFromArray =
-	     getCountOfItemsFromArrayForPredicate(isTrue)
+  getCountOfItemsFromArrayForPredicate(isTrue);
 export const getCountOfStringsFromFlattenedArray = pipe([
   flatten,
   getCountOfStringsFromArray,
 ]);
 
-
-export const getCountOfUniqueStringsFromArray = getCountOfUniqueItemsFromArrayForPredicate(isString)
-export const getCountOfUniqueIntegersFromArray = getCountOfUniqueItemsFromArrayForPredicate(isInteger)
-
+export const getCountOfUniqueStringsFromArray =
+  getCountOfUniqueItemsFromArrayForPredicate(isString);
+export const getCountOfUniqueIntegersFromArray =
+  getCountOfUniqueItemsFromArrayForPredicate(isInteger);
+export const getCountOfItemsFromArrayThatStartWithX = curry(
+  (prefix: string, array: Array<string>) =>
+    pipe([
+      startsWith,
+      partialRight(getCountOfItemsFromArrayForPredicate, [array]),
+    ])(prefix),
+);
 
 export const isClubID = startsWith("Club");
 export const isCountryID = startsWith("Country");
@@ -139,18 +163,15 @@ export const isPlayerID = overSome([
   isMidfielderID,
   isAttackerID,
 ]);
+
+export const filterCountriesByID = filter(isCountryID);
+export const filterDomesticLeaguesByID = filter(isDomesticLeagueID);
+export const filterClubsByID = filter(isClubID);
 export const filterGoalkeepersByID = filter(isGoalkeeperID);
 export const filterDefendersByID = filter(isDefenderID);
 export const filterMidfieldersByID = filter(isMidfielderID);
 export const filterAttackersByID = filter(isAttackerID);
 export const filterPlayersByID = filter(isPlayerID);
-export const filterClubsByID = filter(isClubID);
-export const filterByStringAndClubID = filter(overEvery([isString, isClubID]));
-export const filterDomesticLeaguesByID = filter(isDomesticLeagueID);
-export const filterByStringAndDomesticLeagueID = filter(
-  overEvery([isString, isDomesticLeagueID]),
-);
-export const filterCountriesByID = filter(isCountryID);
 
 export const pickCountries = pickBy((_: Entity, entityID: string): boolean =>
   isCountryID(entityID),
@@ -186,15 +207,38 @@ export const getCompetitionClubs = property(CompetitionArrayIndices.Clubs);
 
 export const getClubName = property([ClubArrayIndices.Name]);
 export const getClubSquad = property([ClubArrayIndices.Squad]);
-export const getClubIDsCount = pipe([filterClubsByID, size]);
+
+export const getPlayerPositionGroupFromID = property([0]);
 
 export const getClubsSliceLengths = over([
   pipe([flatMapDepth(map(size), CLUBSDEPTH)]),
   map(size),
 ]);
-export const getCountryIDsCount = pipe([filterCountriesByID, size]);
 
-export const getPlayerPositionGroupFromID = property([0]);
+export const getCountryIDsCount = pipe([filterCountriesByID, size]);
+export const getDomesticLeagueIDsCount = pipe([
+  filterDomesticLeaguesByID,
+  size,
+]);
+export const getClubIDsCount = pipe([filterClubsByID, size]);
+
+export const getAttackerIDsCount =
+  getCountOfItemsFromArrayForPredicate(isAttackerID);
+export const getMidfielderIDsCount =
+  getCountOfItemsFromArrayForPredicate(isMidfielderID);
+export const getDefenderIDsCount =
+  getCountOfItemsFromArrayForPredicate(isDefenderID);
+export const getGoalkeeperIDsCount =
+  getCountOfItemsFromArrayForPredicate(isGoalkeeperID);
+export const getPlayerIDsCount =
+  getCountOfItemsFromArrayForPredicate(isPlayerID);
+
+export const getBreakdownOfPlayersByPositionFromArray = over([
+  getAttackerIDsCount,
+  getMidfielderIDsCount,
+  getDefenderIDsCount,
+  getGoalkeeperIDsCount,
+]);
 
 export const getEntityFromSaveEntities = (id: string, save: Save) =>
   pipe([property(["Entities", id])])(save);
@@ -245,22 +289,6 @@ export const getClubBestStarting11FromSave = curry(
 export const getClubBestStarting11FromSaveWithDefault433 =
   getClubBestStarting11FromSave(DEFAULTMATCHCOMPOSITION);
 
-export const getDomesticLeagueIDsCount = pipe([
-  filterByStringAndDomesticLeagueID,
-  size,
-]);
-
-export const getAttackerIDsCount =
-	     getCountOfItemsFromArrayForPredicate(isAttackerID);
-export const getDefenderIDsCount =
-	     getCountOfItemsFromArrayForPredicate(isDefenderID);
-export const getMidfielderIDsCount =
-	     getCountOfItemsFromArrayForPredicate(isMidfielderID);
-export const getGoalkeeperIDsCount =
-	     getCountOfItemsFromArrayForPredicate(isGoalkeeperID);
-export const getPlayerIDsCount =
-	     getCountOfItemsFromArrayForPredicate(isPlayerID);
-
 export const groupPlayersByPosition = over([
   pickGoalkeepers,
   pickDefenders,
@@ -274,25 +302,6 @@ export const sortPlayersByRatings = pipe([
   reverse,
   Object.fromEntries,
 ]);
-
-export const getTotalPlayersToGenerateBasedOnGivenComposition = curry(
-  (
-    composition: Array<[PositionGroup, number]>,
-    startingIndex: number,
-    totalClubs: number,
-  ): Array<[PositionGroup, number, number]> => {
-    return map(
-      ([positionGroup, count]: [PositionGroup, number]): [
-        PositionGroup,
-        number,
-        number,
-      ] => [positionGroup, multiply(count, totalClubs), startingIndex],
-    )(composition);
-  },
-);
-
-export const getTotalPlayersToGenerateUsingBaseComposition =
-  getTotalPlayersToGenerateBasedOnGivenComposition(BASECLUBCOMPOSITION, 0);
 
 export const getCountriesCountFromBaseCountries = pipe([map(first), size]);
 

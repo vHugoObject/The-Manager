@@ -1,61 +1,17 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
+import { pipe, over, multiply, toString, toArray } from "lodash/fp";
+import { BaseEntities } from "../Types";
+import { convertArraysToSetsAndAssertStrictEqual } from "../Asserters";
 import {
-  pipe,
-  first,
-  over,
-  map,
-  isString,
-  isNumber,
-  multiply,
-  toString,
-  toArray,
-  sum,
-  zipAll,
-  zipObject,
-  countBy,
-  flatMapDeep,
-  size,
-} from "lodash/fp";
-import { BaseEntities, PositionGroup, Save } from "../Types";
-import {
-  DEFAULTMATCHCOMPOSITION,
-  DEFAULTTESTMATCHESCOUNT,
-  DEFAULTPLAYERSPERTESTMATCHES,
-} from "../Constants";
-import {
-  pairArraysAndAssertStrictEqual,
-  convertArraysToSetsAndAssertStrictEqual,
-} from "../Asserters";
-import {
-  fastCheckTestSingleStringIDGenerator,
-  fastCheckTestMixedArrayOfStringIDsGenerator,
-  fastCheckNLengthArrayOfStringsAndIntegersGenerator,
-  fastCheckTestLinearRangeGenerator,
-  fastCheckNLengthArrayOfItemCountTuplesGivenItemsAndRangeOfCountsGenerator,
   fastCheckTestBaseEntitiesGenerator,
   getRandomCountryIndex,
   getRandomDomesticLeagueIndex,
   getRandomClubIndex,
   fakerToArb,
-  getCompletelyRandomClubID,
-  createTestSave,
 } from "../TestDataGenerationUtilities";
+import { spreadMultiply } from "../Transformers";
 import {
-  convertRangeSizeAndMinIntoRange,
-  spreadZipObject,
-  zipAllAndGetInitial,
-  spreadMultiply,
-  getLengthOfLinearRange,
-  convertArrayOfArraysToArrayOfSets,
-} from "../Transformers";
-import {
-  sortPlayersByRatings,
-  getCountsForASetOfIDPrefixes,
-  getIDPrefix,
-  getIDSuffix,
-  getCountOfItemsFromArrayForPredicate,
-  getObjectKeysCount,
   getCountriesCountFromBaseCountries,
   getDomesticLeaguesPerCountryCountFromBaseCountries,
   getClubsPerDomesticLeaguesCountFromBaseCountries,
@@ -71,113 +27,9 @@ import {
   getBaseEntitiesClubsCount,
   getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet,
   getBaseEntitiesClubIDAtSpecificIndex,
-  getTotalPlayersToGenerateBasedOnGivenComposition,
-  getClubBestStarting11FromSave,
-  getPlayerPositionGroupFromID,
-  getClubSquadFromSave,
-  getClubPlayerSkillsFromSave,
 } from "../Getters";
 
-describe("Getters test suite", () => {
-  const POSITIONGROUPSLIST = Object.values(PositionGroup);
-  test.prop([fc.gen(), fc.integer()])("getIDPrefix", (fcGen) => {
-    const [testStringID, [testString]] =
-      fastCheckTestSingleStringIDGenerator(fcGen);
-    const actualIDPrefix: string = getIDPrefix(testStringID);
-    expect(actualIDPrefix).toEqual(testString);
-  });
-
-  test.prop([fc.gen(), fc.integer()])("getIDSuffix", (fcGen) => {
-    const [testStringID, [, testIDNumber]] =
-      fastCheckTestSingleStringIDGenerator(fcGen);
-    const actualIDNumber: string = getIDSuffix(testStringID);
-    const expectedIDNumber: string = testIDNumber.toString();
-    expect(actualIDNumber).toBe(expectedIDNumber);
-  });
-
-  test.prop([fc.gen(), fc.integer({ min: 2, max: 100 })])(
-    "getCountOfItemsFromArrayForPredicate",
-    (fcGen, testPredicatesCount) => {
-      const [testItems, [expectedStringCount, expectedIntegerCount]] =
-        fastCheckNLengthArrayOfStringsAndIntegersGenerator(
-          fcGen,
-          testPredicatesCount,
-        );
-      const [testGetStringCount, testGetIntegerCount] = map(
-        getCountOfItemsFromArrayForPredicate,
-      )([isString, isNumber]);
-      const [actualStringCount, actualIntegerCount] = over([
-        testGetStringCount,
-        testGetIntegerCount,
-      ])(testItems);
-
-      pairArraysAndAssertStrictEqual([
-        actualStringCount,
-        expectedStringCount,
-        actualIntegerCount,
-        expectedIntegerCount,
-      ]);
-    },
-  );
-
-  test.prop([fc.integer({ min: 2, max: 10 }), fc.gen()])(
-    "getCountsForASetOfIDPrefixes",
-    (testIDPrefixes, fcGen) => {
-      const [testStringIDs, testStringCountIndexTuples]: [
-        Array<string>,
-        Array<[string, number]>,
-      ] = fastCheckTestMixedArrayOfStringIDsGenerator(fcGen, testIDPrefixes);
-      const [testStrings, expectedCountsObject] = pipe([
-        zipAllAndGetInitial,
-        over([first, spreadZipObject]),
-      ])(testStringCountIndexTuples);
-      const actualCountsObject: Record<string, number> =
-        getCountsForASetOfIDPrefixes(testStrings, testStringIDs);
-      expect(actualCountsObject).toStrictEqual(expectedCountsObject);
-    },
-  );
-
-  test.prop([fc.gen(), fc.integer({ min: 2 })])(
-    "getLengthOfLinearRange",
-     (fcGen, testRangeSize) => {
-      const testRange: [number, number] = fastCheckTestLinearRangeGenerator(
-        fcGen,
-        testRangeSize,
-      );
-      const actualRangeSize: number = getLengthOfLinearRange(testRange);
-      expect(actualRangeSize).toEqual(testRangeSize);
-    },
-  );
-
-  test.prop([fc.integer({ min: 3 }), fc.integer({ min: 2 })])(
-    "convertRangeMinAndSizeIntoRange",
-     (testRangeMin, testRangeSize) => {
-      const actualRange: [number, number] = convertRangeSizeAndMinIntoRange(
-        testRangeSize,
-        testRangeMin,
-      );
-
-      const actualRangeSize = getLengthOfLinearRange(actualRange);
-
-      expect(actualRangeSize).toEqual(testRangeSize);
-    },
-  );
-  test.prop([
-    fc.nat({ max: 100 }).chain((expectedKeysCount: number) => {
-      return fc.tuple(
-        fc.constant(expectedKeysCount),
-        fc.dictionary(fc.string(), fc.integer(), {
-          minKeys: expectedKeysCount,
-          maxKeys: expectedKeysCount,
-        }),
-      );
-    }),
-  ])("getObjectKeysCount",  (testTuple) => {
-    const [expectedKeysCount, testRecord] = testTuple;
-    const actualKeysCount: number = getObjectKeysCount(testRecord);
-    expect(actualKeysCount).toEqual(expectedKeysCount);
-  });
-
+describe("BaseEntitiesGetters test suite", () => {
   test.prop([
     fc
       .tuple(
@@ -225,7 +77,7 @@ describe("Getters test suite", () => {
       ),
   ])(
     "getCountriesCountFromBaseCountries, getDomesticLeaguesPerCountryCountFromBaseCountries, getClubsPerDomesticLeaguesCountFromBaseCountries,",
-     (testCountriesDomesticsLeaguesClubsWithCounts) => {
+    (testCountriesDomesticsLeaguesClubsWithCounts) => {
       const [
         testCountriesDomesticsLeaguesClubs,
         [
@@ -554,226 +406,6 @@ describe("Getters test suite", () => {
         ]);
 
       expect(expectedDomesticLeagueClubsIDSet.has(actualClubID)).toBeTruthy();
-    },
-  );
-
-  test.prop([
-    fc.integer({ min: 5, max: 25 }).chain((totalTestSkills: number) => {
-      return fc.dictionary(
-        fc.string(),
-        fc.array(fc.integer({ min: 0, max: 100 }), {
-          minLength: totalTestSkills,
-          maxLength: totalTestSkills,
-        }),
-        { minKeys: 5 },
-      );
-    }),
-  ])("sortPlayersByRatings",  (testPlayers) => {
-    const actualSortedPlayers: Record<
-      string,
-      Array<number>
-    > = sortPlayersByRatings(testPlayers);
-
-    expect(actualSortedPlayers).toMatchObject(testPlayers);
-  });
-
-  test.prop(
-    [
-      fc.dictionary(
-        fc.constantFrom(...POSITIONGROUPSLIST),
-        fc.array(fc.nat({ max: 1 }), { minLength: 1 }),
-      ),
-    ],
-    { numRuns: 0 },
-  )("getPositionBreakdownOfRecordOfPlayers",  (testPlayers) => {
-    const actualSortedPlayers: Record<
-      string,
-      Array<number>
-    > = sortPlayersByRatings(testPlayers);
-
-    expect(actualSortedPlayers).toMatchObject(testPlayers);
-  });
-
-  test.prop(
-    [
-      fc.integer({ min: 3, max: 10 }),
-      fc.integer({ min: 3, max: 100 }),
-      fc.integer({ min: 3 }),
-      fc.nat(),
-      fc.gen(),
-    ],
-    { numRuns: 0 },
-  )(
-    "getTotalPlayersToGenerateBasedOnGivenComposition",
-    (
-      testMinItemCount,
-      testRangeSize,
-      testTotalClubs,
-      testStartingIndex,
-      fcGen,
-    ) => {
-      const testComposition =
-        fastCheckNLengthArrayOfItemCountTuplesGivenItemsAndRangeOfCountsGenerator(
-          POSITIONGROUPSLIST,
-          fcGen,
-          [testMinItemCount, testRangeSize],
-        );
-
-      const testCompositionGenerator =
-        getTotalPlayersToGenerateBasedOnGivenComposition(testComposition);
-
-      const actualPlayers: Array<[PositionGroup, number, number]> =
-        testCompositionGenerator(testStartingIndex, testTotalClubs);
-      const [
-        [actualPositions, actualCounts, actualStartingIndices],
-        [expectedPositions, expectedCountsPerClub],
-      ] = map(zipAll)([actualPlayers, testComposition]);
-
-      pairArraysAndAssertStrictEqual([
-        actualPositions,
-        expectedPositions,
-        actualStartingIndices,
-        [testStartingIndex],
-      ]);
-      expect(sum(actualCounts)).toBeGreaterThanOrEqual(
-        sum(expectedCountsPerClub),
-      );
-    },
-  );
-  const getActualComposition = pipe([
-    Object.keys,
-    countBy(getPlayerPositionGroupFromID),
-  ]);
-  const getActualPlayerIDsCountsFromStartingElevens = pipe([
-    flatMapDeep(map(Object.keys)),
-    size,
-  ]);
-
-  test.prop(
-    [
-      fc.integer({ min: 2000, max: 2100 }),
-      fc.string(),
-      fc.tuple(
-        fc.integer({ min: 1, max: 3 }),
-        fc.integer({ min: 1, max: 3 }),
-        fc.integer({ min: 1, max: 20 }),
-      ),
-      fc.gen(),
-    ],
-    { numRuns: 0 },
-  )(
-    "getClubSquadFromSave, getClubPlayerSkillsFromSave, getClubBestStarting11FromSave",
-     (
-      testSeason,
-      testPlayerName,
-      testCountriesDomesticsLeaguesClubsCount,
-      fcGen,
-    ) => {
-      const testSave: Save =  createTestSave(fcGen, [
-        testPlayerName,
-        testSeason,
-        testCountriesDomesticsLeaguesClubsCount,
-      ]);
-      const testBaseEntities: BaseEntities =
-         fastCheckTestBaseEntitiesGenerator(
-          [testSeason, testCountriesDomesticsLeaguesClubsCount],
-          fcGen,
-        );
-
-      const testClubID: string = getCompletelyRandomClubID(
-        fcGen,
-        testBaseEntities,
-      );
-
-      const actualPlayerSkills: Record<
-        string,
-        Array<number>
-      > = getClubPlayerSkillsFromSave([testSave, testClubID]);
-
-      const [actualPlayerIDs]: [Array<string>, Array<Array<number>>] =
-        pipe([Object.entries, zipAll])(actualPlayerSkills);
-
-      const expectedPlayerIDs = getClubSquadFromSave([testSave, testClubID]);
-
-      const [actualPlayerIDsSet, expectedPlayerIDsSet] =
-        convertArrayOfArraysToArrayOfSets([actualPlayerIDs, expectedPlayerIDs]);
-
-      expect(actualPlayerIDsSet).toStrictEqual(expectedPlayerIDsSet);
-    },
-  );
-
-  test.prop(
-    [
-      fc.integer({ min: 2000, max: 2100 }),
-      fc.string(),
-      fc.tuple(
-        fc.integer({ min: 1, max: 1 }),
-        fc.integer({ min: 1, max: 2 }),
-        fc.integer({ min: 1, max: 20 }),
-      ),
-      fc.gen(),
-    ],
-    { numRuns: 0 },
-  )(
-    "getClubBestStarting11FromSave, getClubBestStarting11ForAGroupOfMatchupsWithDefaultCompFromSave",
-     (
-      testSeason,
-      testPlayerName,
-      testCountriesDomesticsLeaguesClubsCount,
-      fcGen,
-    ) => {
-      const testSave: Save = createTestSave(fcGen, [
-        testPlayerName,
-        testSeason,
-        testCountriesDomesticsLeaguesClubsCount,
-      ]);
-      const testBaseEntities: BaseEntities =
-        fastCheckTestBaseEntitiesGenerator(
-          [testSeason, testCountriesDomesticsLeaguesClubsCount],
-          fcGen,
-        );
-
-      const testClubID: string = getCompletelyRandomClubID(
-        fcGen,
-        testBaseEntities,
-      );
-
-      const testGetClubBestStarting11FromSaveWithDEFAULT433 =
-        getClubBestStarting11FromSave(DEFAULTMATCHCOMPOSITION);
-
-      const actualBestStartingEleven: Record<
-        string,
-        Array<number>
-      > = testGetClubBestStarting11FromSaveWithDEFAULT433([
-        testSave,
-        testClubID,
-      ]);
-
-      const expectedComposition: Record<string, number> = zipObject(
-        Object.values(PositionGroup),
-        DEFAULTMATCHCOMPOSITION,
-      );
-
-      const actualComposition: Record<string, number> = getActualComposition(
-        actualBestStartingEleven,
-      );
-      expect(actualComposition).toStrictEqual(expectedComposition);
-
-      const testMatchUps: Array<[string, string]> =
-        defaultGetAListOfRandomMatches([fcGen, testBaseEntities]);
-
-      const actualBestStartingElevens: Array<
-        [Record<string, Array<number>>, Record<string, Array<number>>]
-      > = getClubBestStarting11ForAGroupOfMatchupsWithDefaultCompFromSave(
-        testSave,
-        testMatchUps,
-      );
-
-      const expectedPlayersCount: number =
-        DEFAULTTESTMATCHESCOUNT * DEFAULTPLAYERSPERTESTMATCHES;
-      const actualPlayersCount: number =
-        getActualPlayerIDsCountsFromStartingElevens(actualBestStartingElevens);
-      expect(actualPlayersCount).toEqual(expectedPlayersCount);
     },
   );
 });
