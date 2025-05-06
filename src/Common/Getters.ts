@@ -27,7 +27,6 @@ import {
   pick,
   flattenDepth,
   zipWith,
-  zipAll,
   pickBy,
   startsWith,
   overSome,
@@ -39,11 +38,9 @@ import {
   tail,
   partialRight,
 } from "lodash/fp";
-import { updatePaths } from "futil-js";
 import {
   PositionGroup,
   Save,
-  BaseEntities,
   Entity,
   CountryArrayIndices,
   CompetitionArrayIndices,
@@ -53,7 +50,7 @@ import {
   DEFAULTMATCHCOMPOSITION,
   CLUBSDEPTH,
   COMPETITIONSDEPTH,
-  PLAYERSDEPTH,
+  IDPREFIXES
 } from "./Constants";
 
 export const isTrue = isEqual(true);
@@ -92,6 +89,7 @@ export const getIDPrefixes = map(getIDPrefix);
 export const getIDSuffix = pipe([getPartsOfIDAsArray, last]);
 export const getLastEntityIDNumber = pipe([last, getIDSuffix]);
 export const getLastIDNumberOutOfIDNameTuple = pipe([last, first, getIDSuffix]);
+
 export const countByIDPrefix = countBy(getIDPrefix);
 
 export const getCountsForASetOfIDPrefixes = (
@@ -100,6 +98,8 @@ export const getCountsForASetOfIDPrefixes = (
 ): Record<string, number> => {
   return pipe([countByIDPrefix, pick(idPrefixes)])(ids);
 };
+
+
 
 export const getCountOfItemsFromArrayForPredicateWithTransformation = curry(
   <T, V>(
@@ -150,9 +150,9 @@ export const getCountOfItemsFromArrayThatStartWithX = curry(
     ])(prefix),
 );
 
-export const isClubID = startsWith("Club");
-export const isCountryID = startsWith("Country");
-export const isDomesticLeagueID = startsWith("DomesticLeague");
+export const isClubID = startsWith(IDPREFIXES.Club);
+export const isCountryID = startsWith(IDPREFIXES.Country);
+export const isDomesticLeagueID = startsWith(IDPREFIXES.DomesticLeague);
 export const isGoalkeeperID = startsWith(PositionGroup.Goalkeeper);
 export const isDefenderID = startsWith(PositionGroup.Defender);
 export const isMidfielderID = startsWith(PositionGroup.Midfielder);
@@ -222,6 +222,12 @@ export const getDomesticLeagueIDsCount = pipe([
 ]);
 export const getClubIDsCount = pipe([filterClubsByID, size]);
 
+export const getCountOfNonPlayerEntitiesByTypeFromArray = over([
+  getCountryIDsCount,
+  getDomesticLeagueIDsCount,
+  getClubIDsCount
+])
+
 export const getAttackerIDsCount =
   getCountOfItemsFromArrayForPredicate(isAttackerID);
 export const getMidfielderIDsCount =
@@ -233,7 +239,7 @@ export const getGoalkeeperIDsCount =
 export const getPlayerIDsCount =
   getCountOfItemsFromArrayForPredicate(isPlayerID);
 
-export const getBreakdownOfPlayersByPositionFromArray = over([
+export const getCountOfPlayersByPositionFromArray = over([
   getAttackerIDsCount,
   getMidfielderIDsCount,
   getDefenderIDsCount,
@@ -321,153 +327,3 @@ export const getCountriesDomesticLeaguesAndClubsCounts = over([
   getDomesticLeaguesPerCountryCountFromBaseCountries,
   getClubsPerDomesticLeaguesCountFromBaseCountries,
 ]);
-
-export const getBaseEntitiesCountries = property(["countries"]);
-export const getBaseEntitiesDomesticLeagues = property(["domesticLeagues"]);
-export const getBaseEntitiesClubs = property(["clubs"]);
-export const getBaseEntitiesPlayers = property(["players"]);
-
-export const getBaseEntitiesCountriesCount = pipe([
-  getBaseEntitiesCountries,
-  size,
-]);
-export const getBaseEntitiesDomesticLeaguesCount = pipe([
-  getBaseEntitiesDomesticLeagues,
-  flattenDepth(COMPETITIONSDEPTH),
-  size,
-]);
-export const getBaseEntitiesClubsCount = pipe([
-  getBaseEntitiesClubs,
-  flattenDepth(CLUBSDEPTH),
-  size,
-]);
-
-export const getBaseEntitiesCountryIDs = pipe([
-  getBaseEntitiesCountries,
-  zipAll,
-  first,
-]);
-
-export const getBaseEntitiesCountryIDsAsSet = pipe([
-  getBaseEntitiesCountryIDs,
-  (ids: Array<string>) => new Set(ids),
-]);
-export const getBaseEntitiesCountryIDAtSpecificIndex = curry(
-  (baseEntities: BaseEntities, index: string): string => {
-    return pipe([getBaseEntitiesCountries, property([index]), first])(
-      baseEntities,
-    );
-  },
-);
-
-export const getBaseEntitiesDomesticLeagueIDsForACountryIndex = curry(
-  (baseEntities: BaseEntities, index: string): Array<string> => {
-    return pipe([
-      getBaseEntitiesDomesticLeagues,
-      property([index]),
-      map(first),
-    ])(baseEntities);
-  },
-);
-
-export const getBaseEntitiesDomesticLeagueIDsForACountryIndexAsSet = curry(
-  (baseEntities: BaseEntities, index: string): Set<string> => {
-    return pipe([
-      getBaseEntitiesDomesticLeagueIDsForACountryIndex,
-      (ids: Array<string>) => new Set(ids),
-    ])(baseEntities, index);
-  },
-);
-
-export const getBaseEntitiesDomesticLeagueIDsAsSet = pipe([
-  getBaseEntitiesDomesticLeagues,
-  flattenDepth(COMPETITIONSDEPTH),
-  map(first),
-  (ids: Array<string>) => new Set(ids),
-]);
-
-export const getBaseEntitiesClubIDsAsSet = pipe([
-  getBaseEntitiesClubs,
-  flattenDepth(CLUBSDEPTH),
-  map(first),
-  (ids: Array<string>) => new Set(ids),
-]);
-
-export const getBaseEntitiesDomesticLeagueIDAtSpecificIndex = curry(
-  (
-    baseEntities: BaseEntities,
-    countryDomesticLeagueIndicesTuple: [string, string],
-  ): string => {
-    return pipe([
-      getBaseEntitiesDomesticLeagues,
-      property(countryDomesticLeagueIndicesTuple),
-      first,
-    ])(baseEntities);
-  },
-);
-
-export const getBaseEntitiesClubIDsForADomesticLeagueIndex = curry(
-  (
-    baseEntities: BaseEntities,
-    countryDomesticLeagueIndexTuple: [string, string],
-  ): Set<string> => {
-    return pipe([
-      getBaseEntitiesClubs,
-      property(countryDomesticLeagueIndexTuple),
-      map(first),
-    ])(baseEntities);
-  },
-);
-
-export const getBaseEntitiesClubIDsForADomesticLeagueIndexAsSet = curry(
-  (
-    baseEntities: BaseEntities,
-    countryDomesticLeagueIndexTuple: [string, string],
-  ): Set<string> => {
-    return pipe([
-      getBaseEntitiesClubIDsForADomesticLeagueIndex,
-      (ids: Array<string>) => new Set(ids),
-    ])(baseEntities, countryDomesticLeagueIndexTuple);
-  },
-);
-
-export const getBaseEntitiesClubIDAtSpecificIndex = curry(
-  (
-    baseEntities: BaseEntities,
-    countryDomesticLeagueClubIndicesTuple: [string, string, string],
-  ): string => {
-    return pipe([
-      getBaseEntitiesClubs,
-      property(countryDomesticLeagueClubIndicesTuple),
-      first,
-    ])(baseEntities);
-  },
-);
-
-export const getCountOfXFromBaseEntities = curry(
-  (
-    [depth, getter]: [number, (ids: Array<string>) => number],
-    baseEntities: BaseEntities,
-  ): number => {
-    return pipe([flattenDepth(depth), zipAll, first, getter])(baseEntities);
-  },
-);
-
-export const getTestBaseEntitiesDomesticLeaguesCount =
-  getCountOfXFromBaseEntities([COMPETITIONSDEPTH, getDomesticLeagueIDsCount]);
-
-export const getTestBaseEntitiesClubsCount = getCountOfXFromBaseEntities([
-  CLUBSDEPTH,
-  getClubIDsCount,
-]);
-
-export const getTestBaseEntitiesPlayersCount = getCountOfXFromBaseEntities([
-  PLAYERSDEPTH,
-  getPlayerIDsCount,
-]);
-
-export const getTestBaseEntitiesCount = updatePaths({
-  countries: getCountryIDsCount,
-  domesticLeagues: getTestBaseEntitiesDomesticLeaguesCount,
-  clubs: getTestBaseEntitiesClubsCount,
-});

@@ -7,9 +7,6 @@ import {
   map,
   isString,
   isNumber,
-  countBy,
-  flatMapDeep,
-  size,
 } from "lodash/fp";
 import { pairArraysAndAssertStrictEqual } from "../Asserters";
 import {

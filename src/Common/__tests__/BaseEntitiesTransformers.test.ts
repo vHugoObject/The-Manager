@@ -1,38 +1,37 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import { over, pipe, zipAll, zipObject, multiply } from "lodash/fp";
-import { DEFAULTSQUADSIZE } from "../Constants";
+import { over, pipe, zipAll, zipObject, map } from "lodash/fp";
 import {
   Entity,
-  BaseEntities,
   BaseCountries,
-  PLAYERSKILLSPHYSICALCONTRACTINDICES,
 } from "../Types";
+import { DEFAULTCOUNTRYSTRUCTURE } from "../Constants"
 import {
   pairArraysAndAssertStrictEqual,
-  convertArraysToSetsAndAssertStrictEqual,
+  convertArraysToSetsAndAssertStrictEqual
 } from "../Asserters";
 import {
-  fastCheckTestBaseCountriesGenerator,
   fastCheckTestMixedArrayOfPositionGroupIDsGenerator,
   fastCheckTestSingleCountryWithCompetitionsGenerator,
   fastCheckTestSingleDomesticLeagueWithClubsGenerator,
+  fastCheckRandomSeason
 } from "../TestDataGenerationUtilities";
 import {
-  getTestBaseEntitiesCount,
   getCountryDomesticLeagues,
   getClubSquad,
   getCompetitionName,
   getCompetitionClubs,
   getCountryName,
   getClubName,
-  getCountOfObjectValues,
+  countByIDPrefix
 } from "../Getters";
 import {
-  convertBaseCountriesToBaseEntities,
   createCountry,
   createCompetition,
   createClub,
+  multiplyAccumulate,
+  joinOnUnderscores,
+  createIDsForCountries, 
 } from "../Transformers";
 
 describe("BaseEntitiesTransformers test suite", () => {
@@ -122,54 +121,30 @@ describe("BaseEntitiesTransformers test suite", () => {
     },
   );
 
-  test.prop(
-    [
-      fc.integer({ min: 2000, max: 2100 }),
-      fc.tuple(
-        fc.integer({ min: 1, max: 5 }),
-        fc.integer({ min: 1, max: 5 }),
-        fc.integer({ min: 1, max: 10 }),
-      ),
-      fc.gen(),
-    ],
-    { numRuns: 0 },
-  )(
-    "convertBaseCountriesToBaseEntities",
-    (testSeason, testCountriesDomesticsLeaguesClubsCount, fcGen) => {
-      const testBaseCountries: BaseCountries =
-        fastCheckTestBaseCountriesGenerator(
-          fcGen,
-          testCountriesDomesticsLeaguesClubsCount,
-        );
-      const [
-        expectedCountriesCount,
-        expectedDomesticLeaguesPerCountryCount,
-        expectedClubsPerDomesticLeaguesCount,
-      ] = testCountriesDomesticsLeaguesClubsCount;
-      const expectedDomesticLeaguesCount: number = multiply(
-        expectedCountriesCount,
-        expectedDomesticLeaguesPerCountryCount,
-      );
-      const expectedClubsCount: number = pipe([
-        multiply(expectedCountriesCount),
-        multiply(expectedDomesticLeaguesPerCountryCount),
-      ])(expectedClubsPerDomesticLeaguesCount);
+  test.prop([    
+    fc.integer({ min: 2, max: 10 }),
+    fc.gen()
+  ])(
+    "createIDsForCountries",
+    (testCountriesCount, fcGen) => {
 
-      const expectedCountsObject = zipObject(
-        ["countries", "domesticLeagues", "clubs"],
-        [
-          expectedCountriesCount,
-          expectedDomesticLeaguesCount,
-          expectedClubsCount,
-        ],
-      );
+      const testSeason: number = fastCheckRandomSeason(fcGen)
+      const actualIDs: Array<string> = createIDsForCountries(testCountriesCount)
+      const expectedComposition: string = joinOnUnderscores(DEFAULTCOUNTRYSTRUCTURE)
 
-      const actualBaseEntities: BaseEntities =
-        convertBaseCountriesToBaseEntities(testSeason, testBaseCountries);
+      const actualCompositions: Array<string> = pipe([
+        map(pipe([countByIDPrefix, Object.values])),
+        map(joinOnUnderscores),
+      ])(actualIDs);
 
-      const actualCountsObject: Record<string, number> =
-        getTestBaseEntitiesCount(actualBaseEntities);
-      expect(actualCountsObject).toStrictEqual(expectedCountsObject);
+      convertArraysToSetsAndAssertStrictEqual([
+        actualCompositions,
+        [expectedComposition],
+      ]);
+     
+      
     },
   );
+  
+
 });

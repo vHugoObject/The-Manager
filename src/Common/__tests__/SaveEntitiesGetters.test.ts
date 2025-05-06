@@ -9,7 +9,7 @@ import {
   flatMapDeep,
   size,
 } from "lodash/fp";
-import { BaseEntities, PositionGroup, Save } from "../Types";
+import { PositionGroup, Save } from "../Types";
 import {
   DEFAULTMATCHCOMPOSITION,
   DEFAULTTESTMATCHESCOUNT,
@@ -17,9 +17,6 @@ import {
 } from "../Constants";
 import {
   fastCheckTestMixedArrayOfPositionGroupIDsGenerator,
-  fastCheckTestBaseEntitiesGenerator,
-  getCompletelyRandomClubID,
-  createTestSave,
 } from "../TestDataGenerationUtilities";
 import {
   convertArrayOfArraysToArrayOfSets,
@@ -31,7 +28,7 @@ import {
   getPlayerPositionGroupFromID,
   getClubSquadFromSave,
   getClubPlayerSkillsFromSave,
-  getBreakdownOfPlayersByPositionFromArray,
+  getCountOfPlayersByPositionFromArray,
 } from "../Getters";
 
 describe("SaveEntitiesGetters test suite", () => {
@@ -70,11 +67,11 @@ describe("SaveEntitiesGetters test suite", () => {
       fc.integer({ min: 50, max: 100 }),
     ),
     fc.gen(),
-  ])("getBreakdownOfPlayersByPositionFromArray", (testRange, fcGen) => {
+  ])("getCountOfPlayersByPositionFromArray", (testRange, fcGen) => {
     const [testPlayerIDs, playerIDIndexCountTuples]: Array<string> =
       fastCheckTestMixedArrayOfPositionGroupIDsGenerator(fcGen, testRange);
     const actualCountsPerPosition: Array<number> =
-      getBreakdownOfPlayersByPositionFromArray(testPlayerIDs);
+      getCountOfPlayersByPositionFromArray(testPlayerIDs);
     const expectedCountsPerPosition = zipAllAndGetSecondArray(
       playerIDIndexCountTuples,
     );

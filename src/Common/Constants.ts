@@ -14,21 +14,26 @@ export enum IDPREFIXES {
   Midfielder = "1",
   Defender = "2",
   Goalkeeper = "3",
-  Club = "4",
-  DomesticLeague = "5",
-  DomesticCup = "6",
-  Country = "7",
-  InternationalCup = "8",
+  Country = "4",
+  DomesticCup = "5",  
+  DomesticLeague = "6",
+  Club = "7",
 }
 
-export const DEFAULTSQUADSIZE: number = 25;
-export const BASECLUBCOMPOSITION: Record<PositionGroup, number> = {
-  [PositionGroup.Goalkeeper]: 4,
-  [PositionGroup.Defender]: 7,
-  [PositionGroup.Midfielder]: 7,
-  [PositionGroup.Attacker]: 7,
-};
+export const BASECOUNTRIESINDICESDOMESTICLEAGUESINDEX: number = 1
+export const BASECOUNTRIESINDICESCLUBSINDEX: number = 2
+
+export const NONPLAYERIDPREFIXES: Array<IDPREFIXES> = [IDPREFIXES.Country, IDPREFIXES.DomesticLeague, IDPREFIXES.Club]
+
+// aligned with IDPREFIXES
+export const DEFAULTCOUNTRYSTRUCTURE = [1,2,5,20]
+export const DEFAULTCOUNTRYSIZE = 108
+export const MINOFNONPLAYERPREFIXES = 4
+
 export const PLAYERSPEROUTFIELDPOSITIONGROUP = 7;
+export const DEFAULTSQUADSIZE: number = 25;
+// aligned with IDPREFIXES/PositionGroup enum
+export const BASECLUBCOMPOSITION: Array<number> = [7,7,7,4]
 export const MAXPLAYERIDPREFIXPLUSONE = 4;
 
 export const DEFAULTMATCHCOMPOSITION: Array<number> = [1, 4, 3, 3];
@@ -53,6 +58,6 @@ export const DEFAULTTESTCOMPETITIONSPERCOUNTRY: number = 5;
 export const DEFAULTTESTCLUBSPERCOMPETITION: number = 20;
 export const DEFAULTTESTMATCHESCOUNT: number = 20;
 export const DEFAULTPLAYERSPERTESTMATCHES: number = 22;
-export const TESTRANDOMSEASONRANGE = [2000, 2100];
+export const TESTRANDOMSEASONRANGE: [number, number] = [2000, 2100];
 export const DOUBLEBETWEENZEROAND1RANGE: [number, number] = [0.1, 1];
 export const TESTROUNDROBINCLUBSRANGE: [number, number] = [18, 100];

@@ -40,9 +40,11 @@ import {
   overSome,
   head,
   tail,
-  update,
   sortBy,
   partition,
+  every,
+  size,
+  inRange
 } from "lodash/fp";
 import {
   addDays,
@@ -60,15 +62,11 @@ import {
   isEqual,
   getWeekOfMonth,
 } from "date-fns/fp";
-import { mapIndexed, updatePaths, updateAllPaths } from "futil-js";
+import { mapIndexed } from "futil-js";
 import {
-  BaseEntities,
   Entity,
-  BaseEntity,
-  BaseCountry,
   Save,
   SaveArguments,
-  PositionGroup,
   ATTACKINGSKILLS,
   DEFENDINGSKILLS,
   GOALKEEPINGSKILLS,
@@ -84,10 +82,12 @@ import {
   U,
   HOMEEFFECT,
   DEFENSESTRENGTHBALANCE,
-  BASECLUBCOMPOSITION,
   DEFAULTSQUADSIZE,
   PLAYERSPEROUTFIELDPOSITIONGROUP,
   MAXPLAYERIDPREFIXPLUSONE,
+  DEFAULTCOUNTRYSIZE,
+  MINOFNONPLAYERPREFIXES,
+  IDPREFIXES
 } from "./Constants";
 import { PLAYERBIODATABYPOSITION } from "./PlayerBioConstants";
 import {
@@ -99,14 +99,16 @@ import {
   getFirstTwoArrayValues,
   getLastTwoArrayValues,
   isGoalkeeperID,
-  getBaseEntitiesClubs,
-  getBaseEntitiesDomesticLeagues,
-  getBaseEntitiesClubsCount,
 } from "./Getters";
 
 export const convertToSet = <T>(collection: Array<T>): Set<T> => {
   return new Set(collection);
 };
+
+export const convertArrayToSetThenGetSize = pipe([convertToSet, size])
+export const isEveryIntegerInRange = curry(([start, end]: [number, number], arrayOfIntegers: Array<number>): Boolean => {
+  return every(inRange(start, end), arrayOfIntegers)
+})
 
 export const sortByIdentity = sortBy(identity);
 export const sortTuplesByFirstValueInTuple = sortBy(first);
@@ -118,6 +120,10 @@ export const createStringID = curry(
   (string: string, idNumber: number): string =>
     joinOnUnderscores([string, idNumber]),
 );
+
+export const createCountryID = createStringID(IDPREFIXES.Country)
+export const createDomesticLeagueID = createStringID(IDPREFIXES.DomesticLeague)
+export const createClubID = createStringID(IDPREFIXES.Club)
 
 const spreadCreateStringID = spread(createStringID);
 
@@ -140,8 +146,8 @@ export const unfoldItemCountTupleIntoArray = curry(
   },
 );
 
-export const unfoldStartingIndexAndCountIntoRange = curry(
-  (startingIndex: number, count: number): Array<number> => {
+export const unfoldCountStartingIndexIntoRange = curry(
+  (count: number, startingIndex: number): Array<number> => {
     return unfold(add(startingIndex), count);
   },
 );
@@ -173,42 +179,42 @@ export const unfoldBooleanCountTuplesIntoShuffledArrayOfBooleans = pipe([
   shuffle,
 ]);
 
-export const unfoldSingleStringStartingIndexAndCountTupleIntoArrayOfStringIDs =
+export const unfoldSingleStringCountStartingIndexTupleIntoArrayOfStringIDs =
   curry(
-    (id: string, [startingIndex, count]: [number, number]): Array<string> => {
+    (id: string | IDPREFIXES, [count, startingIndex]: [number, number]): Array<string> => {
       return unfold(pipe([add(startingIndex), createStringID(id)]), count);
     },
   );
 
-export const unfoldStringStartingIndexAndCountTuplesIntoArrayOfArrayOfStringIDs =
+export const unfoldStringCountStartingIndexTuplesIntoArrayOfArrayOfStringIDs =
   (
-    stringStartingIndexAndCountTuples: Array<[string, number, number]>,
+    stringCountStartingIndexTuples: Array<[string | IDPREFIXES, number, number]>,
   ): Array<Array<string>> => {
     return pipe([
       map(([string, count, startingIndex]: [string, number, number]) => {
         return [pipe([add(startingIndex), createStringID(string)]), count];
       }),
       mapSpreadUnfold,
-    ])(stringStartingIndexAndCountTuples);
+    ])(stringCountStartingIndexTuples);
   };
 
-export const unfoldStringStartingIndexAndCountTuplesIntoArrayOfStringIDs = (
-  stringStartingIndexAndCountTuples: Array<[string, number, number]>,
+export const unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs = (
+  stringCountStartingIndexTuples: Array<[string, number, number]>,
 ): Array<string> => {
   return pipe([
-    unfoldStringStartingIndexAndCountTuplesIntoArrayOfArrayOfStringIDs,
+    unfoldStringCountStartingIndexTuplesIntoArrayOfArrayOfStringIDs,
     flatten,
-  ])(stringStartingIndexAndCountTuples);
+  ])(stringCountStartingIndexTuples);
 };
 
-export const unfoldStringStartingIndexAndCountTuplesIntoShuffledArrayOfStringIDs =
+export const unfoldStringCountStartingIndexTuplesIntoShuffledArrayOfStringIDs =
   (
-    stringStartingIndexAndCountTuples: Array<[string, number, number]>,
+    stringCountStartingIndexTuples: Array<[string, number, number]>,
   ): Array<string> => {
     return pipe([
-      unfoldStringStartingIndexAndCountTuplesIntoArrayOfStringIDs,
+      unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs,
       shuffle,
-    ])(stringStartingIndexAndCountTuples);
+    ])(stringCountStartingIndexTuples);
   };
 
 export const apply = <T>(func: (arg: T) => T, arg: T) => func(arg);
@@ -274,6 +280,11 @@ export const zipAllAndGetMinOfLastArray = zipAllAndTransformXArrayWithY([
   min,
 ]);
 
+export const zipAllAndGetSizeOfFirstArray = zipAllAndTransformXArrayWithY([
+  first,
+  size
+]);
+
 export const convertConcatenatedArraysIntoSet = pipe([concat, convertToSet]);
 export const convertFlattenedArrayIntoSet = pipe([flatten, convertToSet]);
 export const convertArrayOfArraysToArrayOfSets = map(convertToSet);
@@ -303,7 +314,7 @@ export const foldArrayOfArraysIntoArrayOfLinearRanges = map(
 
 export const convertObjectKeysIntoSet = pipe([
   Object.keys,
-  <T>(collection: Array<T>): Set<T> => new Set(collection),
+  convertToSet
 ]);
 
 export const zipDivide = zipWith(divide);
@@ -323,8 +334,16 @@ export const addPlusOne = curry((intOne: number, intTwo: number) =>
   pipe([add, addOne])(intOne, intTwo),
 );
 export const spreadThenSubtract = spread(subtract);
-
 export const reverseThenSpreadSubtract = pipe([reverse, spreadThenSubtract]);
+export const mod = curry(
+  (divisor: number, dividend: number): number => dividend % divisor,
+);
+export const getBaseLog = curry((baseLog: number, of: number) => {
+  return Math.log(of) / Math.log(baseLog);
+})
+
+export const log3 = getBaseLog(3)
+
 
 export const accumulate = curry(
   <T>([func, initial]: [Function, T], array: Array<T>): Array<T> => {
@@ -389,9 +408,6 @@ export const getAverageModularStepForRangeOfData = (
   ])(ranges);
 };
 
-export const mod = curry(
-  (divisor: number, dividend: number): number => dividend % divisor,
-);
 
 export const simpleModularArithmetic = curry(
   (
@@ -522,9 +538,9 @@ export const createClub = (name: string, squad: Array<string>): Entity => {
 };
 
 export const createPlayerIDsForClubs = (totalClubs: number) => {
-  const adjuster = mod(DEFAULTSQUADSIZE);
+  const repeater = mod(DEFAULTSQUADSIZE);
   const idTransformer = (index: number) =>
-    Math.floor(adjuster(index) / PLAYERSPEROUTFIELDPOSITIONGROUP) %
+    Math.floor(repeater(index) / PLAYERSPEROUTFIELDPOSITIONGROUP) %
     MAXPLAYERIDPREFIXPLUSONE;
 
   return pipe([
@@ -536,286 +552,12 @@ export const createPlayerIDsForClubs = (totalClubs: number) => {
   ])(totalClubs);
 };
 
-export const convertBaseCountriesToBaseEntities = curry(
-  (season: number, baseCountries: Array<BaseCountry>): BaseEntities => {
-    const updater = {
-      countries: mapIndexed((countryName: string, index: number) => [
-        `Country_${index + 1}`,
-        countryName,
-      ]),
-      domesticLeagues: transformCompetitions(
-        mapIndexed((competitionName: string, index: number) => [
-          `DomesticLeague_${season}_${index + 1}`,
-          competitionName,
-        ]),
-      ),
-      clubs: transformClubs(
-        mapIndexed((clubName: string, index: number) => [
-          `Club_${season}_${index + 1}`,
-          clubName,
-        ]),
-      ),
-    };
-    return pipe([
-      zipAll,
-      zipObject(["countries", "domesticLeagues", "clubs"]),
-      pipe([updatePaths(updater)]),
-    ])(baseCountries);
-  },
-);
+export const createIDsForCountries = (season: number, totalCountries: number) => {
+  const repeater = mod(DEFAULTCOUNTRYSIZE)
+  const idTransformer = (index: number) => (Math.ceil(Math.log(index+1) / Math.log(3))) + MINOFNONPLAYERPREFIXES
+  
+}
 
-export const runModularIncreasersModularlyOverARangeOfPlayers = (
-  [startingRange, modularIncreasers]: [Array<number>, Array<Function>],
-  [positionGroup, count, startingIndex]: [PositionGroup, number, number],
-): Array<[string, Array<number>]> => {
-  const modularAdditionFuncForListOfRanges = modularAddition(
-    startingRange.length,
-  );
-
-  return pipe([
-    reduce(
-      (
-        [playerData, currentRange, indexToUpdate]: [
-          Array<[string, Array<number>]>,
-          Array<number>,
-          number,
-        ],
-        playerNumber: number,
-      ): [Array<[string, Array<number>]>, Array<number>, number] => {
-        const updater: Function = property(indexToUpdate, modularIncreasers);
-        const updatedRange = update(indexToUpdate, updater, currentRange);
-
-        return [
-          concat(playerData, [
-            [`${positionGroup}_${playerNumber}`, currentRange],
-          ]),
-          updatedRange,
-          modularAdditionFuncForListOfRanges(indexToUpdate),
-        ];
-      },
-      [[], startingRange, 0],
-    ),
-    first,
-  ])(range(startingIndex, startingIndex + count));
-};
-
-export const runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers = (
-  [startingRange, modularIncreasers]: [Array<number>, Array<Function>],
-  [positionGroup, count, startingIndex]: [PositionGroup, number, number],
-): Array<[string, Array<number>]> => {
-  return pipe([
-    reduce(
-      (
-        [playerData, currentRange]: [
-          Array<[string, Array<number>]>,
-          Array<number>,
-        ],
-        playerNumber: number,
-      ): [Array<[string, Array<number>]>, Array<number>] => {
-        const updatedRange: Array<number> = zipWith(
-          (func: Function, currentValue: number): number => {
-            return func(currentValue);
-          },
-        )(modularIncreasers, currentRange);
-        return [
-          concat(playerData, [
-            [`${positionGroup}_${playerNumber}`, currentRange],
-          ]),
-          updatedRange,
-        ];
-      },
-      [[], startingRange],
-    ),
-    first,
-  ])(range(startingIndex, startingIndex + count));
-};
-
-export const generateDataForAGroupOfPlayersByAveragingModularIncreases = curry(
-  (
-    [ranges, plusOrMinus]: [Array<[number, number]>, number],
-    [positionGroup, count, startingIndex]: [PositionGroup, number, number],
-  ): Promise<Array<[string, Array<number>]>> => {
-    const [modularIncreasers, minOfRangesOnly] = pipe([
-      over([
-        mapModularIncreasersWithTheSameAverageStep([plusOrMinus, count]),
-        map(first),
-      ]),
-    ])(ranges);
-
-    return runModularIncreasersModularlyOverARangeOfPlayers(
-      [minOfRangesOnly, modularIncreasers],
-      [positionGroup, count, startingIndex],
-    );
-  },
-);
-
-export const generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers =
-  curry(
-    (
-      [ranges, increasers]: [Array<[number, number]>, Array<Function>],
-      [positionGroup, count, startingIndex]: [PositionGroup, number, number],
-    ): Promise<Array<[string, Array<number>]>> => {
-      const randomStarts: Array<number> = getRandomNumberInRanges(ranges);
-      return runAMixOfModularAndLinearIncreasersLinearlyOverARangeOfPlayers(
-        [randomStarts, increasers],
-        [positionGroup, count, startingIndex],
-      );
-    },
-  );
-
-export const generateSkillsPhysicalContractDataForMultiplePositionGroups = pipe(
-  [
-    map(
-      ([positionGroup, count, startingIndex]: [
-        PositionGroup,
-        number,
-        number,
-      ]) => {
-        return generateDataForAGroupOfPlayersByAveragingModularIncreases(
-          [
-            property(
-              [positionGroup],
-              PLAYERSKILLSPHYSICALCONTRACTRANGESBYPOSITION,
-            ),
-            PLAYERSKILLSPHYSICALCONTRACTRANDOMPLUSORMINUS,
-          ],
-          [positionGroup, count, startingIndex],
-        );
-      },
-    ),
-    flatten,
-    Object.fromEntries,
-  ],
-);
-
-export const generatePlayerBioDataForMultiplePositionGroups = (
-  positionGroupCountStartingIndexTuples: Array<[PositionGroup, number, number]>,
-): Promise<Array<[string, Array<number>]>> => {
-  const namesAndCountriesRanges: Array<[number, number]> =
-    foldArrayOfArraysIntoArrayOfLinearRanges([
-      FIRSTNAMES,
-      LASTNAMES,
-      COUNTRYNAMES,
-    ]);
-  return pipe([
-    map(
-      ([positionGroup, playerCount, startingIndex]: [
-        PositionGroup,
-        number,
-        number,
-      ]) => {
-        const [positionRange, positionGroupRange] = property(
-          [positionGroup],
-          PLAYERBIODATABYPOSITION,
-        );
-        const ranges = concat(namesAndCountriesRanges, [
-          positionRange,
-          positionGroupRange,
-        ]);
-        const namesAndCountriesIncreasers =
-          mapModularIncreasersWithDifferentStepsForARange(
-            playerCount,
-            namesAndCountriesRanges,
-          );
-        const increasers = concat(namesAndCountriesIncreasers, [
-          identity,
-          nonZeroBoundedModularAddition([positionGroupRange, 1]),
-        ]);
-
-        return generateDataForAGroupOfPlayersLinearlyWithRandomStartsAndGivenIncreasers(
-          [ranges, increasers],
-          [positionGroup, playerCount, startingIndex],
-        );
-      },
-    ),
-    flatten,
-  ])(positionGroupCountStartingIndexTuples);
-};
-
-// can't export getClubs and flattenClubs?
-export const generatePlayerSkillsPhysicalContractDataForListOfClubs = (
-  startingIndex: number,
-  entities: BaseEntities,
-) => {
-  return pipe([
-    getBaseEntitiesClubsCount,
-    getTotalPlayersToGenerateBasedOnGivenComposition(
-      BASECLUBCOMPOSITION,
-      startingIndex,
-    ),
-    generateSkillsPhysicalContractDataForMultiplePositionGroups,
-  ])(entities);
-};
-
-export const generatePlayerBioDataForListOfClubs = (
-  startingIndex: number,
-  entities: BaseEntities,
-) => {
-  return pipe([
-    getBaseEntitiesClubsCount,
-    getTotalPlayersToGenerateBasedOnGivenComposition(
-      BASECLUBCOMPOSITION,
-      startingIndex,
-    ),
-    generatePlayerBioDataForMultiplePositionGroups,
-  ])(entities);
-};
-
-// accepts a transformers object
-export const createEntities = (
-  baseEntities: BaseEntities,
-): Promise<Record<string, Entity>> => {
-  const baseEntitiesPlayers: Array<Array<string>> = pipe([
-    getBaseEntitiesClubs,
-    createPlayerIDsForClubs,
-  ])(baseEntities);
-
-  return pipe([
-    updateAllPaths({
-      countries: pipe([
-        zipWith(
-          (
-            competitions: Array<BaseEntity>,
-            [id, name]: BaseEntity,
-          ): [string, Entity] => {
-            return [id, createCountry(name, competitions)];
-          },
-          getBaseEntitiesDomesticLeagues(baseEntities),
-        ),
-      ]),
-      domesticLeagues: pipe([
-        flatten,
-        zipWith(
-          (
-            clubs: Array<BaseEntity>,
-            [id, name]: BaseEntity,
-          ): [string, Entity] => {
-            return [id, createCompetition(name, clubs)];
-          },
-          pipe([getBaseEntitiesClubs, flattenCompetitions])(baseEntities),
-        ),
-      ]),
-      clubs: pipe([
-        flattenDepth(2),
-        zipWith(
-          (
-            players: Array<string>,
-            [id, name]: BaseEntity,
-          ): [string, Entity] => {
-            return [id, createClub(name, players)];
-          },
-          baseEntitiesPlayers,
-        ),
-      ]),
-      players: (): Promise<Array<[string, Array<number>]>> => {
-        return generatePlayerBioDataForListOfClubs(0, baseEntities);
-      },
-    }),
-    Object.values,
-    flatten,
-    Object.fromEntries,
-  ])(baseEntities);
-};
 
 export const createSave = ({
   Name,

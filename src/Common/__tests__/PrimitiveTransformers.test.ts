@@ -26,18 +26,18 @@ import {
   convertCharacterIntoCharacterCode,
   zipApply,
   unfold,
-  unfoldStartingIndexAndCountIntoRange,
+  unfoldCountStartingIndexIntoRange,
   addMinusOne,
   minusOne,
   unfoldItemCountTupleIntoArray,
   unfoldItemCountTuplesIntoMixedArray,
   zipAllAndGetSumOfLastArray,
-  unfoldSingleStringStartingIndexAndCountTupleIntoArrayOfStringIDs,
-  unfoldStringStartingIndexAndCountTuplesIntoArrayOfArrayOfStringIDs,
+  unfoldSingleStringCountStartingIndexTupleIntoArrayOfStringIDs,
+  unfoldStringCountStartingIndexTuplesIntoArrayOfArrayOfStringIDs,
   spreadZipObject,
   zipAllAndGetInitial,
   zipAllAndGetSumOfSecondArray,
-  unfoldStringStartingIndexAndCountTuplesIntoArrayOfStringIDs,
+  unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs,
 } from "../Transformers";
 
 describe("PrimitiveTransformers test suite", () => {
@@ -121,9 +121,9 @@ describe("PrimitiveTransformers test suite", () => {
     },
   );
   test.prop([fc.nat(), fc.integer({ min: 3, max: 50 })])(
-    "unfoldStartingIndexAndCountIntoRange",
+    "unfoldCountStartingIndexIntoRange",
     (testStartingIndex, testCount) => {
-      const actualRange: Array<number> = unfoldStartingIndexAndCountIntoRange(
+      const actualRange: Array<number> = unfoldCountStartingIndexIntoRange(
         testStartingIndex,
         testCount,
       );
@@ -161,13 +161,13 @@ describe("PrimitiveTransformers test suite", () => {
   );
 
   test.prop([fc.gen()])(
-    "unfoldSingleStringStartingIndexAndCountTupleIntoArrayOfStringIDs",
+    "unfoldSingleStringCountStartingIndexTupleIntoArrayOfStringIDs",
     (fcGen) => {
       const [expectedPrefix, expectedStartingIndex, expectedCount] =
         fastCheckTestSingleStringCountStartingIndexTupleGenerator(fcGen);
 
       const actualIDs: Array<string> =
-        unfoldSingleStringStartingIndexAndCountTupleIntoArrayOfStringIDs(
+        unfoldSingleStringCountStartingIndexTupleIntoArrayOfStringIDs(
           expectedPrefix,
           [expectedStartingIndex, expectedCount],
         );
@@ -187,7 +187,7 @@ describe("PrimitiveTransformers test suite", () => {
   );
 
   test.prop([fc.integer({ min: 3, max: 10 }), fc.gen()])(
-    "unfoldStringStartingIndexAndCountTuplesIntoArrayOfArrayOfStringIDs",
+    "unfoldStringCountStartingIndexTuplesIntoArrayOfArrayOfStringIDs",
     (testArraySize, fcGen) => {
       const testTuples: Array<[string, number, number]> =
         fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator(
@@ -196,7 +196,7 @@ describe("PrimitiveTransformers test suite", () => {
         );
 
       const actualStringIDs: Array<Array<string>> =
-        unfoldStringStartingIndexAndCountTuplesIntoArrayOfArrayOfStringIDs(
+        unfoldStringCountStartingIndexTuplesIntoArrayOfArrayOfStringIDs(
           testTuples,
         );
       const expectedCountsObject: Record<string, number> = pipe([
@@ -214,7 +214,7 @@ describe("PrimitiveTransformers test suite", () => {
   );
 
   test.prop([fc.integer({ min: 3, max: 10 }), fc.gen()])(
-    "unfoldStringStartingIndexAndCountTuplesIntoArrayOfStringIDs",
+    "unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs",
     (testArraySize, fcGen) => {
       const testTuples: Array<[string, number, number]> =
         fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator(
@@ -223,7 +223,7 @@ describe("PrimitiveTransformers test suite", () => {
         );
 
       const actualStringIDs: Array<string> =
-        unfoldStringStartingIndexAndCountTuplesIntoArrayOfStringIDs(testTuples);
+        unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs(testTuples);
       const expectedStringCount: number =
         zipAllAndGetSumOfSecondArray(testTuples);
       const actualStringCount: number =
