@@ -5,12 +5,12 @@ import { test, fc } from "@fast-check/vitest"
 import { describe, expect } from "vitest";
 import "fake-indexeddb/auto";
 import { pipe, over } from "lodash/fp"
-import { setup, getValuesOfElements, getTextOfElements, getIDsOfElements } from "../../UITestingUtilities";
+import { setup, getValuesOfElements, getTextOfElements, getIDsOfElements, getElementValue, getElementName, getElementText } from "../../UITestingUtilities";
 import { pairArraysAndAssertStrictEqual, pairIntegersAndAssertEqual } from "../../../Common/Asserters"
 import { BaseCountries } from "../../../Common/Types"
-import { IDPREFIXES } from "../../../Common/Constants"
-import { fastCheckTestBaseCountriesGenerator, fastCheckTestRandomBaseCountryIndex, fastCheckNLengthUniqueStringArrayGenerator, fastCheckRandomEntityIDPrefix, fastCheckTestCompletelyRandomBaseDomesticLeagueIndex} from "../../../Common/TestDataGenerationUtilities"
-import { countByIDPrefix } from "../../../Common/Getters"
+import { fastCheckTestBaseCountriesGenerator, fastCheckTestRandomBaseCountryIndex, fastCheckNLengthUniqueStringArrayGenerator, fastCheckRandomEntityIDPrefix, fastCheckTestCompletelyRandomBaseDomesticLeagueIndex, fastCheckTestCompletelyRandomBaseClubIndex,
+  fastCheckNonSpaceRandomCharacterGenerator
+} from "../../../Common/TestDataGenerationUtilities"
 import { convertArrayToSetThenGetSize, isEveryIntegerInRange, convertArrayOfStringsIntoArrayOfIntegers, createStringID } from "../../../Common/Transformers"
 import { getCountOfItemsFromArrayThatStartWithX } from "../../../Common/Getters"
 import { CreateCountryOptions, CreateDomesticLeagueOptions, CreateClubOptions, NewSaveForm, CreateEntityOptions } from "../NewSaveForm"
@@ -30,11 +30,9 @@ describe("NewSaveForm", async () => {
       const testIDPrefix: string = fastCheckRandomEntityIDPrefix(fcGen)
       
       
-      setup(<div><CreateEntityOptions idCreator={createStringID(testIDPrefix)} selectName={testSelectName} strings={testOptions}/></div>);
+      setup(<div><select><CreateEntityOptions idCreator={createStringID(testIDPrefix)} strings={testOptions}/></select></div>);
       
 
-      const actualCombobox: HTMLSelectElement = screen.getByRole("combobox")
-      expect(actualCombobox.name).toBe(testSelectName)
       
       const actualOptions: Array<HTMLOptionElement> = screen.getAllByRole("option")
       const [actualIDs, actualValues, actualTextValues] = over([getIDsOfElements, getValuesOfElements, getTextOfElements])(actualOptions)
@@ -95,7 +93,7 @@ describe("NewSaveForm", async () => {
           testCountriesDomesticsLeaguesClubsCount,
         );
 
-      const testCountryIndex: number = fastCheckTestRandomBaseCountryIndex(fcGen, testBaseCountries)
+      const testCountryIndex: string = fastCheckTestRandomBaseCountryIndex(fcGen, testBaseCountries)
 
       const [,expectedDomesticLeaguesPerCountryCount] = testCountriesDomesticsLeaguesClubsCount
       
@@ -124,7 +122,7 @@ describe("NewSaveForm", async () => {
           testCountriesDomesticsLeaguesClubsCount,
         );
 
-      const [testCountryIndex, testDomesticLeagueIndex]: [number, number] = fastCheckTestCompletelyRandomBaseDomesticLeagueIndex(fcGen, testBaseCountries)
+      const [testCountryIndex, testDomesticLeagueIndex]: [string, string] = fastCheckTestCompletelyRandomBaseDomesticLeagueIndex(fcGen, testBaseCountries)
 
       const [,,expectedClubsPerDomesticLeagues] = testCountriesDomesticsLeaguesClubsCount
       
@@ -133,7 +131,7 @@ describe("NewSaveForm", async () => {
 	      domesticLeagueIndex={testDomesticLeagueIndex}
       />)
 
-      const options = screen.getAllByRole("option")
+      const options: Array<HTMLOptionElement>  = screen.getAllByRole("option")
       pairIntegersAndAssertEqual([options.length, expectedClubsPerDomesticLeagues])
       cleanup();
 	
@@ -143,8 +141,8 @@ describe("NewSaveForm", async () => {
   test.prop([
     fc.tuple(
       fc.integer({ min: 1, max: 5 }),
-      fc.integer({ min: 1, max: 5 }),
-      fc.integer({ min: 1, max: 10 }),
+      fc.integer({ min: 1, max: 8 }),
+      fc.integer({ min: 1, max: 20 }),
     ),
     fc.gen(),
   ])(
@@ -162,23 +160,61 @@ describe("NewSaveForm", async () => {
       
       
       setup(<NewSaveForm countriesLeaguesClubs={testBaseCountries}/>);
-      expect(screen.getByLabelText("Choose a name:", { selector: "textarea" })).toBeTruthy()
+      expect(screen.getByRole("textbox", { name: "Choose a name:" })).toBeTruthy()
       expect(screen.getByLabelText("Choose a country:", { selector: "select" })).toBeTruthy()
+      
       expect(screen.getByLabelText("Choose a domestic league:", { selector: "select" })).toBeTruthy()
-      expect(screen.getByLabelText("Choose a domestic club:", { selector: "select" })).toBeTruthy()
+      expect(screen.getByLabelText("Choose a club:", { selector: "select" })).toBeTruthy()
+
 
       
-      const options = screen.getAllByRole("option")
-      const {[IDPREFIXES.Country]: actualCountriesCount} = pipe([getIDsOfElements, countByIDPrefix])(options)
-
-      
-      
-      pairIntegersAndAssertEqual([actualCountriesCount, expectedCountriesCount])
-      
+      const options: Array<HTMLOptionElement> = screen.getAllByRole("option")           
+      pairIntegersAndAssertEqual([options.length, expectedCountriesCount])      
       cleanup();
     }
   );
 
+  test.prop([
+    fc.tuple(
+      fc.integer({ min: 1, max: 5 }),
+      fc.integer({ min: 1, max: 8 }),
+      fc.integer({ min: 1, max: 20 }),
+    ),
+    fc.gen(),
+  ], {numRuns: 75})(
+    "Test NewSaveForm selecting a country, domestic league and club",
+    async(testCountriesDomesticsLeaguesClubsCount, fcGen) => {
+      
+      const testBaseCountries: BaseCountries =
+        fastCheckTestBaseCountriesGenerator(
+          fcGen,
+          testCountriesDomesticsLeaguesClubsCount,
+        );
+
+      const testName: string = fastCheckNonSpaceRandomCharacterGenerator(fcGen)
+      const [testCountryNameValue, testDomesticLeagueNameValue, testClubNameValue] = fastCheckTestCompletelyRandomBaseClubIndex(fcGen, testBaseCountries)
+	    
+      const { user } = setup(<NewSaveForm countriesLeaguesClubs={testBaseCountries}/>);
+
+      const actualNameTextArea: HTMLInputElement = screen.getByRole("textbox", { name: "Choose a name:" })
+	    
+      await user.type(actualNameTextArea, testName)
+      expect(actualNameTextArea.value).toBe(testName)
+
+      const actualCountryOptions: HTMLSelectElement = screen.getByLabelText("Choose a country:", { selector: "select" }) 
+      await user.selectOptions(actualCountryOptions, testCountryNameValue)
+
+      
+      const actualDomesticLeagueOptions: HTMLSelectElement = screen.getByLabelText("Choose a domestic league:", { selector: "select" }) 
+      await user.selectOptions(actualDomesticLeagueOptions, testDomesticLeagueNameValue)
+
+      const actualClubOptions: HTMLSelectElement = screen.getByLabelText("Choose a club:", { selector: "select" })
+      await user.selectOptions(actualClubOptions, testClubNameValue)
+      expect(screen.getByRole("button", { name: "Submit" })).toBeTruthy()
+      
+      cleanup();
+    }
+  );
 
 
 })

@@ -13,7 +13,8 @@ import {
   first,
   zipAll,
   property,
-  flatten
+  flatten,
+
 } from "lodash/fp";
 import fastCartesian from "fast-cartesian";
 import { IDPREFIXES } from "./Constants";
@@ -26,11 +27,14 @@ import {
   TESTRANDOMSEASONRANGE,
   DOUBLEBETWEENZEROAND1RANGE,
   TESTROUNDROBINCLUBSRANGE,
-  BASECOUNTRIESINDICESDOMESTICLEAGUESINDEX,
-  BASECOUNTRIESINDICESCLUBSINDEX
+  BASECOUNTRIESDOMESTICLEAGUESINDEX,
+  BASECOUNTRIESCLUBSINDEX
 } from "./Constants";
 import {
   getFirstLevelArrayLengths,
+  getCountryNameFromBaseCountries,
+  getDomesticLeagueNameFromBaseCountries,
+  getClubNameFromBaseCountries
 } from "./Getters";
 import {
   unfold,
@@ -448,19 +452,19 @@ export const fastCheckTestBaseCountriesGenerator = curry(
 
 
 
-export const fastCheckTestRandomBaseCountryIndex = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries): number => {
+export const fastCheckTestRandomBaseCountryIndex = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries): string => {
 
-  return pipe([zipAllAndGetFirstArray, fastCheckRandomObjectKeyAsInteger(fcGen)])(testBaseCountries)
+  return pipe([zipAllAndGetFirstArray, fastCheckRandomObjectKey(fcGen)])(testBaseCountries)
   
 })
 
-export const fastCheckTestRandomBaseDomesticLeagueIndexFromCountry = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries, testCountryIndex: number): number => {
+export const fastCheckTestRandomBaseDomesticLeagueIndexFromCountry = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries, testCountryIndex: string): string => {
 
-  return pipe([property([testCountryIndex, BASECOUNTRIESINDICESDOMESTICLEAGUESINDEX]), fastCheckRandomObjectKeyAsInteger(fcGen)])(testBaseCountries)
+  return pipe([property([testCountryIndex, BASECOUNTRIESDOMESTICLEAGUESINDEX]), fastCheckRandomObjectKey(fcGen)])(testBaseCountries)
   
 })
 
-export const fastCheckTestCompletelyRandomBaseDomesticLeagueIndex = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries): [number, number] => {
+export const fastCheckTestCompletelyRandomBaseDomesticLeagueIndex = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries): [string, string] => {
 
   return pipe([fastCheckTestRandomBaseCountryIndex(fcGen), over([identity, fastCheckTestRandomBaseDomesticLeagueIndexFromCountry(fcGen, testBaseCountries)])])(testBaseCountries)
   
@@ -468,14 +472,26 @@ export const fastCheckTestCompletelyRandomBaseDomesticLeagueIndex = curry((fcGen
 
 
 export const fastCheckTestRandomBaseClubIndexFromCountryAndDomesticLeague = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries,
-  [testCountryIndex, testDomesticLeagueIndex]: [number, number]): number => {
-    return pipe([property([testCountryIndex, BASECOUNTRIESINDICESCLUBSINDEX, testDomesticLeagueIndex]), fastCheckRandomObjectKeyAsInteger(fcGen)])(testBaseCountries)  
+  [testCountryIndex, testDomesticLeagueIndex]: [string, string]): string => {
+    return pipe([property([testCountryIndex, BASECOUNTRIESCLUBSINDEX, testDomesticLeagueIndex]), fastCheckRandomObjectKey(fcGen)])(testBaseCountries)  
 })
 
 
-export const fastCheckTestCompletelyRandomBaseClubIndex = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries): [number, number, number] => {
+export const fastCheckTestCompletelyRandomBaseClubIndex = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries): [string, string, string] => {
   return pipe([fastCheckTestCompletelyRandomBaseDomesticLeagueIndex(fcGen),
     over([identity, fastCheckTestRandomBaseClubIndexFromCountryAndDomesticLeague(fcGen, testBaseCountries)]), flatten])(testBaseCountries)  
 })
+
+
+export const fastCheckTestCompletelyRandomBaseClub = curry((fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries): [[string, string, string], [string, string, string]] => {
+  const [randomCountryIndex, randomDomesticLeagueIndex, randomClubIndex]: [string, string, string] = fastCheckTestCompletelyRandomBaseClubIndex(fcGen, testBaseCountries)
+  const randomClub: [string, string, string] =  over([getCountryNameFromBaseCountries(randomCountryIndex),
+    getDomesticLeagueNameFromBaseCountries([randomCountryIndex, randomDomesticLeagueIndex]),
+    getClubNameFromBaseCountries([randomCountryIndex, randomDomesticLeagueIndex, randomClubIndex])])(testBaseCountries)
+  
+  return [[randomCountryIndex, randomDomesticLeagueIndex, randomClubIndex], randomClub]    
+})
+
+
 
 

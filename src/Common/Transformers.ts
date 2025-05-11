@@ -285,11 +285,18 @@ export const zipAllAndGetSizeOfFirstArray = zipAllAndTransformXArrayWithY([
   size
 ]);
 
+
+export const zipAllAndGetFirstArrayAsSet = zipAllAndTransformXArrayWithY([
+  first,
+  convertToSet
+]);
+
 export const convertConcatenatedArraysIntoSet = pipe([concat, convertToSet]);
 export const convertFlattenedArrayIntoSet = pipe([flatten, convertToSet]);
 export const convertArrayOfArraysToArrayOfSets = map(convertToSet);
 export const convertArrayOfIntegersIntoArrayOfStrings = map(toString);
 export const convertArrayOfStringsIntoArrayOfIntegers = map(parseInt);
+export const calculateTheSumOfArrayOfStringIntegers = pipe([convertArrayOfStringsIntoArrayOfIntegers, sum])
 
 export const mapFlatten = map(flatten);
 export const convertArrayOfArraysIntoShuffledArray = pipe([flatten, shuffle]);
@@ -463,7 +470,7 @@ export const mapModularIncreasersWithDifferentStepsForARange = curry(
   },
 );
 
-export const getRandomNumberInRange = ([min, max]: [
+export const getRandomIntegerInRange = ([min, max]: [
   number,
   number,
 ]): number => {
@@ -472,11 +479,11 @@ export const getRandomNumberInRange = ([min, max]: [
   return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
 };
 
-export const getRandomNumberInRanges = map(getRandomNumberInRange);
+export const getRandomIntegerInRanges = map(getRandomIntegerInRange);
 
 export const getRandomPlusOrMinus = pipe([
   over([multiply(-1), identity]),
-  getRandomNumberInRange,
+  getRandomIntegerInRange,
 ]);
 
 export const getRunningSumOfListOfTuples = curry(

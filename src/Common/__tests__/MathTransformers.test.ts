@@ -30,7 +30,7 @@ import {
   simpleModularArithmetic,
   addOne,
   multiplyByTwo,
-  getRandomNumberInRange,
+  getRandomIntegerInRange,
   getUndadjustedAverageStepForASetOfModularRanges,
   mapModularIncreasersWithTheSameAverageStep,
   mapModularIncreasersWithDifferentStepsForARange,
@@ -172,10 +172,10 @@ describe("MathTransformers test suite", () => {
 
   test.prop([
     fc.tuple(fc.integer({ min: 0, max: 1000 }), fc.integer({ min: 1000 })),
-  ])("getRandomNumberInRange", (testRange) => {
+  ])("getRandomIntegerInRange", (testRange) => {
     const [expectedMin, expectedMax]: [number, number] = testRange;
 
-    const actualNumber = getRandomNumberInRange(testRange);
+    const actualNumber = getRandomIntegerInRange(testRange);
     expect(actualNumber).toBeGreaterThanOrEqual(expectedMin);
     expect(actualNumber).toBeLessThanOrEqual(expectedMax);
   });

@@ -19,6 +19,12 @@ export const renderWithRouter = (ui: React.ReactNode, { route = "/" } = {}) => {
   };
 };
 
-export const getIDsOfElements = map(get("id"))
-export const getValuesOfElements = map(get("value"))
-export const getTextOfElements = map(get("text"))
+export const getElementID = get("id")
+export const getElementValue = get("value")
+export const getElementText = get("text")
+export const getElementName = get("name")
+export const getElementType = get("submit")
+	     
+export const getIDsOfElements = map(getElementID)
+export const getValuesOfElements = map(getElementValue)
+export const getTextOfElements = map(getElementText)
