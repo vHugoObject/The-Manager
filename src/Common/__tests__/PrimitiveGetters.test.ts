@@ -1,25 +1,21 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import {
-  pipe,
-  first,
-  over,
-  map,
-  isString,
-  isNumber,
-} from "lodash/fp";
-import { pairArraysAndAssertStrictEqual } from "../Asserters";
+import { pipe, first, over, map, isString, isNumber, take } from "lodash/fp";
+import { pairAndAssertStrictEqual } from "../Asserters";
 import {
   fastCheckTestSingleStringIDGenerator,
   fastCheckTestMixedArrayOfStringIDsGenerator,
   fastCheckNLengthArrayOfStringsAndIntegersGenerator,
   fastCheckTestLinearRangeGenerator,
+  fastCheckNLengthUniqueStringArrayGenerator,
+  fastCheckRandomIntegerInRange
 } from "../TestDataGenerationUtilities";
 import {
   convertRangeSizeAndMinIntoRange,
   spreadZipObject,
   zipAllAndGetInitial,
   getLengthOfLinearRange,
+  joinOnUnderscores
 } from "../Transformers";
 import {
   getCountsForASetOfIDPrefixes,
@@ -27,6 +23,7 @@ import {
   getIDSuffix,
   getCountOfItemsFromArrayForPredicate,
   getCountOfObjectKeys,
+  getFirstNPartsOfID
 } from "../Getters";
 
 describe("PrimitiveGetters test suite", () => {
@@ -61,7 +58,7 @@ describe("PrimitiveGetters test suite", () => {
         testGetIntegerCount,
       ])(testItems);
 
-      pairArraysAndAssertStrictEqual([
+      pairAndAssertStrictEqual([
         actualStringCount,
         expectedStringCount,
         actualIntegerCount,
@@ -86,6 +83,20 @@ describe("PrimitiveGetters test suite", () => {
       expect(actualCountsObject).toStrictEqual(expectedCountsObject);
     },
   );
+
+  test.prop([fc.integer({ min: 3, max: 20 }), fc.gen()])(
+    "getFirstNPartsOfID",
+    (testIDLength, fcGen) => {
+      const testPartsToGet: number = fastCheckRandomIntegerInRange(fcGen, [1, testIDLength])
+      const [testID, expectedIDParts] = pipe([
+	fastCheckNLengthUniqueStringArrayGenerator,
+	over([joinOnUnderscores, take(testPartsToGet)])
+      ])(fcGen, testIDLength)
+      const actualIDParts: Array<string> = getFirstNPartsOfID(testPartsToGet, testID)
+      pairAndAssertStrictEqual([actualIDParts, expectedIDParts])
+    },
+  );
+  
 
   test.prop([fc.gen(), fc.integer({ min: 2 })])(
     "getLengthOfLinearRange",

@@ -26,7 +26,6 @@ import {
   isArray,
   pick,
   flattenDepth,
-  zipWith,
   pickBy,
   startsWith,
   overSome,
@@ -38,15 +37,7 @@ import {
   tail,
   partialRight,
 } from "lodash/fp";
-import {
-  PositionGroup,
-  Save,
-  Entity,
-  CountryArrayIndices,
-  CompetitionArrayIndices,
-  ClubArrayIndices,
-  BaseCountries
-} from "./Types";
+import { PositionGroup, Save, BaseCountries } from "./Types";
 import {
   DEFAULTMATCHCOMPOSITION,
   CLUBSDEPTH,
@@ -54,7 +45,7 @@ import {
   IDPREFIXES,
   BASECOUNTRIESDOMESTICLEAGUESINDEX,
   BASECOUNTRIESCLUBSINDEX,
-  BASECOUNTRIESCOUNTRIESINDEX
+  BASECOUNTRIESCOUNTRIESINDEX,
 } from "./Constants";
 
 export const isTrue = isEqual(true);
@@ -94,7 +85,19 @@ export const getIDSuffix = pipe([getPartsOfIDAsArray, last]);
 export const getLastEntityIDNumber = pipe([last, getIDSuffix]);
 export const getLastIDNumberOutOfIDNameTuple = pipe([last, first, getIDSuffix]);
 
+export const getFirstNPartsOfID = curry((parts: number, id: string) => {
+  return pipe([getPartsOfIDAsArray, take(parts)])(id)
+})
+
+export const getFirstTwoPartsOfID = getFirstNPartsOfID(2)
+export const getFirstThreePartsOfID = getFirstNPartsOfID(3)
+export const getFirstFourPartsOfID = getFirstNPartsOfID(4)
+
 export const countByIDPrefix = countBy(getIDPrefix);
+export const countByFirstTwoIDParts = countBy(getFirstTwoPartsOfID);
+export const countByFirstThreeIDParts = countBy(getFirstThreePartsOfID);
+export const countByFirstFourIDParts = countBy(getFirstFourPartsOfID);
+
 
 export const getCountsForASetOfIDPrefixes = (
   idPrefixes: Array<string>,
@@ -102,8 +105,6 @@ export const getCountsForASetOfIDPrefixes = (
 ): Record<string, number> => {
   return pipe([countByIDPrefix, pick(idPrefixes)])(ids);
 };
-
-
 
 export const getCountOfItemsFromArrayForPredicateWithTransformation = curry(
   <T, V>(
@@ -155,7 +156,6 @@ export const getCountOfItemsFromArrayThatStartWithX = curry(
 );
 
 export const isClubID = startsWith(IDPREFIXES.Club);
-export const isCountryID = startsWith(IDPREFIXES.Country);
 export const isDomesticLeagueID = startsWith(IDPREFIXES.DomesticLeague);
 export const isGoalkeeperID = startsWith(PositionGroup.Goalkeeper);
 export const isDefenderID = startsWith(PositionGroup.Defender);
@@ -168,7 +168,6 @@ export const isPlayerID = overSome([
   isAttackerID,
 ]);
 
-export const filterCountriesByID = filter(isCountryID);
 export const filterDomesticLeaguesByID = filter(isDomesticLeagueID);
 export const filterClubsByID = filter(isClubID);
 export const filterGoalkeepersByID = filter(isGoalkeeperID);
@@ -176,10 +175,6 @@ export const filterDefendersByID = filter(isDefenderID);
 export const filterMidfieldersByID = filter(isMidfielderID);
 export const filterAttackersByID = filter(isAttackerID);
 export const filterPlayersByID = filter(isPlayerID);
-
-export const pickCountries = pickBy((_: Entity, entityID: string): boolean =>
-  isCountryID(entityID),
-);
 
 export const pickDomesticLeagues = pickBy((_: Entity, entityID: string) =>
   isDomesticLeagueID(entityID),
@@ -201,17 +196,6 @@ export const pickMidfielders = playerPicker(isMidfielderID);
 export const pickAttackers = playerPicker(isAttackerID);
 export const pickPlayers = playerPicker(isPlayerID);
 
-export const getCountryName = property([CountryArrayIndices.Name]);
-export const getCountryDomesticLeagues = property(
-  CountryArrayIndices.Competitions,
-);
-
-export const getCompetitionName = property([CompetitionArrayIndices.Name]);
-export const getCompetitionClubs = property(CompetitionArrayIndices.Clubs);
-
-export const getClubName = property([ClubArrayIndices.Name]);
-export const getClubSquad = property([ClubArrayIndices.Squad]);
-
 export const getPlayerPositionGroupFromID = property([0]);
 
 export const getClubsSliceLengths = over([
@@ -219,7 +203,6 @@ export const getClubsSliceLengths = over([
   map(size),
 ]);
 
-export const getCountryIDsCount = pipe([filterCountriesByID, size]);
 export const getDomesticLeagueIDsCount = pipe([
   filterDomesticLeaguesByID,
   size,
@@ -227,10 +210,9 @@ export const getDomesticLeagueIDsCount = pipe([
 export const getClubIDsCount = pipe([filterClubsByID, size]);
 
 export const getCountOfNonPlayerEntitiesByTypeFromArray = over([
-  getCountryIDsCount,
   getDomesticLeagueIDsCount,
-  getClubIDsCount
-])
+  getClubIDsCount,
+]);
 
 export const getAttackerIDsCount =
   getCountOfItemsFromArrayForPredicate(isAttackerID);
@@ -252,52 +234,11 @@ export const getCountOfPlayersByPositionFromArray = over([
 
 export const getEntityFromSaveEntities = (id: string, save: Save) =>
   pipe([property(["Entities", id])])(save);
+
 export const getGroupOfPlayerSkillsFromSave = (
   ids: Array<string>,
   save: Save,
 ) => pipe([property(["Entities"]), pick(ids)])(save);
-export const getClubSquadFromSave = pipe([
-  getEntityFromSaveEntities,
-  getClubSquad,
-]);
-
-export const getClubPlayerSkillsFromSave = ([save, clubID]: [
-  Save,
-  string,
-]): Record<string, Array<number>> => {
-  return pipe([
-    getClubSquadFromSave,
-    (players: Array<string>) => [save, players],
-    getGroupOfPlayerSkillsFromSave,
-  ])([save, clubID]);
-};
-
-export const getClubBestStarting11FromSave = curry(
-  (
-    composition: Array<number>,
-    [save, clubID]: [Save, string],
-  ): Record<string, Array<number>> => {
-    return pipe([
-      getClubPlayerSkillsFromSave,
-      groupPlayersByPosition,
-      map(sortPlayersByRatings),
-      zipWith(
-        (
-          positionCount: number,
-          positionPlayers: Array<Record<string, Array<number>>>,
-        ): Array<Record<string, Array<number>>> => {
-          return pipe([Object.entries, take(positionCount)])(positionPlayers);
-        },
-        composition,
-      ),
-      flatten,
-      Object.fromEntries,
-    ])([save, clubID]);
-  },
-);
-
-export const getClubBestStarting11FromSaveWithDefault433 =
-  getClubBestStarting11FromSave(DEFAULTMATCHCOMPOSITION);
 
 export const groupPlayersByPosition = over([
   pickGoalkeepers,
@@ -332,27 +273,61 @@ export const getCountriesDomesticLeaguesAndClubsCounts = over([
   getClubsPerDomesticLeaguesCountFromBaseCountries,
 ]);
 
+export const getDomesticLeaguesOfCountryFromBaseCountries = curry(
+  (
+    countryIndex: string,
+    countriesLeaguesClubs: BaseCountries,
+  ): Array<string> => {
+    return property([countryIndex, BASECOUNTRIESDOMESTICLEAGUESINDEX])(
+      countriesLeaguesClubs,
+    );
+  },
+);
 
-export const getDomesticLeaguesOfCountryFromBaseCountries = curry((countryIndex: string, countriesLeaguesClubs: BaseCountries): Array<string> => {
-  return property([countryIndex, BASECOUNTRIESDOMESTICLEAGUESINDEX])(countriesLeaguesClubs)
-})
+export const getClubsOfDomesticLeagueFromBaseCountries = curry(
+  (
+    [countryIndex, domesticLeagueIndex]: [string, string],
+    countriesLeaguesClubs: BaseCountries,
+  ): Array<string> => {
+    return property([
+      countryIndex,
+      BASECOUNTRIESCLUBSINDEX,
+      domesticLeagueIndex,
+    ])(countriesLeaguesClubs);
+  },
+);
 
-export const getClubsOfDomesticLeagueFromBaseCountries = curry(([countryIndex, domesticLeagueIndex]: [string, string], countriesLeaguesClubs: BaseCountries): Array<string> => {
-  return property([countryIndex, BASECOUNTRIESCLUBSINDEX, domesticLeagueIndex])(countriesLeaguesClubs)
-});
-  
+export const getCountryNameFromBaseCountries = curry(
+  (countryIndex: string, countriesLeaguesClubs: BaseCountries): string => {
+    return property([countryIndex, BASECOUNTRIESCOUNTRIESINDEX])(
+      countriesLeaguesClubs,
+    );
+  },
+);
 
-export const getCountryNameFromBaseCountries = curry((countryIndex: string, countriesLeaguesClubs: BaseCountries): string => {
-  return property([countryIndex, BASECOUNTRIESCOUNTRIESINDEX])(countriesLeaguesClubs)
-})
+export const getDomesticLeagueNameFromBaseCountries = curry(
+  (
+    [countryIndex, domesticLeagueIndex]: [string, string],
+    countriesLeaguesClubs: BaseCountries,
+  ): string => {
+    return pipe([
+      getDomesticLeaguesOfCountryFromBaseCountries(countryIndex),
+      property(domesticLeagueIndex),
+    ])(countriesLeaguesClubs);
+  },
+);
 
-export const getDomesticLeagueNameFromBaseCountries = curry(([countryIndex, domesticLeagueIndex]: [string, string], countriesLeaguesClubs: BaseCountries): string => {
-  return pipe([getDomesticLeaguesOfCountryFromBaseCountries(countryIndex),property(domesticLeagueIndex)])(countriesLeaguesClubs)
-})
-
-
-export const getClubNameFromBaseCountries = curry(([countryIndex, domesticLeagueIndex, clubIndex]: [string, string, string], countriesLeaguesClubs: BaseCountries): string => {
-  return pipe([getClubsOfDomesticLeagueFromBaseCountries([countryIndex, domesticLeagueIndex]), property(clubIndex)])(countriesLeaguesClubs)
-})
-
-
+export const getClubNameFromBaseCountries = curry(
+  (
+    [countryIndex, domesticLeagueIndex, clubIndex]: [string, string, string],
+    countriesLeaguesClubs: BaseCountries,
+  ): string => {
+    return pipe([
+      getClubsOfDomesticLeagueFromBaseCountries([
+        countryIndex,
+        domesticLeagueIndex,
+      ]),
+      property(clubIndex),
+    ])(countriesLeaguesClubs);
+  },
+);

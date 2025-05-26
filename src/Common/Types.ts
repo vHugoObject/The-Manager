@@ -1,20 +1,5 @@
-export type Entity = Array<number | string | Array<string>>;
-
 export type BaseCountry = [string, Array<string>, Array<Array<string>>];
 export type BaseCountries = Array<BaseCountry>;
-
-export enum CountryArrayIndices {
-  Name,
-  Competitions,
-}
-export enum CompetitionArrayIndices {
-  Name,
-  Clubs,
-}
-export enum ClubArrayIndices {
-  Name,
-  Squad,
-}
 
 export enum PositionGroup {
   Attacker = "0",

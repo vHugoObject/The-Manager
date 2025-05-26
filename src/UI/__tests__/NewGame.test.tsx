@@ -5,12 +5,8 @@ import { describe, expect, test, expectTypeOf } from "vitest";
 import "fake-indexeddb/auto";
 import { renderWithRouter } from "../UITestingUtilities";
 
-
 describe("NewGame Components", async () => {
-
-
   test("test NewGame with nothing selected", async () => {
-
     renderWithRouter(
       <NewGame countriesLeaguesClubs={testAvailableCountriesLeaguesClubs} />,
     );
@@ -91,5 +87,4 @@ describe("NewGame Components", async () => {
       expect(screen.getByRole("option", { name: expectedLeague })).toBeTruthy();
     });
   });
-
 });

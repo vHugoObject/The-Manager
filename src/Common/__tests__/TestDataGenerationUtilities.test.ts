@@ -8,6 +8,7 @@ import {
   over,
   size,
   sum,
+  isString,
 } from "lodash/fp";
 import { BaseCountries, Entity, PositionGroup } from "../Types";
 import {
@@ -24,7 +25,7 @@ import {
   getCountOfObjectValues,
   getCountOfPlayersByPositionFromArray,
   getDomesticLeaguesOfCountryFromBaseCountries,
-  getClubsOfDomesticLeagueFromBaseCountries
+  getClubsOfDomesticLeagueFromBaseCountries,
 } from "../Getters";
 import {
   convertFlattenedArrayIntoSet,
@@ -38,7 +39,7 @@ import {
 import {
   convertArraysToSetsAndAssertStrictEqual,
   assertIntegerGreaterThanOrEqualMinAndLessThanMax,
-  parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax
+  parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax,
 } from "../Asserters";
 import {
   fastCheckTestClubsForBaseCountriesGenerator,
@@ -66,12 +67,12 @@ import {
   fastCheckTestRandomBaseClubIndexFromCountryAndDomesticLeague,
   fastCheckTestCompletelyRandomBaseDomesticLeagueIndex,
   fastCheckTestCompletelyRandomBaseClubIndex,
-  fastCheckTestCompletelyRandomBaseClub
+  fastCheckTestCompletelyRandomBaseClub,
+  fastCheckNLengthStringGenerator,
 } from "../TestDataGenerationUtilities";
 
 describe("TestDataGenerationUtilities test suite", () => {
-
-  const POSITIONGROUPCOUNT: number = getCountOfObjectValues(PositionGroup)
+  const POSITIONGROUPCOUNT: number = getCountOfObjectValues(PositionGroup);
 
   const getActualStringIndexAndCountArray = pipe([
     zipAll,
@@ -98,7 +99,6 @@ describe("TestDataGenerationUtilities test suite", () => {
     assertIntegerGreaterThanOrEqualMinAndLessThanMax(testRange, actualDouble);
   });
 
-  
   test.prop([
     fc.tuple(
       fc.integer({ min: 1, max: 49 }),
@@ -139,6 +139,16 @@ describe("TestDataGenerationUtilities test suite", () => {
       actualCharacterCode,
     );
   });
+
+  test.prop([fc.integer({ min: 1, max: 100 }), fc.gen()])(
+    "fastCheckNLengthStringGenerator",
+    (testStringLength, fcGen) => {
+      const [actualString, _]: [string, Array<string>] =
+        fastCheckNLengthStringGenerator(fcGen, testStringLength);
+      expect(isString(actualString)).toBeTruthy();
+      expect(actualString.length).toEqual(testStringLength);
+    },
+  );
 
   test.prop([fc.integer({ min: 2 }), fc.gen()])(
     "fastCheckTestLinearRangeGenerator",
@@ -354,31 +364,30 @@ describe("TestDataGenerationUtilities test suite", () => {
     },
   );
 
-    test.prop([
+  test.prop([
     fc.integer({ min: 2, max: 10 }),
     fc.integer({ min: 1, max: 100 }),
     fc.gen(),
   ])(
     "fastCheckTestMixedArrayOfPositionGroupIDsGenerator",
     (testMinCountOfPlayersPerPosition, testRangeSize, fcGen) => {
+      const [actualStringIDs]: [Array<string>, Array<[string, number]>] =
+        fastCheckTestMixedArrayOfPositionGroupIDsGenerator(fcGen, [
+          testMinCountOfPlayersPerPosition,
+          testRangeSize,
+        ]);
 
-      const [actualStringIDs]: [
-        Array<string>,
-        Array<[string, number]>,
-      ] = fastCheckTestMixedArrayOfPositionGroupIDsGenerator(
-        fcGen,
-        [testMinCountOfPlayersPerPosition, testRangeSize],
+      const actualPlayerCount =
+        getCountOfPlayersByPositionFromArray(actualStringIDs);
+      const minTotalPlayerCount: number =
+        testMinCountOfPlayersPerPosition * POSITIONGROUPCOUNT;
+      expect(sum(actualPlayerCount)).toBeGreaterThanOrEqual(
+        minTotalPlayerCount,
       );
-      
-      const actualPlayerCount = getCountOfPlayersByPositionFromArray(actualStringIDs)
-      const minTotalPlayerCount: number = testMinCountOfPlayersPerPosition * POSITIONGROUPCOUNT
-      expect(sum(actualPlayerCount)).toBeGreaterThanOrEqual(minTotalPlayerCount)
     },
   );
 
-
-  
-   test.prop([fc.integer({ min: 2, max: 10 }), fc.gen()])(
+  test.prop([fc.integer({ min: 2, max: 10 }), fc.gen()])(
     "fastCheckTestMixedArrayOfStringIDsGenerator",
     (testArraySize, fcGen) => {
       const [actualStringIDs, actualStringCountIndexTuples]: [
@@ -389,9 +398,8 @@ describe("TestDataGenerationUtilities test suite", () => {
       const actualSize: number = getSizeOfCompactedAray(actualStringIDs);
       expect(actualSize).toBeGreaterThanOrEqual(testArraySize);
     },
-   );
+  );
 
-  
   test.prop([fc.integer({ min: 2, max: 100 }), fc.gen()])(
     "fastCheckTestCountriesForBaseCountriesGenerator",
     (testCountriesCount, fcGen) => {
@@ -495,9 +503,7 @@ describe("TestDataGenerationUtilities test suite", () => {
     },
   );
 
-
-  
-    test.prop([
+  test.prop([
     fc.tuple(
       fc.integer({ min: 1, max: 5 }),
       fc.integer({ min: 1, max: 10 }),
@@ -513,12 +519,20 @@ describe("TestDataGenerationUtilities test suite", () => {
           testCountriesDomesticLeaguesClubsCount,
         );
       const [expectedCountriesCount]: [number, number, number] =
-            testCountriesDomesticLeaguesClubsCount;
-      const actualRandomBaseCountryIndex: string = fastCheckTestRandomBaseCountryIndex(fcGen, testCountriesDomesticLeaguesClubs)
-      
-      pipe([parseInt, assertIntegerGreaterThanOrEqualMinAndLessThanMax([0, expectedCountriesCount])])(actualRandomBaseCountryIndex)
-      
-      
+        testCountriesDomesticLeaguesClubsCount;
+      const actualRandomBaseCountryIndex: string =
+        fastCheckTestRandomBaseCountryIndex(
+          fcGen,
+          testCountriesDomesticLeaguesClubs,
+        );
+
+      pipe([
+        parseInt,
+        assertIntegerGreaterThanOrEqualMinAndLessThanMax([
+          0,
+          expectedCountriesCount,
+        ]),
+      ])(actualRandomBaseCountryIndex);
     },
   );
 
@@ -538,19 +552,31 @@ describe("TestDataGenerationUtilities test suite", () => {
           testCountriesDomesticLeaguesClubsCount,
         );
 
-      const testRandomBaseCountryIndex: string = fastCheckTestRandomBaseCountryIndex(fcGen, testCountriesDomesticLeaguesClubs)
+      const testRandomBaseCountryIndex: string =
+        fastCheckTestRandomBaseCountryIndex(
+          fcGen,
+          testCountriesDomesticLeaguesClubs,
+        );
 
-      const [, expectedDomesticLeaguesPerCountryCount]: [number, number, number] =
-            testCountriesDomesticLeaguesClubsCount;
-      
-      const actualRandomBaseDomesticLeagueIndex: string = fastCheckTestRandomBaseDomesticLeagueIndexFromCountry(fcGen, testCountriesDomesticLeaguesClubs, testRandomBaseCountryIndex)
+      const [, expectedDomesticLeaguesPerCountryCount]: [
+        number,
+        number,
+        number,
+      ] = testCountriesDomesticLeaguesClubsCount;
 
-      parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax([0, expectedDomesticLeaguesPerCountryCount],actualRandomBaseDomesticLeagueIndex)
-      
-      
+      const actualRandomBaseDomesticLeagueIndex: string =
+        fastCheckTestRandomBaseDomesticLeagueIndexFromCountry(
+          fcGen,
+          testCountriesDomesticLeaguesClubs,
+          testRandomBaseCountryIndex,
+        );
+
+      parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax(
+        [0, expectedDomesticLeaguesPerCountryCount],
+        actualRandomBaseDomesticLeagueIndex,
+      );
     },
   );
-
 
   test.prop([
     fc.tuple(
@@ -562,25 +588,32 @@ describe("TestDataGenerationUtilities test suite", () => {
   ])(
     "fastCheckTestRandomBaseClubIndexFromCountryAndDomesticLeague",
     (testCountriesDomesticLeaguesClubsCount, fcGen) => {
-      
       const testCountriesDomesticLeaguesClubs: BaseCountries =
         fastCheckTestBaseCountriesGenerator(
           fcGen,
           testCountriesDomesticLeaguesClubsCount,
         );
 
-      const testRandomFullBaseDomesticLeagueIndex: [string, string] = fastCheckTestCompletelyRandomBaseDomesticLeagueIndex(fcGen, testCountriesDomesticLeaguesClubs)
-   
-      const [, ,expectedClubsPerDomesticLeague]: [number, number, number] =
-            testCountriesDomesticLeaguesClubsCount;
-      
-      const actualRandomClubIndex: string = fastCheckTestRandomBaseClubIndexFromCountryAndDomesticLeague(fcGen, testCountriesDomesticLeaguesClubs, testRandomFullBaseDomesticLeagueIndex)
-      
-      parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax([0, expectedClubsPerDomesticLeague],actualRandomClubIndex)
+      const testRandomFullBaseDomesticLeagueIndex: [string, string] =
+        fastCheckTestCompletelyRandomBaseDomesticLeagueIndex(
+          fcGen,
+          testCountriesDomesticLeaguesClubs,
+        );
 
-      
+      const [, , expectedClubsPerDomesticLeague]: [number, number, number] =
+        testCountriesDomesticLeaguesClubsCount;
 
-      
+      const actualRandomClubIndex: string =
+        fastCheckTestRandomBaseClubIndexFromCountryAndDomesticLeague(
+          fcGen,
+          testCountriesDomesticLeaguesClubs,
+          testRandomFullBaseDomesticLeagueIndex,
+        );
+
+      parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax(
+        [0, expectedClubsPerDomesticLeague],
+        actualRandomClubIndex,
+      );
     },
   );
 
@@ -591,7 +624,7 @@ describe("TestDataGenerationUtilities test suite", () => {
       fc.integer({ min: 1, max: 20 }),
     ),
     fc.gen(),
-    ])(
+  ])(
     "fastCheckTestCompletelyRandomBaseDomesticLeagueIndex",
     (testCountriesDomesticLeaguesClubsCount, fcGen) => {
       const testCountriesDomesticLeaguesClubs: BaseCountries =
@@ -599,76 +632,92 @@ describe("TestDataGenerationUtilities test suite", () => {
           fcGen,
           testCountriesDomesticLeaguesClubsCount,
         );
-      
-      const actualIndices: [string, string] = fastCheckTestCompletelyRandomBaseDomesticLeagueIndex(fcGen, testCountriesDomesticLeaguesClubs)
+
+      const actualIndices: [string, string] =
+        fastCheckTestCompletelyRandomBaseDomesticLeagueIndex(
+          fcGen,
+          testCountriesDomesticLeaguesClubs,
+        );
       // just checking that we get something, don't need to double check the work done by the functions this functions calls
-      expect(getSizeOfCompactedAray(actualIndices)).toEqual(2)
-      
+      expect(getSizeOfCompactedAray(actualIndices)).toEqual(2);
     },
   );
 
-  
-    test.prop([
+  test.prop([
     fc.tuple(
       fc.integer({ min: 1, max: 3 }),
       fc.integer({ min: 1, max: 8 }),
       fc.integer({ min: 1, max: 20 }),
     ),
     fc.gen(),
-    ])(
+  ])(
     "fastCheckTestCompletelyRandomBaseClubIndex",
     (testCountriesDomesticLeaguesClubsCount, fcGen) => {
-      
       const testCountriesDomesticLeaguesClubs: BaseCountries =
         fastCheckTestBaseCountriesGenerator(
           fcGen,
           testCountriesDomesticLeaguesClubsCount,
         );
 
-      const [expectedCountriesCount, expectedDomesticLeaguesPerCountryCount,expectedClubsPerDomesticLeague]: [number, number, number] =
-            testCountriesDomesticLeaguesClubsCount;
-      
-      const actualFullClubAddress: [string, string, string] = fastCheckTestCompletelyRandomBaseClubIndex(fcGen, testCountriesDomesticLeaguesClubs)
-      expect(getCountOfStringsFromArray(actualFullClubAddress)).toEqual(3)
-      
-      
-    },
-    );
+      const [
+        expectedCountriesCount,
+        expectedDomesticLeaguesPerCountryCount,
+        expectedClubsPerDomesticLeague,
+      ]: [number, number, number] = testCountriesDomesticLeaguesClubsCount;
 
-      test.prop([
+      const actualFullClubAddress: [string, string, string] =
+        fastCheckTestCompletelyRandomBaseClubIndex(
+          fcGen,
+          testCountriesDomesticLeaguesClubs,
+        );
+      expect(getCountOfStringsFromArray(actualFullClubAddress)).toEqual(3);
+    },
+  );
+
+  test.prop([
     fc.tuple(
       fc.integer({ min: 1, max: 3 }),
       fc.integer({ min: 1, max: 8 }),
       fc.integer({ min: 1, max: 20 }),
     ),
     fc.gen(),
-    ])(
+  ])(
     "fastCheckTestCompletelyRandomBaseClub",
     (testCountriesDomesticLeaguesClubsCount, fcGen) => {
-      
       const testCountriesDomesticLeaguesClubs: BaseCountries =
         fastCheckTestBaseCountriesGenerator(
           fcGen,
           testCountriesDomesticLeaguesClubsCount,
         );
-      
-      const [[actualCountryIndex, actualDomesticLeagueIndex,], [actualCountryName, actualDomesticLeagueName, actualClubName]] = fastCheckTestCompletelyRandomBaseClub(fcGen, testCountriesDomesticLeaguesClubs)
 
-      const expectedCountryNamesSet = zipAllAndGetFirstArrayAsSet(testCountriesDomesticLeaguesClubs)
+      const [
+        [actualCountryIndex, actualDomesticLeagueIndex],
+        [actualCountryName, actualDomesticLeagueName, actualClubName],
+      ] = fastCheckTestCompletelyRandomBaseClub(
+        fcGen,
+        testCountriesDomesticLeaguesClubs,
+      );
+
+      const expectedCountryNamesSet = zipAllAndGetFirstArrayAsSet(
+        testCountriesDomesticLeaguesClubs,
+      );
       expect(expectedCountryNamesSet.has(actualCountryName)).toBeTruthy();
 
-      const [expectedDomesticLeagueNamesSet, expectedClubNamesSet] = pipe([over([getDomesticLeaguesOfCountryFromBaseCountries(actualCountryIndex),
-	getClubsOfDomesticLeagueFromBaseCountries([actualCountryIndex, actualDomesticLeagueIndex])
-      ]), convertArrayOfArraysToArrayOfSets])(testCountriesDomesticLeaguesClubs)
+      const [expectedDomesticLeagueNamesSet, expectedClubNamesSet] = pipe([
+        over([
+          getDomesticLeaguesOfCountryFromBaseCountries(actualCountryIndex),
+          getClubsOfDomesticLeagueFromBaseCountries([
+            actualCountryIndex,
+            actualDomesticLeagueIndex,
+          ]),
+        ]),
+        convertArrayOfArraysToArrayOfSets,
+      ])(testCountriesDomesticLeaguesClubs);
 
-
-      expect(expectedDomesticLeagueNamesSet.has(actualDomesticLeagueName)).toBeTruthy();
+      expect(
+        expectedDomesticLeagueNamesSet.has(actualDomesticLeagueName),
+      ).toBeTruthy();
       expect(expectedClubNamesSet.has(actualClubName)).toBeTruthy();
-
-      
     },
   );
-
-
-
 });

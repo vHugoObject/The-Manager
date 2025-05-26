@@ -2,13 +2,15 @@ import { test, fc } from "@fast-check/vitest";
 import { describe, expect, assert } from "vitest";
 import { over, map, size, last, pipe, first, min, add } from "lodash/fp";
 import {
-  pairArraysAndAssertStrictEqual,
+  pairAndAssertStrictEqual,
   pairIntegersAndAssertEqual,
 } from "../Asserters";
 import {
   fastCheckNLengthArrayOfStringCountTuplesGenerator,
   fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator,
   fastCheckTestSingleStringCountStartingIndexTupleGenerator,
+  fastCheckNLengthStringGenerator,
+  fastCheckRandomIntegerInRange,
 } from "../TestDataGenerationUtilities";
 import {
   getFirstLevelArrayLengths,
@@ -38,6 +40,7 @@ import {
   zipAllAndGetInitial,
   zipAllAndGetSumOfSecondArray,
   unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs,
+  subString,
 } from "../Transformers";
 
 describe("PrimitiveTransformers test suite", () => {
@@ -67,7 +70,7 @@ describe("PrimitiveTransformers test suite", () => {
     ] = testArraysAndExpectedValues;
     const actualArrayLength: number = apply(size, testArrayOne);
     const actualArrayMinValue: number = apply(min, testArrayTwo);
-    pairArraysAndAssertStrictEqual([actualArrayLength, expectedArrayLength]);
+    pairAndAssertStrictEqual([actualArrayLength, expectedArrayLength]);
     assert.isAtLeast(actualArrayMinValue, expectedArrayMinValue);
   });
 
@@ -97,10 +100,30 @@ describe("PrimitiveTransformers test suite", () => {
       [size, min],
       testArrays,
     );
-    pairArraysAndAssertStrictEqual([actualArrayLength, expectedArrayLength]);
+    pairAndAssertStrictEqual([actualArrayLength, expectedArrayLength]);
     assert.isAtLeast(actualArrayMinValue, expectedArrayMinValue);
   });
 
+  test.prop([fc.gen(), fc.integer({ min: 5, max: 100 })])(
+    "subString",
+    (fcGen, testStringLength) => {
+      const [testString, testStringParts]: [string, Array<string>] =
+        fastCheckNLengthStringGenerator(fcGen, testStringLength);
+      const testSubStringLength: number = fastCheckRandomIntegerInRange(fcGen, [
+        2,
+        testStringLength,
+      ]);
+      const expectedSubString: string = testStringParts
+        .slice(0, testSubStringLength)
+        .join("");
+      const actualSubString: string = subString(
+        0,
+        testSubStringLength,
+        testString,
+      );
+      expect(actualSubString).toBe(expectedSubString);
+    },
+  );
   test.prop([fc.integer({ min: 2, max: 1000 }), fc.nat()])(
     "unfold",
     (testArraySize, testValueToAdd) => {
@@ -124,9 +147,10 @@ describe("PrimitiveTransformers test suite", () => {
     "unfoldCountStartingIndexIntoRange",
     (testStartingIndex, testCount) => {
       const actualRange: Array<number> = unfoldCountStartingIndexIntoRange(
-        testStartingIndex,
         testCount,
+        testStartingIndex,
       );
+
       expect(actualRange.length).toEqual(testCount);
       const [actualFirstItem, actualLastItem] =
         getFirstAndLastItemsOfArray(actualRange);
@@ -169,7 +193,7 @@ describe("PrimitiveTransformers test suite", () => {
       const actualIDs: Array<string> =
         unfoldSingleStringCountStartingIndexTupleIntoArrayOfStringIDs(
           expectedPrefix,
-          [expectedStartingIndex, expectedCount],
+          [expectedCount, expectedStartingIndex],
         );
       const actualIDsCount = getCountOfItemsFromArrayThatStartWithX(
         expectedPrefix,

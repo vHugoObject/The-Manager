@@ -1,4 +1,4 @@
-import { PositionGroup, BaseCountry } from "./Types";
+import { BaseCountry } from "./Types";
 import { ENGLAND } from "./England";
 
 export const NONSPACESCHARACTERRANGE: [number, number] = [96, 3000];
@@ -14,28 +14,25 @@ export enum IDPREFIXES {
   Midfielder = "1",
   Defender = "2",
   Goalkeeper = "3",
-  Country = "4",
-  DomesticCup = "5",  
-  DomesticLeague = "6",
-  Club = "7",
+  Club = "4",
 }
 
-export const BASECOUNTRIESCOUNTRIESINDEX: number = 0
-export const BASECOUNTRIESDOMESTICLEAGUESINDEX: number = 1
-export const BASECOUNTRIESCLUBSINDEX: number = 2
+export const BASECOUNTRIESCOUNTRIESINDEX: number = 0;
+export const BASECOUNTRIESDOMESTICLEAGUESINDEX: number = 1;
+export const BASECOUNTRIESCLUBSINDEX: number = 2;
 
-export const NONPLAYERIDPREFIXES: Array<IDPREFIXES> = [IDPREFIXES.Country, IDPREFIXES.DomesticLeague, IDPREFIXES.Club]
 
-// aligned with IDPREFIXES
-export const DEFAULTCOUNTRYSTRUCTURE = [1,2,5,20]
-export const DEFAULTCOUNTRYSIZE = 108
-export const MINOFNONPLAYERPREFIXES = 4
-
-export const PLAYERSPEROUTFIELDPOSITIONGROUP = 7;
+export const DEFAULTDOMESTICLEAGUESPERCOUNTRY = 5;
+export const DEFAULTCLUBSPERDOMESTICLEAGUE = 20;
 export const DEFAULTSQUADSIZE: number = 25;
+
+export const DEFAULTCLUBSPERCOUNTRY = DEFAULTCLUBSPERDOMESTICLEAGUE * DEFAULTDOMESTICLEAGUESPERCOUNTRY
+export const DEFAULTPLAYERSPERDOMESTICLEAGUE = DEFAULTCLUBSPERDOMESTICLEAGUE * DEFAULTSQUADSIZE
+export const DEFAULTPLAYERSPERCOUNTRY = DEFAULTCLUBSPERCOUNTRY * DEFAULTSQUADSIZE
+
 // aligned with IDPREFIXES/PositionGroup enum
-export const BASECLUBCOMPOSITION: Array<number> = [7,7,7,4]
-export const MAXPLAYERIDPREFIXPLUSONE = 4;
+export const DEFAULTPLAYERPEROUTFIELDPOSITIONGROUP: number = 7
+export const BASECLUBCOMPOSITION: Array<number> = [7, 7, 7, 4];
 
 export const DEFAULTMATCHCOMPOSITION: Array<number> = [1, 4, 3, 3];
 export const DEFENSESTRENGTHBALANCE: [number, number] = [5, 95];
