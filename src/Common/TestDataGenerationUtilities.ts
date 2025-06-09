@@ -14,11 +14,12 @@ import {
   zipAll,
   property,
   flatten,
-  join,
+  join,  
 } from "lodash/fp";
 import fastCartesian from "fast-cartesian";
 import { IDPREFIXES } from "./Constants";
-import { PositionGroup, BaseCountries } from "./Types";
+import { BaseCountries } from "./Types";
+import { PositionGroup } from "./PlayerDataConstants"
 import {
   NONSPACESCHARACTERRANGE,
   TESTRANDOMSEASONRANGE,

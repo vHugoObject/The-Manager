@@ -45,7 +45,7 @@ import {
   every,
   size,
   inRange,
-  partialRight
+  partialRight  
 } from "lodash/fp";
 import {
   addDays,
@@ -67,10 +67,12 @@ import { mapIndexed } from "futil-js";
 import {
   Save,
   SaveArguments,
-  ATTACKINGSKILLS,
+} from "./Types";
+import {
+    ATTACKINGSKILLS,
   DEFENDINGSKILLS,
   GOALKEEPINGSKILLS,
-} from "./Types";
+} from "./PlayerDataConstants";
 import {
   JANUARY,
   FEBRUARY,
@@ -90,12 +92,12 @@ import {
   DEFAULTPLAYERSPERDOMESTICLEAGUE,
   DEFAULTSQUADSIZE,
   DEFAULTPLAYERPEROUTFIELDPOSITIONGROUP
-
 } from "./Constants";
 import {
   getFirstTwoArrayValues,
   getLastTwoArrayValues,
   isGoalkeeperID,
+  pickFromArray
 } from "./Getters";
 
 export const convertToSet = <T>(collection: Array<T>): Set<T> => {
@@ -409,17 +411,6 @@ export const weightedRandom = <T>([weights, items]: [
   ])(weights);
 };
 
-export const getAverageModularStepForRangeOfData = (
-  ranges: Array<[number, number]>,
-  lengthOfRangeToBeFilled: number,
-): number => {
-  return pipe([
-    map(([min, max]: [number, number]) => addOne(max - min)),
-    sum,
-    multiply(1 / lengthOfRangeToBeFilled),
-    Math.ceil,
-  ])(ranges);
-};
 
 export const simpleModularArithmetic = curry(
   (
@@ -440,40 +431,14 @@ export const nonZeroBoundedModularAddition = curry(
     standardIncrease: number,
     currentNumber: number,
   ): number => {
-    if (rangeMax == 0) {
-      return 0;
-    }
-    return add(
-      subtract(add(standardIncrease, currentNumber), rangeMin) %
-        subtract(addOne(rangeMax), rangeMin),
-      rangeMin,
-    );
+    const rangeSize: number = subtract(rangeMax, rangeMin)
+    const adjustedIncrease = mod(rangeSize, standardIncrease)
+    const currentIndexOfNumber: number = max([0, subtract(currentNumber, rangeMin)]) as number
+    const indexOfNextNumber: number = mod(rangeSize, add(currentIndexOfNumber, adjustedIncrease))
+    return add(rangeMin, indexOfNextNumber)
   },
 );
 
-export const mapModularIncreasersWithTheSameAverageStep = curry(
-  (
-    [plusOrMinus, playerCount]: [number, number],
-    ranges: Array<[number, number]>,
-  ) => {
-    const randomPlusOrMinus: number = getRandomPlusOrMinus(plusOrMinus);
-    const step: number =
-      getAverageModularStepForRangeOfData(ranges, playerCount) +
-      randomPlusOrMinus;
-    return map((range: [number, number]) => {
-      return nonZeroBoundedModularAddition(range, step);
-    })(ranges);
-  },
-);
-
-export const mapModularIncreasersWithDifferentStepsForARange = curry(
-  (playerCount: number, ranges: Array<[number, number]>) => {
-    return map(([min, max]: [number, number]) => {
-      const step: number = Math.ceil((max - min) / playerCount);
-      return nonZeroBoundedModularAddition([min, max], step);
-    })(ranges);
-  },
-);
 
 export const getRandomIntegerInRange = ([min, max]: [
   number,
@@ -510,12 +475,6 @@ export const getRunningSumOfListOfTuples = curry(
   },
 );
 
-export const getUndadjustedAverageStepForASetOfModularRanges = pipe([
-  map(([min, max]: [number, number]) => addOne(max - min)),
-  mean,
-  Math.ceil,
-]);
-
 export const getLengthOfLinearRange = pipe([
   reverseThenSpreadSubtract,
   minusOne,
@@ -523,6 +482,7 @@ export const getLengthOfLinearRange = pipe([
 
 export const splitOnUnderscores = split("_");
 export const joinOnUnderscores = join("_");
+export const splitOnUnderscoresAndParseInts = pipe([splitOnUnderscores, convertArrayOfStringsIntoArrayOfIntegers])
 
 export const convertCharacterAtIndexIntoCharacterCode = Function.prototype.call.bind(String.prototype.charCodeAt)
 export const convertCharacterIntoCharacterCode = partialRight(convertCharacterAtIndexIntoCharacterCode, [0])
@@ -914,5 +874,17 @@ export const countryIDRepeaterForPlayers = floorDivision(DEFAULTPLAYERSPERCOUNTR
 export const domesticLeagueIDRepeaterForPlayers = floorDivision(DEFAULTPLAYERSPERDOMESTICLEAGUE)
 export const domesticLeagueLevelRepeaterForPlayers = pipe([domesticLeagueIDRepeaterForPlayers, mod(DEFAULTDOMESTICLEAGUESPERCOUNTRY)])
 export const clubIDRepeaterForPlayers = floorDivision(DEFAULTSQUADSIZE)
-export const positionIDRepeaterForPlayers = pipe([mod(DEFAULTSQUADSIZE), floorDivision(DEFAULTPLAYERPEROUTFIELDPOSITIONGROUP)])
+export const positionGroupIDRepeaterForPlayers = pipe([mod(DEFAULTSQUADSIZE), floorDivision(DEFAULTPLAYERPEROUTFIELDPOSITIONGROUP)])
+
+export const createPlayerID = (season: number, playerNumber: number): string => {  
+  // Season_Country_DomesticLeague_DomesticLeagueLevel_PositionGroup_PlayerNumber_Club
+  return pipe([
+    over([countryIDRepeaterForPlayers, domesticLeagueIDRepeaterForPlayers,
+      domesticLeagueLevelRepeaterForPlayers,
+      positionGroupIDRepeaterForPlayers, identity,
+      clubIDRepeaterForPlayers]),
+    concat([season]),
+    joinOnUnderscores
+  ])(playerNumber)
+}
 

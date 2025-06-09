@@ -9,6 +9,8 @@ export const AUGUST: number = 7;
 export const SEPTEMBER: number = 8;
 export const DECEMBER: number = 11;
 
+export const startingCountries: Array<BaseCountry> = [ENGLAND];
+
 export enum IDPREFIXES {
   Attacker = "0",
   Midfielder = "1",
@@ -46,7 +48,6 @@ export const DBNAME: string = "the-manager";
 export const SAVESTORE: string = "save-games";
 export const DBVERSION: number = 1;
 export const KEYPATH: string = "SaveID";
-export const startingCountries: Array<BaseCountry> = [ENGLAND];
 export const COMPETITIONSDEPTH: number = 1;
 export const CLUBSDEPTH: number = 2;
 export const PLAYERSDEPTH: number = 3;

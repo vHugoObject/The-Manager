@@ -37,7 +37,8 @@ import {
   tail,
   partialRight,
 } from "lodash/fp";
-import { PositionGroup, Save, BaseCountries } from "./Types";
+import { Save, BaseCountries } from "./Types";
+import { PositionGroup } from "./PlayerDataConstants"
 import {
   DEFAULTMATCHCOMPOSITION,
   CLUBSDEPTH,

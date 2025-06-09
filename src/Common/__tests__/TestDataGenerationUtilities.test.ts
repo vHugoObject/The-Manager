@@ -38,8 +38,8 @@ import {
 } from "../Transformers";
 import {
   convertArraysToSetsAndAssertStrictEqual,
-  assertIntegerGreaterThanOrEqualMinAndLessThanMax,
-  parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax,
+  assertIntegerInRangeInclusive,
+  parseIntAndAssertIntegerInRangeInclusive,
 } from "../Asserters";
 import {
   fastCheckTestClubsForBaseCountriesGenerator,
@@ -96,7 +96,7 @@ describe("TestDataGenerationUtilities test suite", () => {
     fc.gen(),
   ])("fastCheckRandomDoubleInRange", (testRange, fcGen) => {
     const actualDouble: number = fastCheckRandomDoubleInRange(testRange, fcGen);
-    assertIntegerGreaterThanOrEqualMinAndLessThanMax(testRange, actualDouble);
+    assertIntegerInRangeInclusive(testRange, actualDouble);
   });
 
   test.prop([
@@ -134,7 +134,7 @@ describe("TestDataGenerationUtilities test suite", () => {
     );
     const actualCharacterCode: number =
       convertCharacterIntoCharacterCode(actualCharacter);
-    assertIntegerGreaterThanOrEqualMinAndLessThanMax(
+    assertIntegerInRangeInclusive(
       testUTFRange,
       actualCharacterCode,
     );
@@ -528,7 +528,7 @@ describe("TestDataGenerationUtilities test suite", () => {
 
       pipe([
         parseInt,
-        assertIntegerGreaterThanOrEqualMinAndLessThanMax([
+        assertIntegerInRangeInclusive([
           0,
           expectedCountriesCount,
         ]),
@@ -571,7 +571,7 @@ describe("TestDataGenerationUtilities test suite", () => {
           testRandomBaseCountryIndex,
         );
 
-      parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax(
+      parseIntAndAssertIntegerInRangeInclusive(
         [0, expectedDomesticLeaguesPerCountryCount],
         actualRandomBaseDomesticLeagueIndex,
       );
@@ -610,7 +610,7 @@ describe("TestDataGenerationUtilities test suite", () => {
           testRandomFullBaseDomesticLeagueIndex,
         );
 
-      parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax(
+      parseIntAndAssertIntegerInRangeInclusive(
         [0, expectedClubsPerDomesticLeague],
         actualRandomClubIndex,
       );

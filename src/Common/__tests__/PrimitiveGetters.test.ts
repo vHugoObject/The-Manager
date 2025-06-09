@@ -1,7 +1,7 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import { pipe, first, over, map, isString, isNumber, take } from "lodash/fp";
-import { pairAndAssertStrictEqual } from "../Asserters";
+import { pairSetsAndAssertStrictEqual } from "../Asserters";
 import {
   fastCheckTestSingleStringIDGenerator,
   fastCheckTestMixedArrayOfStringIDsGenerator,
@@ -58,7 +58,7 @@ describe("PrimitiveGetters test suite", () => {
         testGetIntegerCount,
       ])(testItems);
 
-      pairAndAssertStrictEqual([
+      pairSetsAndAssertStrictEqual([
         actualStringCount,
         expectedStringCount,
         actualIntegerCount,
@@ -93,7 +93,7 @@ describe("PrimitiveGetters test suite", () => {
 	over([joinOnUnderscores, take(testPartsToGet)])
       ])(fcGen, testIDLength)
       const actualIDParts: Array<string> = getFirstNPartsOfID(testPartsToGet, testID)
-      pairAndAssertStrictEqual([actualIDParts, expectedIDParts])
+      pairSetsAndAssertStrictEqual([actualIDParts, expectedIDParts])
     },
   );
   
@@ -138,4 +138,7 @@ describe("PrimitiveGetters test suite", () => {
     const actualKeysCount: number = getCountOfObjectKeys(testRecord);
     expect(actualKeysCount).toEqual(expectedKeysCount);
   });
+
+
+
 });

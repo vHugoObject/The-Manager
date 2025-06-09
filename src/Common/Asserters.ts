@@ -16,7 +16,7 @@ export const pairStringsAndAssertEqual = pipe([
   }),
 ]);
 
-export const pairAndAssertStrictEqual = pipe([
+export const pairSetsAndAssertStrictEqual = pipe([
   chunk(2),
   forEach(([actual, expected]: [Set<any>, Set<any>]) => {
     expect(actual).toStrictEqual(expected);
@@ -25,21 +25,30 @@ export const pairAndAssertStrictEqual = pipe([
 
 export const convertArraysToSetsAndAssertStrictEqual = pipe([
   convertArrayOfArraysToArrayOfSets,
-  pairAndAssertStrictEqual,
+  pairSetsAndAssertStrictEqual,
 ]);
 
-export const assertIntegerGreaterThanOrEqualMinAndLessThanMax = curry(
+export const assertIntegerInRangeInclusive = curry(
   ([min, max]: [number, number], integer: number) => {
     expect(integer).toBeGreaterThanOrEqual(min);
     expect(integer).toBeLessThanOrEqual(max);
   },
 );
 
-export const parseIntAndAssertIntegerGreaterThanOrEqualMinAndLessThanMax =
-  curry((range: [number, number], integerAsString: string) => {
+export const assertIntegerInRangeExclusive = curry(
+  ([min, max]: [number, number], integer: number) => {
+    expect(integer).toBeGreaterThanOrEqual(min);
+    expect(integer).toBeLessThan(max);
+  },
+);
+
+export const parseIntAndAssert = curry((asserter: Function,
+  range: [number, number], integerAsString: string) => {
     return pipe([
       parseInt,
-      assertIntegerGreaterThanOrEqualMinAndLessThanMax(range),
+      asserter(range),
     ])(integerAsString);
   });
 
+export const parseIntAndAssertIntegerInRangeInclusive = parseIntAndAssert(assertIntegerInRangeInclusive)
+export const parseIntAndAssertIntegerInRangeExclusive = parseIntAndAssert(assertIntegerInRangeExclusive)

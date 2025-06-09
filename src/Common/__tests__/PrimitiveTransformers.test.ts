@@ -2,7 +2,7 @@ import { test, fc } from "@fast-check/vitest";
 import { describe, expect, assert } from "vitest";
 import { over, map, size, last, pipe, first, min, add } from "lodash/fp";
 import {
-  pairAndAssertStrictEqual,
+  pairSetsAndAssertStrictEqual,
   pairIntegersAndAssertEqual,
 } from "../Asserters";
 import {
@@ -40,7 +40,7 @@ import {
   zipAllAndGetInitial,
   zipAllAndGetSumOfSecondArray,
   unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs,
-  subString,
+  subString
 } from "../Transformers";
 
 describe("PrimitiveTransformers test suite", () => {
@@ -70,7 +70,7 @@ describe("PrimitiveTransformers test suite", () => {
     ] = testArraysAndExpectedValues;
     const actualArrayLength: number = apply(size, testArrayOne);
     const actualArrayMinValue: number = apply(min, testArrayTwo);
-    pairAndAssertStrictEqual([actualArrayLength, expectedArrayLength]);
+    pairSetsAndAssertStrictEqual([actualArrayLength, expectedArrayLength]);
     assert.isAtLeast(actualArrayMinValue, expectedArrayMinValue);
   });
 
@@ -100,7 +100,7 @@ describe("PrimitiveTransformers test suite", () => {
       [size, min],
       testArrays,
     );
-    pairAndAssertStrictEqual([actualArrayLength, expectedArrayLength]);
+    pairSetsAndAssertStrictEqual([actualArrayLength, expectedArrayLength]);
     assert.isAtLeast(actualArrayMinValue, expectedArrayMinValue);
   });
 
@@ -296,4 +296,7 @@ describe("PrimitiveTransformers test suite", () => {
       expect(actualRanges.length).toEqual(testArrayOfArraysOfStrings.length);
     },
   );
+
+
+  
 });

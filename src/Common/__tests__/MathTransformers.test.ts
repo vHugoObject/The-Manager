@@ -13,16 +13,16 @@ import {
   add,
   max,
   head,
+  subtract
 } from "lodash/fp";
 import {
   fastCheckTestLinearRangeGenerator,
   fastCheckNLengthArrayOfDoublesBetweenZeroAndOne,
 } from "../TestDataGenerationUtilities";
-import { assertIntegerGreaterThanOrEqualMinAndLessThanMax } from "../Asserters";
+import { assertIntegerInRangeInclusive, assertIntegerInRangeExclusive } from "../Asserters";
 import { getMinAndMaxOfArray } from "../Getters";
 import {
   minusOne,
-  getAverageModularStepForRangeOfData,
   nonZeroBoundedModularAddition,
   weightedRandom,
   getRunningSumOfList,
@@ -31,14 +31,12 @@ import {
   addOne,
   multiplyByTwo,
   getRandomIntegerInRange,
-  getUndadjustedAverageStepForASetOfModularRanges,
-  mapModularIncreasersWithTheSameAverageStep,
-  mapModularIncreasersWithDifferentStepsForARange,
   getRandomPlusOrMinus,
   accumulate,
   reverseThenSpreadSubtract,
   weightedMean,
   normalizePercentages,
+  calculateAverageIncreaseForModularRange
 } from "../Transformers";
 
 describe("MathTransformers test suite", () => {
@@ -74,7 +72,7 @@ describe("MathTransformers test suite", () => {
         testIntegers,
       );
       const [min, max] = getMinAndMaxOfArray(testIntegers);
-      assertIntegerGreaterThanOrEqualMinAndLessThanMax(
+      assertIntegerInRangeInclusive(
         [min, max],
         actualWeightedMean,
       );
@@ -180,120 +178,47 @@ describe("MathTransformers test suite", () => {
     expect(actualNumber).toBeLessThanOrEqual(expectedMax);
   });
 
+
   test.prop([
-    fc.array(
-      fc.tuple(fc.integer({ min: 0, max: 1000 }), fc.integer({ min: 1001 })),
-      { minLength: 3 },
-    ),
-  ])("getUndadjustedAverageStepForASetOfModularRanges", (testRanges) => {
-    const [expectedMin, expectedMax]: [number, number] = over([
-      pipe([map(first), min]),
-      pipe([map(last), max]),
-    ])(testRanges);
-    const actualStep: number =
-      getUndadjustedAverageStepForASetOfModularRanges(testRanges);
-    expect(actualStep).toBeGreaterThan(expectedMin);
-    expect(actualStep).toBeLessThan(expectedMax);
+    fc.gen(),
+    fc.integer({min: 2}),
+  ])("test nonZeroBoundedModularAddition at rangeMax-1", (fcGen, testRangeSize) => {
+    const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
+    const actualResult: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, minusOne(testRangeMax))
+    expect(actualResult).toEqual(testRangeMin)
   });
 
   test.prop([
-    fc.array(
-      fc.tuple(fc.integer({ min: 0, max: 1000 }), fc.integer({ min: 1001 })),
-      { minLength: 3 },
-    ),
-    fc.integer({ min: 100, max: 1000 }),
-  ])("getAverageModularStepForRangeOfData", (testRanges, testPlayerCount) => {
-    const actualAdjustedStep: number = getAverageModularStepForRangeOfData(
-      testRanges,
-      testPlayerCount,
-    );
-    const unadjustedStep: number =
-      getUndadjustedAverageStepForASetOfModularRanges(testRanges);
-    expect(actualAdjustedStep).toBeLessThan(unadjustedStep);
+    fc.gen(),
+    fc.integer({min: 2}),
+  ])("test nonZeroBoundedModularAddition at rangeMax-2", (fcGen, testRangeSize) => {
+    const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
+    const actualResult: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, subtract(testRangeMax, 2))
+    expect(actualResult).toEqual(minusOne(testRangeMax))
+  });
+  
+  test.prop([
+    fc.gen(),
+    fc.integer({min: 2}),
+  ])("test nonZeroBoundedModularAddition at rangeMin", (fcGen, testRangeSize) => {
+    const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
+    const actualResult: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, testRangeMin)
+    expect(actualResult).toEqual(addOne(testRangeMin))
   });
 
+  
   test.prop([
-    fc
-      .tuple(fc.integer({ min: 0, max: 1000 }), fc.integer({ min: 1001 }))
-      .chain(([min, max]: [number, number]) => {
-        return fc.tuple(
-          fc.tuple(
-            fc.tuple(fc.constant(min), fc.constant(max)),
-            fc.integer({ min, max }),
-          ),
-          fc.integer({ min, max: min * 3 }),
-        );
-      }),
-  ])("nonZeroBoundedModularAddition", (testRangeIncreaseAndCurrentNumber) => {
-    const [[testRange, testIncrease], testCurrentNumber]: [
-      [[number, number], number],
-      number,
-    ] = testRangeIncreaseAndCurrentNumber;
-    const testPartialBoundedModularAdditionFunction =
-      nonZeroBoundedModularAddition(testRange, testIncrease);
-    const actualNumber: number =
-      testPartialBoundedModularAdditionFunction(testCurrentNumber);
-    const [expectedMin, expectedMax]: [number, number] = testRange;
-    expect(actualNumber).toBeGreaterThanOrEqual(expectedMin);
-    expect(actualNumber).toBeLessThanOrEqual(expectedMax);
+    fc.gen(),
+    fc.integer({min: 2}),
+    fc.integer({min: 2}),
+    fc.integer({min: 2})
+  ])("general nonZeroBoundedModularAddition test", (fcGen, testRangeSize, testIncrease, testCurrentNumber) => {
+    
+    const testRange: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
+    const actualResult: number = nonZeroBoundedModularAddition(testRange, testIncrease, testCurrentNumber)
+    assertIntegerInRangeExclusive(testRange, actualResult)
+    
   });
-
-  test.prop([
-    fc.array(
-      fc.tuple(
-        fc.integer({ min: 0, max: 50 }),
-        fc.integer({ min: 51, max: 100 }),
-      ),
-      { minLength: 3 },
-    ),
-    fc.integer({ min: 5, max: 10 }),
-    fc.integer({ min: 100, max: 1000 }),
-  ])(
-    "mapModularIncreasersWithTheSameAverageStep",
-    (testRanges, testRandomPlusOrMinus, testPlayerCount) => {
-      const actualModularIncreasers =
-        mapModularIncreasersWithTheSameAverageStep(
-          [testRandomPlusOrMinus, testPlayerCount],
-          testRanges,
-        );
-
-      pipe([
-        zipAll,
-        map(([[min, max], actualFunction]: [[number, number], Function]) => {
-          const actualValue = actualFunction(max);
-          assert.isNumber(actualValue);
-        }),
-      ])([testRanges, actualModularIncreasers]);
-    },
-  );
-
-  test.prop([
-    fc.array(
-      fc.tuple(
-        fc.integer({ min: 0, max: 50 }),
-        fc.integer({ min: 51, max: 100 }),
-      ),
-      { minLength: 3 },
-    ),
-    fc.integer({ min: 100, max: 1000 }),
-  ])(
-    "mapModularIncreasersWithDifferentStepsForARange",
-    (testRanges, testPlayerCount) => {
-      const actualModularIncreasers =
-        mapModularIncreasersWithDifferentStepsForARange(
-          testPlayerCount,
-          testRanges,
-        );
-      pipe([
-        zipAll,
-        map(([[min, max], actualFunction]: [[number, number], Function]) => {
-          const actualValue = actualFunction(max);
-          expect(actualValue).toBeLessThanOrEqual(max);
-          expect(actualValue).toBeGreaterThanOrEqual(min);
-        }),
-      ])([testRanges, actualModularIncreasers]);
-    },
-  );
 
   test.prop([fc.integer({ min: 1 })])("getRandomPlusOrMinus", (testNumber) => {
     const actualNumber = getRandomPlusOrMinus(testNumber);
@@ -336,4 +261,6 @@ describe("MathTransformers test suite", () => {
       );
     },
   );
+
+
 });

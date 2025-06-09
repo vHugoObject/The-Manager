@@ -1,20 +1,19 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import { mapIndexed, flatMapIndexed } from "futil-js"
-import { pipe, flatten, multiply, chunk, map } from "lodash/fp";
+import { mapIndexed } from "futil-js"
+import { pipe, flatten, multiply, chunk, map, countBy, size, property } from "lodash/fp";
 import {
   DEFAULTCLUBSPERDOMESTICLEAGUE,
-  IDPREFIXES,
   DEFAULTDOMESTICLEAGUESPERCOUNTRY,
   DEFAULTCLUBSPERCOUNTRY,
   DEFAULTPLAYERSPERCOUNTRY,
   DEFAULTPLAYERSPERDOMESTICLEAGUE,
   DEFAULTSQUADSIZE,
-  BASECLUBCOMPOSITION
+  BASECLUBCOMPOSITION,
 } from "../Constants";
-import { fastCheckRandomSeason } from "../TestDataGenerationUtilities";
-import { pairAndAssertStrictEqual } from "../Asserters";
-import { countByFirstFourIDParts, countByIdentity } from "../Getters";
+import { COUNTOFPLAYERDATACATEORIES, POSITIONGROUPSCOUNT } from "../PlayerDataConstants";
+import { fastCheckRandomSeason, fastCheckRandomIntegerInRange } from "../TestDataGenerationUtilities";
+import { pairSetsAndAssertStrictEqual, pairIntegersAndAssertEqual, assertIntegerInRangeExclusive } from "../Asserters";
 import { countryIDRepeaterForClubs,
   countryIDRepeaterForPlayers,
   domesticLeagueIDRepeaterForClubs,
@@ -22,14 +21,17 @@ import { countryIDRepeaterForClubs,
   domesticLeagueLevelRepeaterForClubs,
   domesticLeagueLevelRepeaterForPlayers,
   unfold,
-  unfoldIntoObject,
   convertArrayChunksIntoSets,
   clubIDRepeaterForPlayers,
   clubScheduleIDRepeater,
-  positionIDRepeaterForPlayers,
+  positionGroupIDRepeaterForPlayers,
   convertToSet,
   convertToList,
-  createClubIDs,
+  createPlayerID,
+  createPlayerForCountries,
+  addOne,
+  floorDivision,
+  splitOnUnderscoresAndParseInts
 } from "../Transformers";
 
 describe("BaseCountriesTransformers test suite", () => {
@@ -178,11 +180,12 @@ describe("BaseCountriesTransformers test suite", () => {
   );
 
   test.prop([fc.integer({ min: 2, max: 10 })])(
-    "positionIDRepeaterForPlayers",
+    "positionGroupIDRepeaterForPlayers",
     (testCountriesCount) => {
 
       const testPlayersCount: number = multiply(testCountriesCount, DEFAULTPLAYERSPERCOUNTRY)
       const expectedClubs: number = multiply(testCountriesCount, DEFAULTCLUBSPERCOUNTRY)
+      // flatMapIndexed?
       const expectedComposition = pipe([
 	mapIndexed((positionCount: number, position: number) => unfold(() => position, positionCount)),
 	flatten,
@@ -192,7 +195,7 @@ describe("BaseCountriesTransformers test suite", () => {
 
       const expectedIDCountsSets: Array<Set<number>> = unfold((_: number) => expectedComposition)(expectedClubs)
       
-      const actualIDs: Array<number> = unfold(positionIDRepeaterForPlayers, testPlayersCount)
+      const actualIDs: Array<number> = unfold(positionGroupIDRepeaterForPlayers, testPlayersCount)
       const actualIDCountsSets: Array<Array<number>> = pipe([
 	chunk(DEFAULTSQUADSIZE),
 	map(pipe([convertToList, convertToSet])),	
@@ -202,6 +205,48 @@ describe("BaseCountriesTransformers test suite", () => {
     },
   );
 
+  test.prop([fc.nat({max: DEFAULTPLAYERSPERCOUNTRY * 10}), fc.gen()])(
+    "createPlayerID",
+    (testPlayerNumber, fcGen) => {
+      const testSeason: number = fastCheckRandomSeason(fcGen)
+      
+      // Season_Country_DomesticLeague_DomesticLeagueLevel_PositionGroup_PlayerNumber_Club
+      const actualPlayerID = createPlayerID(testSeason, testPlayerNumber)      
+      const [actualSeason, actualCountry,
+	actualDomesticLeague, actualDomesticLeagueLevel,
+	actualPositionGroup, actualPlayerNumber, actualClub]: Array<number> = splitOnUnderscoresAndParseInts(actualPlayerID)
+
+      const expectedCountry: number = floorDivision(DEFAULTPLAYERSPERCOUNTRY, testPlayerNumber)
+      const expectedDomesticLeague: number = floorDivision(DEFAULTPLAYERSPERDOMESTICLEAGUE, testPlayerNumber)
+      const expectedClub: number = floorDivision(DEFAULTSQUADSIZE, testPlayerNumber)            
+	    
+      pairIntegersAndAssertEqual([actualSeason, testSeason,
+	actualCountry, expectedCountry,
+	actualDomesticLeague, expectedDomesticLeague,
+	actualClub, expectedClub,
+	actualPlayerNumber, testPlayerNumber])
+      
+      assertIntegerInRangeExclusive([0, POSITIONGROUPSCOUNT], actualPositionGroup)
+      assertIntegerInRangeExclusive([0, DEFAULTDOMESTICLEAGUESPERCOUNTRY], actualDomesticLeagueLevel)
+      
+      
+    },
+  );
+
+  test.prop([fc.nat({max: DEFAULTPLAYERSPERCOUNTRY * 10}), fc.gen()])(
+    "transformPlayerIDIntoPlayerRating",
+    (testPlayerNumber, fcGen) => {
+      const testSeason: number = fastCheckRandomSeason(fcGen)
+      
+      // Season_Country_DomesticLeague_DomesticLeagueLevel_PositionGroup_PlayerNumber_Club
+      const actualPlayerID = createPlayerID(testSeason, testPlayerNumber)
+      
+      
+      
+    },
+  );
+    
+  
 
 
 });
