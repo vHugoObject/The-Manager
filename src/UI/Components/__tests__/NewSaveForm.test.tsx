@@ -18,7 +18,7 @@ import {
   fastCheckTestCompletelyRandomBaseClubIndex,
   fastCheckTestCompletelyRandomBaseDomesticLeagueIndex,
   fastCheckTestRandomBaseCountryIndex,
-} from "../../../Common/TestDataGenerationUtilities";
+} from "../../../Common/TestDataGenerators";
 import {
   convertArrayOfStringsIntoArrayOfIntegers,
   convertArrayToSetThenGetSize,

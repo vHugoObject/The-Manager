@@ -1,7 +1,7 @@
 import { BaseCountry } from "./Types";
 import { ENGLAND } from "./England";
 
-export const NONSPACESCHARACTERRANGE: [number, number] = [96, 3000];
+export const NONSPACESCHARACTERRANGE: [number, number] = [96, 10000];
 export const JANUARY: number = 0;
 export const FEBRUARY: number = 1;
 export const JUNE: number = 5;
@@ -25,15 +25,21 @@ export const BASECOUNTRIESCLUBSINDEX: number = 2;
 
 
 export const DEFAULTDOMESTICLEAGUESPERCOUNTRY = 5;
+export const DEFAULTDOMESTICLEAGUESPERCOUNTRYIDRANGE: [number, number] = [0,4];
 export const DEFAULTCLUBSPERDOMESTICLEAGUE = 20;
 export const DEFAULTSQUADSIZE: number = 25;
+// 
+export const DEFAULTWAGERANGECYCLES: number = DEFAULTCLUBSPERDOMESTICLEAGUE/2
+
 
 export const DEFAULTCLUBSPERCOUNTRY = DEFAULTCLUBSPERDOMESTICLEAGUE * DEFAULTDOMESTICLEAGUESPERCOUNTRY
 export const DEFAULTPLAYERSPERDOMESTICLEAGUE = DEFAULTCLUBSPERDOMESTICLEAGUE * DEFAULTSQUADSIZE
 export const DEFAULTPLAYERSPERCOUNTRY = DEFAULTCLUBSPERCOUNTRY * DEFAULTSQUADSIZE
 
+
+export const DEFAULTPLAYERSPEROUTFIELDPOSITIONGROUP: number = 7
+export const DEFAULTGOALKEEPERPERCLUB: number = 4
 // aligned with IDPREFIXES/PositionGroup enum
-export const DEFAULTPLAYERPEROUTFIELDPOSITIONGROUP: number = 7
 export const BASECLUBCOMPOSITION: Array<number> = [7, 7, 7, 4];
 
 export const DEFAULTMATCHCOMPOSITION: Array<number> = [1, 4, 3, 3];

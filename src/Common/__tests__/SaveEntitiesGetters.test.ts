@@ -1,6 +1,6 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import { fastCheckTestMixedArrayOfPositionGroupIDsGenerator } from "../TestDataGenerationUtilities";
+import { fastCheckTestMixedArrayOfPositionGroupIDsGenerator } from "../TestDataGenerators";
 import { zipAllAndGetSecondArray } from "../Transformers";
 import {
   sortPlayersByRatings,

@@ -20,7 +20,7 @@ import {
   generateTestStartingEleven,
   generateTwoTestStartingElevens,
   generateTwoTestStartingElevenTuples,
-} from "../TestDataGenerationUtilities";
+} from "../TestDataGenerators";
 import { getSumOfFlattenedArray, getCountOfObjectValues } from "../Getters";
 import {
   calculateMeanCategoryStrengthForPlayer,

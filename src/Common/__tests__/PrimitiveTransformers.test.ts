@@ -11,7 +11,7 @@ import {
   fastCheckTestSingleStringCountStartingIndexTupleGenerator,
   fastCheckNLengthStringGenerator,
   fastCheckRandomIntegerInRange,
-} from "../TestDataGenerationUtilities";
+} from "../TestDataGenerators";
 import {
   getFirstLevelArrayLengths,
   getFirstAndLastItemsOfArray,
@@ -260,16 +260,19 @@ describe("PrimitiveTransformers test suite", () => {
     "convertCharacterIntoCharacterCode",
     (testChar) => {
       const actualCharCode: number =
-        convertCharacterIntoCharacterCode(testChar);
+            convertCharacterIntoCharacterCode(testChar);
+      console.log(actualCharCode)
       assert.isNumber(actualCharCode);
     },
   );
 
-  test.prop([fc.integer({ min: 1, max: 100 })])(
+  test.prop([fc.integer({ min: 96 })])(
     "convertCharacterCodeIntoCharacter",
     (testInteger) => {
       const actualChar: string = convertCharacterCodeIntoCharacter(testInteger);
       assert.isString(actualChar);
+      expect(actualChar.length).toBeGreaterThanOrEqual(1)
+
     },
   );
 

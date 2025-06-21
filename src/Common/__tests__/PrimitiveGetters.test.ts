@@ -1,6 +1,6 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import { pipe, first, over, map, isString, isNumber, take } from "lodash/fp";
+import { pipe, first, over, map, isString, isNumber, take, concat, shuffle } from "lodash/fp";
 import { pairSetsAndAssertStrictEqual } from "../Asserters";
 import {
   fastCheckTestSingleStringIDGenerator,
@@ -9,7 +9,7 @@ import {
   fastCheckTestLinearRangeGenerator,
   fastCheckNLengthUniqueStringArrayGenerator,
   fastCheckRandomIntegerInRange
-} from "../TestDataGenerationUtilities";
+} from "../TestDataGenerators";
 import {
   convertRangeSizeAndMinIntoRange,
   spreadZipObject,
@@ -23,7 +23,8 @@ import {
   getIDSuffix,
   getCountOfItemsFromArrayForPredicate,
   getCountOfObjectKeys,
-  getFirstNPartsOfID
+  getFirstNPartsOfID,
+  getCountOfFloatsBetweenZeroAndOne
 } from "../Getters";
 
 describe("PrimitiveGetters test suite", () => {
@@ -123,6 +124,7 @@ describe("PrimitiveGetters test suite", () => {
       expect(actualRangeSize).toEqual(testRangeSize);
     },
   );
+  
   test.prop([
     fc.nat({ max: 100 }).chain((expectedKeysCount: number) => {
       return fc.tuple(
@@ -139,6 +141,16 @@ describe("PrimitiveGetters test suite", () => {
     expect(actualKeysCount).toEqual(expectedKeysCount);
   });
 
-
+  test.prop([fc.array(fc.float({ noDefaultInfinity: true, noNaN: true, min: Math.fround(0.1), max: Math.fround(0.99) }), {minLength: 1}),
+    fc.array(fc.integer({min: 2}), {minLength: 1})
+  ])(
+    "getCountOfFloatsBetweenZeroAndOne",
+    (testFloats, testIntegers) => {
+      const testArray: Array<number> = pipe([concat(testFloats), shuffle])(testIntegers)
+      
+      const actualFloatCount: number = getCountOfFloatsBetweenZeroAndOne(testArray)
+      expect(actualFloatCount).toEqual(testFloats.length);
+    },
+  );
 
 });

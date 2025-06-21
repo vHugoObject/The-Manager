@@ -1,6 +1,6 @@
-import { chunk, forEach, pipe, curry } from "lodash/fp";
-import { expect } from "vitest";
-import { convertArrayOfArraysToArrayOfSets } from "../Common/Transformers";
+import { chunk, forEach, pipe, curry, map, mean } from "lodash/fp";
+import { expect, assert } from "vitest";
+import { convertArrayOfArraysToArrayOfSets, convertArrayToSetThenGetSize } from "../Common/Transformers";
 
 export const pairIntegersAndAssertEqual = pipe([
   chunk(2),
@@ -35,10 +35,22 @@ export const assertIntegerInRangeInclusive = curry(
   },
 );
 
+export const assertArrayOfIntegersInRangeInclusive = curry(
+  (range: [number, number], integers: Array<number>) => {
+    map(assertIntegerInRangeInclusive(range))(integers)
+  }
+)
+
 export const assertIntegerInRangeExclusive = curry(
   ([min, max]: [number, number], integer: number) => {
     expect(integer).toBeGreaterThanOrEqual(min);
     expect(integer).toBeLessThan(max);
+  },
+);
+
+export const assertMeanInRangeExclusive = curry(
+  (range: [number, number], integers: Array<number>): void => {
+    pipe([mean, assertIntegerInRangeExclusive(range)])(integers)
   },
 );
 
@@ -52,3 +64,9 @@ export const parseIntAndAssert = curry((asserter: Function,
 
 export const parseIntAndAssertIntegerInRangeInclusive = parseIntAndAssert(assertIntegerInRangeInclusive)
 export const parseIntAndAssertIntegerInRangeExclusive = parseIntAndAssert(assertIntegerInRangeExclusive)
+
+export const assertAllArrayValuesAreUnique = <T>(array: Array<T>) => {
+  expect(array.length).toEqual(convertArrayToSetThenGetSize(array))
+}
+
+export const assertNumbers = map(assert.isNumber)

@@ -28,7 +28,7 @@ import {
   format,
 } from "date-fns/fp";
 import { AUGUST, JANUARY, FEBRUARY, JUNE } from "../Constants";
-import { fastCheckRandomRoundRobinClubsCount } from "../TestDataGenerationUtilities";
+import { fastCheckRandomRoundRobinClubsCount } from "../TestDataGenerators";
 import {
   roundRobinScheduler,
   totalRoundRobinMatches,

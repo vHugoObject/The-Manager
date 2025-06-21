@@ -45,7 +45,8 @@ import {
   every,
   size,
   inRange,
-  partialRight  
+  partialRight,
+  partial
 } from "lodash/fp";
 import {
   addDays,
@@ -69,9 +70,21 @@ import {
   SaveArguments,
 } from "./Types";
 import {
+  FIRSTNAMES,
+  LASTNAMES,
+  COUNTRYNAMES
+} from "./Names"
+import {
     ATTACKINGSKILLS,
   DEFENDINGSKILLS,
   GOALKEEPINGSKILLS,
+  PLAYERIDINDICES,
+  PLAYERDATAINDICES,
+  PLAYERIDDATARANGESBYPOSITION,
+  MAXCONTRACTYEARS,
+  DEFAULTAGERANGE,
+  DEFAULTMINAGE,
+  WAGECEILINGADJUSTMENTBYDIVISION,
 } from "./PlayerDataConstants";
 import {
   JANUARY,
@@ -91,14 +104,19 @@ import {
   DEFAULTPLAYERSPERCOUNTRY,
   DEFAULTPLAYERSPERDOMESTICLEAGUE,
   DEFAULTSQUADSIZE,
-  DEFAULTPLAYERPEROUTFIELDPOSITIONGROUP
+  DEFAULTPLAYERSPEROUTFIELDPOSITIONGROUP,
+  DEFAULTWAGERANGECYCLES
 } from "./Constants";
 import {
   getFirstTwoArrayValues,
   getLastTwoArrayValues,
-  isGoalkeeperID,
-  pickFromArray
+  getPositionGroupFromPlayerID,
+  getSeasonFromPlayerID,
+  getPlayerNumberFromPlayerID,
+  getDomesticLeagueLevelFromPlayerID
 } from "./Getters";
+
+export const mapSum = map(sum)
 
 export const convertToSet = <T>(collection: Array<T>): Set<T> => {
   return new Set(collection);
@@ -109,6 +127,7 @@ export const convertToList = <T>(object: T): Array<T> => {
 };
 
 export const convertArrayChunksIntoSets = pipe([chunk, map(convertToSet)])
+
 
 export const subString = curry((start: number, end: number, string: string) => {
   const stringer = Function.prototype.call.bind(String.prototype.substring);
@@ -300,6 +319,8 @@ export const zipAllAndGetFirstArrayAsSet = zipAllAndTransformXArrayWithY([
   convertToSet,
 ]);
 
+
+
 export const convertConcatenatedArraysIntoSet = pipe([concat, convertToSet]);
 export const convertFlattenedArrayIntoSet = pipe([flatten, convertToSet]);
 export const convertArrayOfArraysToArrayOfSets = map(convertToSet);
@@ -336,6 +357,8 @@ export const convertObjectKeysIntoSet = pipe([Object.keys, convertToSet]);
 export const zipDivide = zipWith(divide);
 export const spreadZipDivide = spread(zipDivide);
 export const spreadDivide = spread(divide);
+export const spreadMultiply = spread(multiply);
+export const spreadAdd = spread(add);
 export const addOne = add(1);
 export const minusOne = add(-1);
 export const multiplyByTwo = multiply(2);
@@ -374,7 +397,7 @@ export const accumulate = curry(
 
 export const getRunningSumOfList = accumulate([add, 0]);
 export const multiplyAccumulate = accumulate([multiply, 1]);
-export const spreadMultiply = pipe([multiplyAccumulate, last]);
+export const spreadMultiplyAccumulate = pipe([multiplyAccumulate, last]);
 
 export const normalizePercentages = (
   percentages: Array<number>,
@@ -411,6 +434,10 @@ export const weightedRandom = <T>([weights, items]: [
   ])(weights);
 };
 
+
+export const sumOfAnArithmeticSeries = (lastNumberInSeries: number): number => {
+  return lastNumberInSeries * ((lastNumberInSeries + 1)/2)
+}
 
 export const simpleModularArithmetic = curry(
   (
@@ -487,8 +514,8 @@ export const splitOnUnderscoresAndParseInts = pipe([splitOnUnderscores, convertA
 export const convertCharacterAtIndexIntoCharacterCode = Function.prototype.call.bind(String.prototype.charCodeAt)
 export const convertCharacterIntoCharacterCode = partialRight(convertCharacterAtIndexIntoCharacterCode, [0])
 
-export const convertCharacterCodeIntoCharacter = (integer: number): string =>
-  String.fromCharCode(integer);
+export const convertCharacterCodeIntoCharacter = String.fromCharCode;
+
 export const convertArrayOfIntegersIntoArrayOfCharacters = map(
   convertCharacterIntoCharacterCode,
 );
@@ -865,26 +892,65 @@ export const getDaysLeftInCurrentSeason = (
 export const floorDivision = curry((divisor: number, dividend: number): number => {
   return Math.floor(dividend/divisor)
 })
-export const countryIDRepeaterForClubs = floorDivision(DEFAULTCLUBSPERCOUNTRY)
-export const domesticLeagueIDRepeaterForClubs = floorDivision(DEFAULTCLUBSPERDOMESTICLEAGUE)
-export const domesticLeagueLevelRepeaterForClubs = pipe([domesticLeagueIDRepeaterForClubs, mod(DEFAULTDOMESTICLEAGUESPERCOUNTRY)])
+
+
+export const multiplyByDEFAULTDOMESTICLEAGUESPERCOUNTRY = multiply(DEFAULTDOMESTICLEAGUESPERCOUNTRY)
+export const multiplyByDEFAULTCLUBSPERCOUNTRY = multiply(DEFAULTCLUBSPERCOUNTRY)
+export const multiplyByDEFAULTPLAYERSPERCOUNTRY = multiply(DEFAULTPLAYERSPERCOUNTRY)
+
+
+export const countryIDRepeaterForClubIDs = floorDivision(DEFAULTCLUBSPERCOUNTRY)
+export const domesticLeagueIDRepeaterForClubIDs = floorDivision(DEFAULTCLUBSPERDOMESTICLEAGUE)
+export const domesticLeagueLevelRepeaterForClubIDs = pipe([domesticLeagueIDRepeaterForClubIDs, mod(DEFAULTDOMESTICLEAGUESPERCOUNTRY)])
 export const clubScheduleIDRepeater = mod(DEFAULTCLUBSPERDOMESTICLEAGUE)
 
-export const countryIDRepeaterForPlayers = floorDivision(DEFAULTPLAYERSPERCOUNTRY)
-export const domesticLeagueIDRepeaterForPlayers = floorDivision(DEFAULTPLAYERSPERDOMESTICLEAGUE)
-export const domesticLeagueLevelRepeaterForPlayers = pipe([domesticLeagueIDRepeaterForPlayers, mod(DEFAULTDOMESTICLEAGUESPERCOUNTRY)])
-export const clubIDRepeaterForPlayers = floorDivision(DEFAULTSQUADSIZE)
-export const positionGroupIDRepeaterForPlayers = pipe([mod(DEFAULTSQUADSIZE), floorDivision(DEFAULTPLAYERPEROUTFIELDPOSITIONGROUP)])
+export const countryIDRepeaterForPlayerIDs = floorDivision(DEFAULTPLAYERSPERCOUNTRY)
+export const domesticLeagueIDRepeaterForPlayerIDs = floorDivision(DEFAULTPLAYERSPERDOMESTICLEAGUE)
+export const domesticLeagueLevelRepeaterForPlayerIDs = pipe([domesticLeagueIDRepeaterForPlayerIDs, mod(DEFAULTDOMESTICLEAGUESPERCOUNTRY)])
+export const clubIDRepeaterForPlayerIDs = floorDivision(DEFAULTSQUADSIZE)
+export const positionGroupIDRepeaterForPlayerIDs = pipe([mod(DEFAULTSQUADSIZE), floorDivision(DEFAULTPLAYERSPEROUTFIELDPOSITIONGROUP)])
+export const contractYearsRepeaterForPlayerIDs = mod(MAXCONTRACTYEARS)
+
+
+export const generateAgeForPlayerID = pipe([add(DEFAULTMINAGE), nonZeroBoundedModularAddition(DEFAULTAGERANGE, 1)])
+
+
 
 export const createPlayerID = (season: number, playerNumber: number): string => {  
-  // Season_Country_DomesticLeague_DomesticLeagueLevel_PositionGroup_PlayerNumber_Club
+  // Season_Country_DomesticLeague_DomesticLeagueLevel_Club_PositionGroup_Position_PlayerNumber
+  // _age_managerEffect_contractYears_wages
   return pipe([
-    over([countryIDRepeaterForPlayers, domesticLeagueIDRepeaterForPlayers,
-      domesticLeagueLevelRepeaterForPlayers,
-      positionGroupIDRepeaterForPlayers, identity,
-      clubIDRepeaterForPlayers]),
+    over([countryIDRepeaterForPlayerIDs, domesticLeagueIDRepeaterForPlayerIDs,
+      domesticLeagueLevelRepeaterForPlayerIDs,
+      positionGroupIDRepeaterForPlayerIDs, identity,
+      clubIDRepeaterForPlayerIDs]),
     concat([season]),
     joinOnUnderscores
   ])(playerNumber)
 }
 
+
+
+
+export const convertPlayerIDIntoPlayerNameAsInteger = curry((nameRangeLength: number, playerID: string): number => {
+  return pipe([
+    over([property([PLAYERIDINDICES.Season]), property([PLAYERIDINDICES.PlayerNumber])]),
+    calculateTheSumOfArrayOfStringIntegers,
+    mod(nameRangeLength)    
+  ])(playerID)
+})
+
+export const convertPlayerIDIntoPlayerFirstNameAsInteger = convertPlayerIDIntoPlayerNameAsInteger(FIRSTNAMES.length)
+export const convertPlayerIDIntoPlayerLastNameAsInteger = convertPlayerIDIntoPlayerNameAsInteger(LASTNAMES.length)
+export const convertPlayerIDIntoPlayerCountryAsInteger = convertPlayerIDIntoPlayerNameAsInteger(COUNTRYNAMES.length)
+
+export const convertPlayerIDIntoPlayerPositionAsInteger = (playerID: string): number => {
+  const playerPositionGroup: string = getPositionGroupFromPlayerID(playerID)
+  const nonZeroBoundedModularAdditionForPositionGroup = pipe([property([playerPositionGroup, PLAYERDATAINDICES.Position]), nonZeroBoundedModularAddition])(PLAYERIDDATARANGESBYPOSITION)
+  
+  return pipe([
+    over([getSeasonFromPlayerID, getPlayerNumberFromPlayerID]),
+    calculateTheSumOfArrayOfStringIntegers,
+    nonZeroBoundedModularAdditionForPositionGroup(1)
+  ])(playerID)
+}

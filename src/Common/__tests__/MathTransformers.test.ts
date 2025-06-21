@@ -18,7 +18,7 @@ import {
 import {
   fastCheckTestLinearRangeGenerator,
   fastCheckNLengthArrayOfDoublesBetweenZeroAndOne,
-} from "../TestDataGenerationUtilities";
+} from "../TestDataGenerators";
 import { assertIntegerInRangeInclusive, assertIntegerInRangeExclusive } from "../Asserters";
 import { getMinAndMaxOfArray } from "../Getters";
 import {
@@ -195,6 +195,7 @@ describe("MathTransformers test suite", () => {
     const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
     const actualResult: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, subtract(testRangeMax, 2))
     expect(actualResult).toEqual(minusOne(testRangeMax))
+    
   });
   
   test.prop([
@@ -206,6 +207,19 @@ describe("MathTransformers test suite", () => {
     expect(actualResult).toEqual(addOne(testRangeMin))
   });
 
+  test.prop([
+    fc.gen(),
+    fc.integer({min: 2}),
+  ])("test nonZeroBoundedModularAddition with multiple increases", (fcGen, testRangeSize) => {
+    
+    const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
+    const actualResultOne: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, testRangeMin)
+    const actualResultTwo: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, actualResultOne)
+
+    expect(actualResultOne).toBeLessThan(actualResultTwo)
+    
+    
+  });
   
   test.prop([
     fc.gen(),

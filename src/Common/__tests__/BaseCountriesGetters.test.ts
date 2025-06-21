@@ -2,7 +2,7 @@ import { test, fc } from "@fast-check/vitest";
 import { describe } from "vitest";
 import { over } from "lodash/fp";
 import { convertArraysToSetsAndAssertStrictEqual } from "../Asserters";
-import { fakerToArb } from "../TestDataGenerationUtilities";
+import { fakerToArb } from "../TestDataGenerators";
 import {
   getCountriesCountFromBaseCountries,
   getDomesticLeaguesPerCountryCountFromBaseCountries,

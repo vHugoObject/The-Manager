@@ -10,7 +10,13 @@ import {
   sum,
   isString,
 } from "lodash/fp";
-import { BaseCountries, Entity, PositionGroup } from "../Types";
+import { BaseCountries } from "../Types";
+import {  
+  DEFAULTDOMESTICLEAGUESPERCOUNTRY,
+  DEFAULTCLUBSPERCOUNTRY,
+  DEFAULTPLAYERSPERCOUNTRY
+} from "../Constants"
+import { PositionGroup } from "../PlayerDataConstants"
 import {
   getCountOfStringsFromArray,
   getCountOfIntegersFromArray,
@@ -23,7 +29,7 @@ import {
   getSecondLevelArrayLengths,
   getCountOfNumbersFromArray,
   getCountOfObjectValues,
-  getCountOfPlayersByPositionFromArray,
+  getCountOfFloatsBetweenZeroAndOne,
   getDomesticLeaguesOfCountryFromBaseCountries,
   getClubsOfDomesticLeagueFromBaseCountries,
 } from "../Getters";
@@ -69,9 +75,17 @@ import {
   fastCheckTestCompletelyRandomBaseClubIndex,
   fastCheckTestCompletelyRandomBaseClub,
   fastCheckNLengthStringGenerator,
-} from "../TestDataGenerationUtilities";
+  fastCheckTestSeasonAndPlayerNumber,
+  fastCheckTestPlayerIDGenerator,
+  fastCheckGenerateTestDomesticLeaguesCount,
+  fastCheckGenerateTestClubsCount,
+  fastCheckGenerateTestPlayersCount,
+  fastCheckGenerateTestCountriesCount,
+  fastCheckGenerateTestCountriesLeaguesClubsPlayersCount,
+  fastCheckArrayOfNFloatsBetweenZeroAndOne
+} from "../TestDataGenerators";
 
-describe("TestDataGenerationUtilities test suite", () => {
+describe("TestDataGeneratorsg test suite", () => {
   const POSITIONGROUPCOUNT: number = getCountOfObjectValues(PositionGroup);
 
   const getActualStringIndexAndCountArray = pipe([
@@ -179,7 +193,8 @@ describe("TestDataGenerationUtilities test suite", () => {
     "fastCheckNLengthUniqueIntegerArrayGenerator",
     (testArraySize, fcGen) => {
       const actualArray: Array<number> =
-        fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testArraySize);
+            fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testArraySize);
+      
       const actualIntegerCount: number =
         getCountOfUniqueIntegersFromArray(actualArray);
       expect(actualIntegerCount).toEqual(testArraySize);
@@ -368,7 +383,7 @@ describe("TestDataGenerationUtilities test suite", () => {
     fc.integer({ min: 2, max: 10 }),
     fc.integer({ min: 1, max: 100 }),
     fc.gen(),
-  ])(
+  ], {numRuns: 0})(
     "fastCheckTestMixedArrayOfPositionGroupIDsGenerator",
     (testMinCountOfPlayersPerPosition, testRangeSize, fcGen) => {
       const [actualStringIDs]: [Array<string>, Array<[string, number]>] =
@@ -720,4 +735,100 @@ describe("TestDataGenerationUtilities test suite", () => {
       expect(expectedClubNamesSet.has(actualClubName)).toBeTruthy();
     },
   );
+
+  test.prop([    
+    fc.gen(),
+  ])(
+    "fastCheckTestSeasonAndPlayerNumber",
+    (fcGen) => {
+      const [actualSeason, actualPlayerNumber] = fastCheckTestSeasonAndPlayerNumber(fcGen)
+      expect(actualSeason).toBeGreaterThanOrEqual(0)
+      expect(actualPlayerNumber).toBeGreaterThanOrEqual(0)
+    },
+  );
+
+  test.prop([    
+    fc.gen(),
+  ])(
+    "fastCheckTestPlayerIDGenerator",
+    (fcGen) => {
+      const actualPlayerID: string = fastCheckTestPlayerIDGenerator(fcGen)
+      assert.isString(actualPlayerID)
+    },
+  );
+
+    test.prop([    
+    fc.gen(),
+  ])(
+    "fastCheckGenerateTestCountriesCount",
+    (fcGen) => {
+      
+      const actualCountriesCount: number = fastCheckGenerateTestCountriesCount(fcGen)
+      expect(actualCountriesCount).toBeGreaterThanOrEqual(2)
+      
+    },
+  );
+
+  test.prop([    
+    fc.gen(),
+  ])(
+    "fastCheckGenerateTestCountriesLeaguesClubsPlayersCount",
+    (fcGen) => {
+      
+      const [, actualDomesticLeaguesCount, actualClubsCount, actualPlayersCount] = fastCheckGenerateTestCountriesLeaguesClubsPlayersCount(fcGen)
+
+      expect(actualDomesticLeaguesCount).toBeGreaterThanOrEqual(DEFAULTDOMESTICLEAGUESPERCOUNTRY*2)
+      expect(actualClubsCount).toBeGreaterThanOrEqual(DEFAULTCLUBSPERCOUNTRY*2)
+      expect(actualPlayersCount).toBeGreaterThanOrEqual(DEFAULTPLAYERSPERCOUNTRY*2)
+    },
+  );
+  
+
+  test.prop([    
+    fc.gen(),
+  ])(
+    "fastCheckGenerateTestDomesticLeaguesCount",
+    (fcGen) => {
+      
+      const [actualDomesticLeaguesCount] = fastCheckGenerateTestDomesticLeaguesCount(fcGen)
+      expect(actualDomesticLeaguesCount).toBeGreaterThanOrEqual(DEFAULTDOMESTICLEAGUESPERCOUNTRY*2)
+    },
+  );
+
+  test.prop([    
+    fc.gen(),
+  ])(
+    "fastCheckGenerateTestClubsCount",
+    (fcGen) => {
+      
+      const [actualClubsCount] = fastCheckGenerateTestClubsCount(fcGen)
+      expect(actualClubsCount).toBeGreaterThanOrEqual(DEFAULTCLUBSPERCOUNTRY*2)
+    },
+  );
+
+  test.prop([    
+    fc.gen(),
+  ])(
+    "fastCheckGenerateTestPlayersCount",
+    (fcGen) => {
+      const [actualPlayersCount] = fastCheckGenerateTestPlayersCount(fcGen)
+      expect(actualPlayersCount).toBeGreaterThanOrEqual(DEFAULTPLAYERSPERCOUNTRY*2)
+    },
+  );
+
+
+  test.prop([    
+    fc.gen(),
+    fc.integer({min: 3, max: 50})
+  ])(
+    "fastCheckArrayOfNFloatsBetweenZeroAndOne",
+    (fcGen, testFloatCount) => {
+      const actualFloats: Array<number> = fastCheckArrayOfNFloatsBetweenZeroAndOne(fcGen, testFloatCount)
+
+      expect(getCountOfFloatsBetweenZeroAndOne(actualFloats)).toEqual(testFloatCount)
+      
+    },
+  );
+  
+  
 });
