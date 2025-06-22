@@ -11,14 +11,6 @@ export const DECEMBER: number = 11;
 
 export const startingCountries: Array<BaseCountry> = [ENGLAND];
 
-export enum IDPREFIXES {
-  Attacker = "0",
-  Midfielder = "1",
-  Defender = "2",
-  Goalkeeper = "3",
-  Club = "4",
-}
-
 export const BASECOUNTRIESCOUNTRIESINDEX: number = 0;
 export const BASECOUNTRIESDOMESTICLEAGUESINDEX: number = 1;
 export const BASECOUNTRIESCLUBSINDEX: number = 2;
@@ -28,8 +20,6 @@ export const DEFAULTDOMESTICLEAGUESPERCOUNTRY = 5;
 export const DEFAULTDOMESTICLEAGUESPERCOUNTRYIDRANGE: [number, number] = [0,4];
 export const DEFAULTCLUBSPERDOMESTICLEAGUE = 20;
 export const DEFAULTSQUADSIZE: number = 25;
-// 
-export const DEFAULTWAGERANGECYCLES: number = DEFAULTCLUBSPERDOMESTICLEAGUE/2
 
 
 export const DEFAULTCLUBSPERCOUNTRY = DEFAULTCLUBSPERDOMESTICLEAGUE * DEFAULTDOMESTICLEAGUESPERCOUNTRY
@@ -66,3 +56,19 @@ export const DEFAULTPLAYERSPERTESTMATCHES: number = 22;
 export const TESTRANDOMSEASONRANGE: [number, number] = [2000, 2100];
 export const DOUBLEBETWEENZEROAND1RANGE: [number, number] = [0.1, 1];
 export const TESTROUNDROBINCLUBSRANGE: [number, number] = [18, 100];
+
+
+
+export const DEFAULTATTENDANCERANGE: [number, number] = [10_000, 50_000]
+export const DEFAULTSTADIUMCOSTSRANGE: [number, number] = [200_000, 350_000]
+export const DEFAULTSPONSORREVENUERANGE: [number, number] = [5_000_000, 80_000_000]
+export const DEFAULTTICKETSPRICERANGE: [number, number] = [30, 100]
+
+export const DEFAULTMANAGERPAYRANGE: [number, number] = [1_000_000, 30_000_000]
+export const DEFAULTSCOUTINGCOSTRANGE: [number, number] = [250_000, 5_000_000]
+export const DEFAULTHEALTHCOSTRANGE: [number, number] = [250_000, 5_000_000]
+export const DEFAULTPLAYERDEVELOPMENTCOSTRANGE: [number, number] = [250_000, 5_000_000]
+export const DEFAULTWAGEBILLTOREVENUERATIO: [number, number] = [50, 95]
+
+export const INFLATION: number = 0.2
+export const DEFAULTADJUSTMENTBYDIVISION: Array<number> = [1, 0.75, 0.50, 0.45, 0.40]

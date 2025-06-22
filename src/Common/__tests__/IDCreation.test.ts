@@ -14,17 +14,11 @@ import {
 import { POSITIONGROUPSCOUNT,
   MAXCONTRACTYEARS,
   DEFAULTAGERANGE,
-  PLAYERIDDATARANGESBYPOSITION,
-  PLAYERIDINDICES
 } from "../PlayerDataConstants";
 import { fastCheckTestSeasonAndPlayerNumber,
   fastCheckGenerateTestClubsCount,
   fastCheckGenerateTestPlayersCount,
   fastCheckGenerateTestCountriesLeaguesClubsPlayersCount,
-  fastCheckRandomDivisionNumber,
-  fastCheckArrayOfNFloatsBetweenZeroAndOne,
-  fastCheckTestLinearRangeWithMinimumGenerator,
-  fastCheckPlayerNumberGenerator
 } from "../TestDataGenerators";
 import { pairIntegersAndAssertEqual, assertIntegerInRangeExclusive,
   assertMeanInRangeExclusive } from "../Asserters";

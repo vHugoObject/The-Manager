@@ -1,4 +1,4 @@
-import { BaseCountry } from "./CountryTypes";
+import { BaseCountry } from "./Types";
 export const premierLeagueClubs: Array<string> = [
   "Liverpool",
   "Man United",
@@ -74,6 +74,74 @@ export const leagueTwoClubs: Array<string> = [
   "Gillingham",
   "Exeter",
 ];
+
+
+
+const COUNTRYPRIZEMONEYBASEDONMERIT = [
+  33.8,
+  32.1,
+  30.4,
+  28.7,
+  27.0,
+  25.3,
+  23.6,
+  22.0,
+  20.3,
+  18.6,
+  16.9,
+  15.2,
+  13.5,
+  11.8,
+  10.1,
+  8.4,
+  6.8,
+  5.1,
+  3.4,
+  1.7
+]
+
+const INTERNATIONALPRIZEMONEYBASEDONMERIT = [
+  22.6,
+  21.4,
+  20.3,
+  19.2,
+  18.1,
+  16.9,
+  15.8,
+  14.7,
+  13.5,
+  12.4,
+  11.3,
+  10.2,
+  9.0,
+  7.9,
+  6.8,
+  5.6,
+  4.5,
+  3.4,
+  2.3,
+  1.1
+]
+
+
+const COUNTRYEQUALSHAREOFPRIZEMONEYPERCLUB: number = 31.2
+
+const INTERNATIONALEQUALSHAREOFPRIZEMONEYPERCLUB: number = 55.7
+
+const CENTRALCOMMERICIAL: number = 8.2 	     
+      
+const ADJUSTMENTBYDIVISIONTOTALFORPRIZEMONEY: Array<number> = [1, 0.15, 0.10, 0.05, 0.025]
+
+// Based On 2023/24
+export const ENGLANDFINANCESETTINGS = {  
+  ADJUSTMENTBYDIVISIONTOTALFORPRIZEMONEY,
+  INTERNATIONALPRIZEMONEYBASEDONMERIT,
+  COUNTRYPRIZEMONEYBASEDONMERIT,
+  COUNTRYEQUALSHAREOFPRIZEMONEYPERCLUB,
+  INTERNATIONALEQUALSHAREOFPRIZEMONEYPERCLUB,
+  CENTRALCOMMERICIAL,
+  
+}
 
 export const ENGLAND: BaseCountry = [
   "England",
