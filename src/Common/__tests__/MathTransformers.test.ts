@@ -1,25 +1,28 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect, assert } from "vitest";
 import {
-  over,
   map,
   sum,
   last,
   pipe,
-  zipAll,
   first,
   multiply,
-  min,
   add,
-  max,
   head,
-  subtract
+  subtract,
 } from "lodash/fp";
 import {
   fastCheckTestLinearRangeGenerator,
   fastCheckNLengthArrayOfDoublesBetweenZeroAndOne,
+  fastCheckRandomFloatBetweenZeroAndOne,
+  fastCheckArrayOfNFloatsBetweenZeroAndOne,
+  fastCheckRandomIntegerInRange,
+  fastCheckTestLinearRangeWithMinimumGenerator,
 } from "../TestDataGenerators";
-import { assertIntegerInRangeInclusive, assertIntegerInRangeExclusive } from "../Asserters";
+import {
+  assertIntegerInRangeInclusive,
+  assertIntegerInRangeExclusive,
+} from "../Asserters";
 import { getMinAndMaxOfArray } from "../Getters";
 import {
   minusOne,
@@ -35,25 +38,17 @@ import {
   accumulate,
   reverseThenSpreadSubtract,
   weightedMean,
-  normalizePercentages,
-  calculateAverageIncreaseForModularRange
+  normalizeArrayOfNumbers,
+  adjustRangeByPercentage,
 } from "../Transformers";
 
 describe("MathTransformers test suite", () => {
-  test.prop([
-    fc.array(
-      fc.double({
-        maxExcluded: true,
-        noDefaultInfinity: true,
-        noNaN: true,
-        min: 0.1,
-        max: 1,
-      }),
-      { minLength: 3 },
-    ),
-  ])("normalizePercentages", (testPercentages) => {
+  test.prop([fc.gen()])("normalizeArrayOfNumbers", (fcGen) => {
+    const testCount: number = fastCheckRandomIntegerInRange(fcGen, [5, 100]);
+    const testPercentages: Array<number> =
+      fastCheckArrayOfNFloatsBetweenZeroAndOne(fcGen, testCount);
     const actualPercentages: Array<number> =
-      normalizePercentages(testPercentages);
+      normalizeArrayOfNumbers(testPercentages);
     actualPercentages.forEach((actualPercentage: number) => {
       expect(actualPercentage).toBeGreaterThan(0);
       expect(actualPercentage).toBeLessThan(1);
@@ -72,10 +67,7 @@ describe("MathTransformers test suite", () => {
         testIntegers,
       );
       const [min, max] = getMinAndMaxOfArray(testIntegers);
-      assertIntegerInRangeInclusive(
-        [min, max],
-        actualWeightedMean,
-      );
+      assertIntegerInRangeInclusive([min, max], actualWeightedMean);
     },
   );
 
@@ -178,61 +170,88 @@ describe("MathTransformers test suite", () => {
     expect(actualNumber).toBeLessThanOrEqual(expectedMax);
   });
 
+  test.prop([fc.gen(), fc.integer({ min: 2 })])(
+    "test nonZeroBoundedModularAddition at rangeMax-1",
+    (fcGen, testRangeSize) => {
+      const [testRangeMin, testRangeMax]: [number, number] =
+        fastCheckTestLinearRangeGenerator(fcGen, testRangeSize);
+      const actualResult: number = nonZeroBoundedModularAddition(
+        [testRangeMin, testRangeMax],
+        1,
+        minusOne(testRangeMax),
+      );
+      expect(actualResult).toEqual(testRangeMin);
+    },
+  );
+
+  test.prop([fc.gen(), fc.integer({ min: 2 })])(
+    "test nonZeroBoundedModularAddition at rangeMax-2",
+    (fcGen, testRangeSize) => {
+      const [testRangeMin, testRangeMax]: [number, number] =
+        fastCheckTestLinearRangeGenerator(fcGen, testRangeSize);
+      const actualResult: number = nonZeroBoundedModularAddition(
+        [testRangeMin, testRangeMax],
+        1,
+        subtract(testRangeMax, 2),
+      );
+      expect(actualResult).toEqual(minusOne(testRangeMax));
+    },
+  );
+
+  test.prop([fc.gen(), fc.integer({ min: 2 })])(
+    "test nonZeroBoundedModularAddition at rangeMin",
+    (fcGen, testRangeSize) => {
+      const [testRangeMin, testRangeMax]: [number, number] =
+        fastCheckTestLinearRangeGenerator(fcGen, testRangeSize);
+      const actualResult: number = nonZeroBoundedModularAddition(
+        [testRangeMin, testRangeMax],
+        1,
+        testRangeMin,
+      );
+      expect(actualResult).toEqual(addOne(testRangeMin));
+    },
+  );
+
+  test.prop([fc.gen(), fc.integer({ min: 2 })])(
+    "test nonZeroBoundedModularAddition with multiple increases",
+    (fcGen, testRangeSize) => {
+      const [testRangeMin, testRangeMax]: [number, number] =
+        fastCheckTestLinearRangeGenerator(fcGen, testRangeSize);
+      const actualResultOne: number = nonZeroBoundedModularAddition(
+        [testRangeMin, testRangeMax],
+        1,
+        testRangeMin,
+      );
+      const actualResultTwo: number = nonZeroBoundedModularAddition(
+        [testRangeMin, testRangeMax],
+        1,
+        actualResultOne,
+      );
+
+      expect(actualResultOne).toBeLessThan(actualResultTwo);
+    },
+  );
 
   test.prop([
     fc.gen(),
-    fc.integer({min: 2}),
-  ])("test nonZeroBoundedModularAddition at rangeMax-1", (fcGen, testRangeSize) => {
-    const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
-    const actualResult: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, minusOne(testRangeMax))
-    expect(actualResult).toEqual(testRangeMin)
-  });
-
-  test.prop([
-    fc.gen(),
-    fc.integer({min: 2}),
-  ])("test nonZeroBoundedModularAddition at rangeMax-2", (fcGen, testRangeSize) => {
-    const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
-    const actualResult: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, subtract(testRangeMax, 2))
-    expect(actualResult).toEqual(minusOne(testRangeMax))
-    
-  });
-  
-  test.prop([
-    fc.gen(),
-    fc.integer({min: 2}),
-  ])("test nonZeroBoundedModularAddition at rangeMin", (fcGen, testRangeSize) => {
-    const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
-    const actualResult: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, testRangeMin)
-    expect(actualResult).toEqual(addOne(testRangeMin))
-  });
-
-  test.prop([
-    fc.gen(),
-    fc.integer({min: 2}),
-  ])("test nonZeroBoundedModularAddition with multiple increases", (fcGen, testRangeSize) => {
-    
-    const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
-    const actualResultOne: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, testRangeMin)
-    const actualResultTwo: number = nonZeroBoundedModularAddition([testRangeMin, testRangeMax], 1, actualResultOne)
-
-    expect(actualResultOne).toBeLessThan(actualResultTwo)
-    
-    
-  });
-  
-  test.prop([
-    fc.gen(),
-    fc.integer({min: 2}),
-    fc.integer({min: 2}),
-    fc.integer({min: 2})
-  ])("general nonZeroBoundedModularAddition test", (fcGen, testRangeSize, testIncrease, testCurrentNumber) => {
-    
-    const testRange: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
-    const actualResult: number = nonZeroBoundedModularAddition(testRange, testIncrease, testCurrentNumber)
-    assertIntegerInRangeExclusive(testRange, actualResult)
-    
-  });
+    fc.integer({ min: 2 }),
+    fc.integer({ min: 2 }),
+    fc.integer({ min: 2 }),
+  ])(
+    "general nonZeroBoundedModularAddition test",
+    (fcGen, testRangeSize, testIncrease, testCurrentNumber) => {
+      const testRange: [number, number] = fastCheckTestLinearRangeGenerator(
+        fcGen,
+        testRangeSize,
+      );
+      const actualResult: number = nonZeroBoundedModularAddition(
+        testRange,
+        testIncrease,
+        testCurrentNumber,
+      );
+      assertIntegerInRangeExclusive(testRange, actualResult);
+    },
+  );
 
   test.prop([fc.integer({ min: 1 })])("getRandomPlusOrMinus", (testNumber) => {
     const actualNumber = getRandomPlusOrMinus(testNumber);
@@ -276,5 +295,22 @@ describe("MathTransformers test suite", () => {
     },
   );
 
+  test.prop([fc.gen(), fc.integer({ min: 2 })])(
+    "adjustRangeByPercentage",
+    (fcGen, testRangeSize) => {
+      const [testMin, testMax]: [number, number] =
+        fastCheckTestLinearRangeWithMinimumGenerator(fcGen, [1, testRangeSize]);
+      const testPercentage: number =
+        fastCheckRandomFloatBetweenZeroAndOne(fcGen);
+      const [actualMin, actualMax] = adjustRangeByPercentage(
+        [testMin, testMax],
+        testPercentage,
+      );
 
+      expect(actualMin).toBeLessThan(actualMax);
+      expect(actualMin).toBeGreaterThan(0);
+      expect(actualMin).toBeLessThanOrEqual(testMin);
+      expect(actualMax).toBeLessThanOrEqual(testMax);
+    },
+  );
 });

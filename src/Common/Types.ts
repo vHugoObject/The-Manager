@@ -18,7 +18,7 @@ export interface Save {
   SeasonsPlayed: number;
   CurrentSeason: number;
   CurrentDate: Date;
-  Entities: Record<string, Array<number|string>>;
+  Entities: Record<string, Array<number | string>>;
   EntitiesStatistics: Record<string, number>;
   PlayerSkillsAndPhysicalData: Record<string, Record<string, number>>;
   SaveID: SaveID;

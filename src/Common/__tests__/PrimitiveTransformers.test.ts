@@ -1,9 +1,11 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect, assert } from "vitest";
-import { over, map, size, last, pipe, first, min, add } from "lodash/fp";
+import { over, map, size, last, pipe, first, min, add, identity, multiply } from "lodash/fp";
 import {
   pairSetsAndAssertStrictEqual,
   pairIntegersAndAssertEqual,
+  assertArrayOfIntegersInRangeExclusive,
+  assertIntegerInRangeExclusive
 } from "../Asserters";
 import {
   fastCheckNLengthArrayOfStringCountTuplesGenerator,
@@ -11,6 +13,8 @@ import {
   fastCheckTestSingleStringCountStartingIndexTupleGenerator,
   fastCheckNLengthStringGenerator,
   fastCheckRandomIntegerInRange,
+  fastCheckRandomIntegerBetweenOneAnd,
+  fastCheckTestLinearRangeGenerator
 } from "../TestDataGenerators";
 import {
   getFirstLevelArrayLengths,
@@ -40,7 +44,10 @@ import {
   zipAllAndGetInitial,
   zipAllAndGetSumOfSecondArray,
   unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs,
-  subString
+  subString,
+  convertRangeIndexIntoInteger,
+  addOne,
+  convertRangeIndexAndCycleCountIntoInteger
 } from "../Transformers";
 
 describe("PrimitiveTransformers test suite", () => {
@@ -124,7 +131,10 @@ describe("PrimitiveTransformers test suite", () => {
       expect(actualSubString).toBe(expectedSubString);
     },
   );
-  test.prop([fc.integer({ min: 2, max: 1000 }), fc.nat()])(
+
+  describe("unfold", () => {
+
+    test.prop([fc.integer({ min: 2, max: 1000 }), fc.nat()])(
     "unfold",
     (testArraySize, testValueToAdd) => {
       const testAdder = add(testValueToAdd);
@@ -256,12 +266,13 @@ describe("PrimitiveTransformers test suite", () => {
     },
   );
 
+  });
+
   test.prop([fc.string({ minLength: 1, maxLength: 1 })])(
     "convertCharacterIntoCharacterCode",
     (testChar) => {
       const actualCharCode: number =
-            convertCharacterIntoCharacterCode(testChar);
-      console.log(actualCharCode)
+        convertCharacterIntoCharacterCode(testChar);
       assert.isNumber(actualCharCode);
     },
   );
@@ -271,12 +282,13 @@ describe("PrimitiveTransformers test suite", () => {
     (testInteger) => {
       const actualChar: string = convertCharacterCodeIntoCharacter(testInteger);
       assert.isString(actualChar);
-      expect(actualChar.length).toBeGreaterThanOrEqual(1)
-
+      expect(actualChar.length).toBeGreaterThanOrEqual(1);
     },
   );
 
-  test.prop([fc.array(fc.string(), { minLength: 3, maxLength: 200 })])(
+
+  describe("Range stuff", () => {
+      test.prop([fc.array(fc.string(), { minLength: 3, maxLength: 200 })])(
     "convertArrayIntoLinearRange",
     (testArrayOfStrings) => {
       const [firstIndex, lastIndex]: [number, number] =
@@ -286,7 +298,7 @@ describe("PrimitiveTransformers test suite", () => {
     },
   );
 
-  test.prop([
+      test.prop([
     fc.array(fc.array(fc.string(), { minLength: 10, maxLength: 20 }), {
       minLength: 3,
       maxLength: 50,
@@ -300,6 +312,36 @@ describe("PrimitiveTransformers test suite", () => {
     },
   );
 
+    
+    test.prop([fc.gen(), fc.integer({ min: 100, max: 1_000_000_00 }), fc.integer({ min: 1, max: 1000 })])(
+      "convertRangeIndexIntoInteger",
+      (fcGen, testRangeSize, testIndicesCount) => {
+
+	const testRange: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
+	const testStep: number = pipe([multiply(testRangeSize), fastCheckRandomIntegerBetweenOneAnd(fcGen)])(testIndicesCount)
+
+	const actualIntegers = unfold((testIndex: number): number => convertRangeIndexIntoInteger(testRange, [testStep, testIndex]))(testIndicesCount)
+
+	assertArrayOfIntegersInRangeExclusive(testRange, actualIntegers)
+
+      
+    },
+    );
+    
+    test.prop([fc.gen(), fc.integer({ min: 100, max: 1_000_000_00 }), fc.integer({ min: 1000, max: 100_000})])(
+      "convertRangeIndexAndCycleCountIntoInteger",
+      (fcGen, testRangeSize, testItemsCount) => {
+
+	const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
+	const [testCycles, testIndex]: [number, number] = unfold((_: number) => fastCheckRandomIntegerBetweenOneAnd(fcGen, testItemsCount), 2)
+	
+	const actualInteger: number = convertRangeIndexAndCycleCountIntoInteger([testRangeMin, testRangeMax], testCycles, testItemsCount, testIndex)
+	assertIntegerInRangeExclusive([testRangeMin, testRangeMax], actualInteger)
+	
+      
+    },
+    );
+  })
 
   
 });

@@ -34,15 +34,25 @@ import {
   isNumber,
   tail,
   partialRight,
-  inRange
+  inRange,
+  chunk,
+  lt,
+  spread,
+  subtract,
+  add,
+  multiply,
+  divide
 } from "lodash/fp";
 import { Save, BaseCountries } from "./Types";
-import { PositionGroup, PLAYERIDDATARANGESBYPOSITION, PLAYERIDINDICES } from "./PlayerDataConstants"
+import {
+  PositionGroup,
+  PLAYERIDDATARANGESBYPOSITION,
+  PLAYERIDINDICES,
+} from "./PlayerDataConstants";
 import {
   DEFAULTMATCHCOMPOSITION,
   CLUBSDEPTH,
   COMPETITIONSDEPTH,
-  IDPREFIXES,
   BASECOUNTRIESDOMESTICLEAGUESINDEX,
   BASECOUNTRIESCLUBSINDEX,
   BASECOUNTRIESCOUNTRIESINDEX,
@@ -64,7 +74,7 @@ export const getFirstLevelArrayMaxValues = map(max);
 
 export const getSecondArrayValue = property([1]);
 export const getSecondArrayValuesOfNestedArrays = map(getSecondArrayValue);
-export const getSizeOfCompactedAray = pipe([compact, size]);
+export const getSizeOfCompactedArray = pipe([compact, size]);
 export const getFirstLevelArrayLengthsAsSet = pipe([getFirstLevelArrayLengths]);
 export const getSecondLevelArrayLengths = pipe([flatMapDepth(map(size), 2)]);
 
@@ -86,18 +96,17 @@ export const getLastEntityIDNumber = pipe([last, getIDSuffix]);
 export const getLastIDNumberOutOfIDNameTuple = pipe([last, first, getIDSuffix]);
 
 export const getFirstNPartsOfID = curry((parts: number, id: string) => {
-  return pipe([getPartsOfIDAsArray, take(parts)])(id)
-})
+  return pipe([getPartsOfIDAsArray, take(parts)])(id);
+});
 
-export const getFirstTwoPartsOfID = getFirstNPartsOfID(2)
-export const getFirstThreePartsOfID = getFirstNPartsOfID(3)
-export const getFirstFourPartsOfID = getFirstNPartsOfID(4)
+export const getFirstTwoPartsOfID = getFirstNPartsOfID(2);
+export const getFirstThreePartsOfID = getFirstNPartsOfID(3);
+export const getFirstFourPartsOfID = getFirstNPartsOfID(4);
 
 export const countByIDPrefix = countBy(getIDPrefix);
 export const countByFirstTwoIDParts = countBy(getFirstTwoPartsOfID);
 export const countByFirstThreeIDParts = countBy(getFirstThreePartsOfID);
 export const countByFirstFourIDParts = countBy(getFirstFourPartsOfID);
-
 
 export const getCountsForASetOfIDPrefixes = (
   idPrefixes: Array<string>,
@@ -119,12 +128,16 @@ export const getCountOfItemsFromArrayForPredicateWithTransformation = curry(
 export const getCountOfItemsFromArrayForPredicate = curry(
   getCountOfItemsFromArrayForPredicateWithTransformation(identity),
 );
+
 export const getCountOfUniqueItemsFromArrayForPredicate = curry(
   getCountOfItemsFromArrayForPredicateWithTransformation(uniq),
 );
 
-export const betweenZeroAndOne = inRange(0,1)
-export const getCountOfFloatsBetweenZeroAndOne = pipe([filter(betweenZeroAndOne), size])
+export const betweenZeroAndOne = inRange(0, 1);
+export const getCountOfFloatsBetweenZeroAndOne = pipe([
+  filter(betweenZeroAndOne),
+  size,
+]);
 
 export const getCountOfStringsFromArray =
   getCountOfItemsFromArrayForPredicate(isString);
@@ -158,6 +171,43 @@ export const getCountOfItemsFromArrayThatStartWithX = curry(
     ])(prefix),
 );
 
+export const getCountOfItemsFromArrayThatAreGreaterThanZero = getCountOfItemsFromArrayForPredicate(lt(0))
+
+export const getCountOfItemsForPredicatePerArrayChunk = curry(
+  <T>(
+    predicate: (arg: T) => boolean,
+    chunkSize: number,
+    array: Array<T>,
+  ): Array<number> => {
+    return pipe([
+      chunk(chunkSize),
+      map(getCountOfItemsFromArrayForPredicate(predicate)),
+    ])(array);
+  },
+);
+
+export const getCountOfUniqueItemsPerArrayChunk = curry(<T>(chunkSize: number,
+  array: Array<T>): Array<number> => {
+    return pipe([
+      chunk(chunkSize),
+      map(pipe([uniq, size])),      
+    ])(array)
+})
+
+export const getLengthOfLinearRange = pipe([
+  pipe([reverse, spread(subtract)]),
+  add(-1)
+]);
+
+export const getRangeStep = curry((range: [number, number], cycles: number, itemsCount: number): number => {
+  return pipe([
+    getLengthOfLinearRange,
+    multiply(cycles),
+    partialRight(divide, [itemsCount]),
+  ])(range)
+})
+
+
 export const getEntityFromSaveEntities = (id: string, save: Save) =>
   pipe([property(["Entities", id])])(save);
 
@@ -165,7 +215,6 @@ export const getGroupOfPlayerSkillsFromSave = (
   ids: Array<string>,
   save: Save,
 ) => pipe([property(["Entities"]), pick(ids)])(save);
-
 
 export const sortPlayersByRatings = pipe([
   Object.entries,
@@ -252,17 +301,26 @@ export const getClubNameFromBaseCountries = curry(
   },
 );
 
-export const getPlayerIDDataRange = curry((positionGroup: PositionGroup, dataIndex: PLAYERIDINDICES): [number, number] => {
-  return property([positionGroup, dataIndex])(PLAYERIDDATARANGESBYPOSITION)
-})
+export const getPlayerIDDataRange = curry(
+  (
+    positionGroup: PositionGroup,
+    dataIndex: PLAYERIDINDICES,
+  ): [number, number] => {
+    return property([positionGroup, dataIndex])(PLAYERIDDATARANGESBYPOSITION);
+  },
+);
 
 export const getValueFromID = curry((index: string, id: string): string => {
-  return pipe([split("_"), property([index])])(id)
-})
+  return pipe([split("_"), property([index])])(id);
+});
 
-export const getPositionGroupFromPlayerID = getValueFromID(PLAYERIDINDICES.PositionGroup)
-export const getSeasonFromPlayerID = getValueFromID(PLAYERIDINDICES.Season)
-export const getPlayerNumberFromPlayerID = getValueFromID(PLAYERIDINDICES.PlayerNumber)
-export const getDomesticLeagueLevelFromPlayerID = getValueFromID(PLAYERIDINDICES.DomesticLeagueLevel)
-
-
+export const getPositionGroupFromPlayerID = getValueFromID(
+  PLAYERIDINDICES.PositionGroup,
+);
+export const getSeasonFromPlayerID = getValueFromID(PLAYERIDINDICES.Season);
+export const getPlayerNumberFromPlayerID = getValueFromID(
+  PLAYERIDINDICES.PlayerNumber,
+);
+export const getDomesticLeagueLevelFromPlayerID = getValueFromID(
+  PLAYERIDINDICES.DomesticLeagueLevel,
+);
