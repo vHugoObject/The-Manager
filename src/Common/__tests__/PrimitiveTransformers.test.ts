@@ -46,7 +46,6 @@ import {
   unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs,
   subString,
   convertRangeIndexIntoInteger,
-  addOne,
   convertRangeIndexAndCycleCountIntoInteger
 } from "../Transformers";
 
@@ -342,6 +341,5 @@ describe("PrimitiveTransformers test suite", () => {
     },
     );
   })
-
   
 });

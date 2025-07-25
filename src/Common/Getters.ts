@@ -324,3 +324,5 @@ export const getPlayerNumberFromPlayerID = getValueFromID(
 export const getDomesticLeagueLevelFromPlayerID = getValueFromID(
   PLAYERIDINDICES.DomesticLeagueLevel,
 );
+
+export const getEventTargetValue = property(["target", "value"])

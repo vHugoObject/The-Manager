@@ -1,29 +1,26 @@
 import { mapIndexed } from "futil-js";
-import React, { useState } from "react";
+import { pipe } from "lodash/fp"
+import { useState } from "react";
 import {
   getClubsOfDomesticLeagueFromBaseCountries,
   getDomesticLeaguesOfCountryFromBaseCountries,
+  getEventTargetValue
 } from "../../Common/Getters";
-import {
-  createClubID,
-  createCountryID,
-  createDomesticLeagueID,
+import {  
   zipAllAndGetFirstArray,
+  joinOnUnderscores
 } from "../../Common/Transformers";
 import { BaseCountries } from "../../Common/Types";
 
 export const CreateEntityOptions = ({
-  idCreator,
   strings,
 }: {
-  idCreator: (arg: number) => string;
   strings: Array<string>;
 }): Array<JSX.Element> => {
   return mapIndexed((name: string, index: number): JSX.Element => {
     return (
-      <option id={idCreator(index)} key={index} value={index}>
-        {" "}
-        {name}{" "}
+      <option key={index} value={index}>
+        {name}
       </option>
     );
   })(strings);
@@ -35,9 +32,8 @@ export const CreateCountryOptions = ({
   countriesLeaguesClubs: BaseCountries;
 }): JSX.Element => {
   const countryNames = zipAllAndGetFirstArray(countriesLeaguesClubs);
-
   return (
-    <CreateEntityOptions idCreator={createCountryID} strings={countryNames} />
+    <CreateEntityOptions strings={countryNames} />
   );
 };
 
@@ -55,7 +51,6 @@ export const CreateDomesticLeagueOptions = ({
 
   return (
     <CreateEntityOptions
-      idCreator={createDomesticLeagueID}
       strings={domesticLeagueNames}
     />
   );
@@ -75,7 +70,8 @@ export const CreateClubOptions = ({
     countriesLeaguesClubs,
   );
 
-  return <CreateEntityOptions idCreator={createClubID} strings={clubNames} />;
+
+  return <CreateEntityOptions strings={clubNames} />;
 };
 
 export const NewSaveForm = ({
@@ -83,19 +79,31 @@ export const NewSaveForm = ({
 }: {
   countriesLeaguesClubs: BaseCountries;
 }) => {
-  const [domesticLeaguesHidden, setDomesticLeaguesHidden] = useState(true);
-  const [clubsHidden, setClubsHidden] = useState(true);
-  const [submitHidden, setSubmitHidden] = useState(true);
 
+
+  const [playerName, setPlayerName] = useState("");
   const [countryValue, setCountryValue] = useState("0");
   const [domesticLeagueValue, setDomesticLeagueValue] = useState("0");
+  const [clubValue, setClubValue] = useState("0");
+
+  
+  const handleSubmit = (event) => {
+    
+    event.preventDefault();    
+    const playerID: string = joinOnUnderscores([countryValue, domesticLeagueValue, clubValue, "2025"])
+    const saveArguments: Record<string, string> = {
+      name: playerName,
+      playerID,
+    }
+  }
 
   return (
     <div>
       <form method="post">
         <label>
           Choose a name:
-          <input type="text" id="name" name="name" />
+          <input type="text" name="name" value={playerName}
+	    onChange={pipe([getEventTargetValue, setPlayerName])} />
         </label>
 
         <label>
@@ -104,10 +112,8 @@ export const NewSaveForm = ({
           <select
             required={true}
             name="country"
-            value={countryValue}
             onChange={(event): void => {
               setCountryValue(event.target.value);
-              setDomesticLeaguesHidden(false);
             }}
           >
             <CreateCountryOptions
@@ -121,10 +127,8 @@ export const NewSaveForm = ({
             required={true}
             name="league"
             value={domesticLeagueValue}
-            hidden={domesticLeaguesHidden}
             onChange={(event): void => {
               setDomesticLeagueValue(event.target.value);
-              setClubsHidden(false);
             }}
           >
             <CreateDomesticLeagueOptions
@@ -139,9 +143,10 @@ export const NewSaveForm = ({
           <select
             required={true}
             name="club"
-            hidden={clubsHidden}
             value={"0"}
-            onChange={(_) => setSubmitHidden(false)}
+	    onChange={(event): void => {
+              setClubValue(event.target.value);
+            }}
           >
             <CreateClubOptions
               countriesLeaguesClubs={countriesLeaguesClubs}
@@ -150,7 +155,7 @@ export const NewSaveForm = ({
             />
           </select>
         </label>
-        <input hidden={submitHidden} type="submit" />
+        <input onSubmit={handleSubmit} type="submit" />
       </form>
     </div>
   );

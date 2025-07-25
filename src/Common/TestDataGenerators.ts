@@ -41,7 +41,7 @@ import {
   TESTROUNDROBINCLUBSRANGE,
   BASECOUNTRIESDOMESTICLEAGUESINDEX,
   BASECOUNTRIESCLUBSINDEX,
-  DEFAULTOTALPLAYERS,
+  DEFAULTTOTALPLAYERS,
   DEFAULTPLAYERSPERCOUNTRY,
   DEFAULTDOMESTICLEAGUESPERCOUNTRYIDRANGE,
   DEFAULTTOTALCLUBS
@@ -178,6 +178,17 @@ export const fastCheckNRandomArrayIndices = curry(
   },
 );
 
+export const fastCheckNRandomItemsFromArray = curry(
+  <T>(
+    count: number, 
+    fcGen: fc.GeneratorValue,
+    array: Array<T>
+  ): Array<T> => {
+    return fcGen(fc.shuffledSubarray, array, {minLength: count, maxLength: count})
+  },
+);
+
+export const fastCheckGet2RandomItemsFromArray = fastCheckNRandomItemsFromArray(2)
 
 export const fastCheckRandomNaturalNumberWithMax = curry(
   (max: number, fcGen: fc.GeneratorValue): number => {
@@ -206,7 +217,7 @@ export const fastCheckArrayOfNFloatsBetweenZeroAndOne = (
 };
 
 export const fastCheckPlayerIDNumberGenerator =
-  fastCheckRandomNaturalNumberWithMax(DEFAULTOTALPLAYERS);
+  fastCheckRandomNaturalNumberWithMax(DEFAULTTOTALPLAYERS);
 
 export const fastCheckRandomClubIDNumberGenerator = fastCheckRandomNaturalNumberWithMax(DEFAULTTOTALCLUBS)
 
@@ -653,6 +664,23 @@ export const fastCheckTestRandomBaseCountryIndex = curry(
   },
 );
 
+export const fastCheckGetNRandomBaseCountries = curry(
+  (count: number, fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries): string => {
+    return pipe([zipAllAndGetFirstArray, fastCheckNRandomItemsFromArray(count, fcGen)])(
+      testBaseCountries,
+    );
+  },
+);
+
+export const fastCheckGet2RandomBaseCountries = fastCheckGetNRandomBaseCountries(2)
+
+export const fastCheckTestRandomBaseCountryWithIndex = curry(
+  (fcGen: fc.GeneratorValue, testBaseCountries: BaseCountries): [string, string] => {
+    const countryGetter = (index: string) => property([index, 0], testBaseCountries)
+    return pipe([fastCheckTestRandomBaseCountryIndex, over([countryGetter, identity])])(fcGen, testBaseCountries)
+  },
+);
+
 export const fastCheckTestRandomBaseDomesticLeagueIndexFromCountry = curry(
   (
     fcGen: fc.GeneratorValue,
@@ -665,6 +693,7 @@ export const fastCheckTestRandomBaseDomesticLeagueIndexFromCountry = curry(
     ])(testBaseCountries);
   },
 );
+
 
 export const fastCheckTestCompletelyRandomBaseDomesticLeagueIndex = curry(
   (
@@ -683,6 +712,44 @@ export const fastCheckTestCompletelyRandomBaseDomesticLeagueIndex = curry(
     ])(testBaseCountries);
   },
 );
+
+export const fastCheckGetNRandomBaseDomesticLeagues = curry(
+  (
+    count: number,
+    fcGen: fc.GeneratorValue,
+    testBaseCountries: BaseCountries,
+  ): [string, Array<string>] => {
+    return pipe([
+      fastCheckTestRandomBaseCountryIndex(fcGen),
+      over([identity, pipe([
+	(countryIndex: string): [string, string] => [countryIndex, BASECOUNTRIESDOMESTICLEAGUESINDEX.toString()],
+	partialRight(property, [testBaseCountries]),
+	fastCheckNRandomItemsFromArray(count, fcGen)])])
+    ])(testBaseCountries);
+  },
+);
+
+export const fastCheckGet2RandomBaseDomesticLeagues = fastCheckGetNRandomBaseDomesticLeagues(2)
+
+
+export const fastCheckTestCompletelyRandomBaseDomesticLeagueWithIndex = curry(
+  (
+    fcGen: fc.GeneratorValue,
+    testBaseCountries: BaseCountries,
+  ): [[string, string], [string, string]] => {
+    return pipe([
+      fastCheckTestRandomBaseCountryWithIndex(fcGen),
+      over([
+        identity,
+        pipe([last, fastCheckTestRandomBaseDomesticLeagueIndexFromCountry(
+          fcGen,
+          testBaseCountries,
+        )])
+      ]),
+    ])(testBaseCountries);
+  },
+);
+
 
 export const fastCheckTestRandomBaseClubIndexFromCountryAndDomesticLeague =
   curry(
@@ -742,7 +809,7 @@ export const fastCheckTestCompletelyRandomBaseClub = curry(
         randomDomesticLeagueIndex,
         randomClubIndex,
       ]),
-    ])(testBaseCountries);
+    ])(testBaseCountries) as [string, string, string];
 
     return [
       [randomCountryIndex, randomDomesticLeagueIndex, randomClubIndex],
@@ -750,6 +817,27 @@ export const fastCheckTestCompletelyRandomBaseClub = curry(
     ];
   },
 );
+
+export const fastCheckGetNRandomBaseClubs = curry(
+  (
+    count: number,
+    fcGen: fc.GeneratorValue,
+    testBaseCountries: BaseCountries,
+  ): [string, string, Array<string>] => {
+    return pipe([
+      fastCheckTestCompletelyRandomBaseDomesticLeagueIndex,
+      over([identity,
+	pipe([
+	  ([countryIndex, domesticLeagueIndex]: [string, string]): [string, string, string] => [countryIndex, BASECOUNTRIESCLUBSINDEX.toString(), domesticLeagueIndex],	  
+	  partialRight(property, [testBaseCountries]),
+	  fastCheckNRandomItemsFromArray(count, fcGen),
+	])
+      ]),
+    ])(fcGen, testBaseCountries)      
+  }
+);
+
+export const fastCheckGet2RandomBaseClubs = fastCheckGetNRandomBaseClubs(2)
 
 export const fastCheckGenerateTestCountriesCount = partialRight(
   fastCheckRandomIntegerInRange,

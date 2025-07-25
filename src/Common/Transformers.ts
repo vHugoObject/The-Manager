@@ -345,9 +345,6 @@ export const zipDivide = zipWith(divide);
 export const spreadZipDivide = spread(zipDivide);
 export const spreadDivide = spread(divide);
 export const divideByTwo = multiply(1 / 2);
-export const floorDivide = curry((dividend: number, divisor: number): number => {
-  return pipe([divide(dividend), floor])(divisor)
-})
 
 export const spreadMultiply = spread(multiply);
 export const spreadAdd = spread(add);
