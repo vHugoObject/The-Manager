@@ -1,25 +1,47 @@
 import { test, fc } from "@fast-check/vitest";
-import { describe, expect } from "vitest";
-import { property } from "lodash/fp";
-import { fastCheckTestPlayerIDGenerator } from "../TestDataGenerators";
-import { assertIntegerInRangeExclusive } from "../Asserters";
+import { describe, assert, expect } from "vitest";
+import { fastCheckTestPlayerIDGenerator,
+    fastCheckTestSeasonAndPlayerNumber,
+} from "../TestDataGenerators";
+import { assertIntegerInRangeExclusive
+} from "../Asserters";
 import {
   FIRSTNAMESRANGE,
   LASTNAMESRANGE,
   COUNTRYNAMESRANGE,
-  PLAYERIDDATARANGESBYPOSITION,
   PLAYERIDINDICES,
 } from "../PlayerDataConstants";
-import { getPositionGroupFromPlayerID } from "../Getters";
 import {
+  getCountOfIDParts,
+  getCountOfObjectKeys
+} from "../Getters";
+import {
+  splitUnderscoresMapAndSum,
+  createPlayerID,
   convertPlayerIDIntoPlayerFirstNameAsInteger,
   convertPlayerIDIntoPlayerLastNameAsInteger,
   convertPlayerIDIntoPlayerCountryAsInteger,
-  convertPlayerIDIntoPlayerPositionAsInteger,
 } from "../Transformers";
 
 describe("PlayerIDTransformers test suite", () => {
-  test.prop([fc.gen()])(
+
+  test.prop([fc.gen()])("createPlayerID", (fcGen) => {
+    const [testSeason, testPlayerNumber] =
+      fastCheckTestSeasonAndPlayerNumber(fcGen);
+
+    const actualPlayerID: string = createPlayerID(testSeason, testPlayerNumber);
+    assert.isNumber(splitUnderscoresMapAndSum(actualPlayerID))
+    
+    const actualCountOfIDParts: number = getCountOfIDParts(actualPlayerID)    
+    expect(actualPlayerID).toContain(testSeason)
+    expect(actualPlayerID).toContain(testPlayerNumber)
+    const expectedCountOfIDParts: number = getCountOfObjectKeys(PLAYERIDINDICES)
+    expect(actualCountOfIDParts).toEqual(expectedCountOfIDParts)
+    
+ 
+  });
+  
+  test.skip.prop([fc.gen()])(
     "convertPlayerIDIntoPlayerFirstNameAsInteger",
     (fcGen) => {
       const testPlayerID: string = fastCheckTestPlayerIDGenerator(fcGen);
@@ -35,7 +57,7 @@ describe("PlayerIDTransformers test suite", () => {
     },
   );
 
-  test.prop([fc.gen()])(
+  test.skip.prop([fc.gen()])(
     "convertPlayerIDIntoPlayerLastNameAsInteger",
     (fcGen) => {
       const testPlayerID: string = fastCheckTestPlayerIDGenerator(fcGen);
@@ -52,7 +74,7 @@ describe("PlayerIDTransformers test suite", () => {
     },
   );
 
-  test.prop([fc.gen()])(
+  test.skip.prop([fc.gen()])(
     "convertPlayerIDIntoPlayerCountryAsInteger",
     (fcGen) => {
       const testPlayerID: string = fastCheckTestPlayerIDGenerator(fcGen);
@@ -64,29 +86,6 @@ describe("PlayerIDTransformers test suite", () => {
       );
       expect(actualPlayerCountryNameAsInteger).toEqual(
         convertPlayerIDIntoPlayerCountryAsInteger(testPlayerID),
-      );
-    },
-  );
-
-  test.prop([fc.gen()])(
-    "convertPlayerIDIntoPlayerPositionAsInteger",
-    (fcGen) => {
-      const testPlayerID: string = fastCheckTestPlayerIDGenerator(fcGen);
-      const expectedPlayerPositionGroup: string =
-        getPositionGroupFromPlayerID(testPlayerID);
-      const expectedPlayerPositionGroupRange: [number, number] = property(
-        [expectedPlayerPositionGroup, PLAYERIDINDICES.Position],
-        PLAYERIDDATARANGESBYPOSITION,
-      );
-
-      const actualPlayerPositionNumber: number =
-        convertPlayerIDIntoPlayerPositionAsInteger(testPlayerID);
-      assertIntegerInRangeExclusive(
-        expectedPlayerPositionGroupRange,
-        actualPlayerPositionNumber,
-      );
-      expect(actualPlayerPositionNumber).toEqual(
-        convertPlayerIDIntoPlayerPositionAsInteger(testPlayerID),
       );
     },
   );

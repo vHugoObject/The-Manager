@@ -118,5 +118,5 @@ export enum CLUBIDINDICES {
   DomesticLeagueLevel="2",
   ClubScheduleID="3",
   ClubID="4",
-  Year="5"
+  Season="5"
 }

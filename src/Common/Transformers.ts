@@ -73,7 +73,7 @@ import {
   ATTACKINGSKILLS,
   DEFENDINGSKILLS,
   GOALKEEPINGSKILLS,
-  PLAYERIDINDICES,
+  PLAYERBIODATA,
   MAXCONTRACTYEARS,
   DEFAULTAGERANGE,
   DEFAULTMINAGE,
@@ -312,6 +312,10 @@ export const zipAllAndGetFirstArrayAsSet = zipAllAndTransformXArrayWithY([
 
 export const append = flip(concat)
 
+export const splitOnUnderscores = split("_");
+export const joinOnUnderscores = join("_");
+
+
 export const convertConcatenatedArraysIntoSet = pipe([concat, convertToSet]);
 export const convertFlattenedArrayIntoSet = pipe([flatten, convertToSet]);
 export const convertArrayOfArraysToArrayOfSets = map(convertToSet);
@@ -321,6 +325,13 @@ export const calculateTheSumOfArrayOfStringIntegers = pipe([
   convertArrayOfStringsIntoArrayOfIntegers,
   sum,
 ]);
+export const splitOnUnderscoresAndParseInts = pipe([
+  splitOnUnderscores,
+  convertArrayOfStringsIntoArrayOfIntegers,
+]);
+
+
+export const splitUnderscoresMapAndSum = pipe([splitOnUnderscoresAndParseInts, sum])
 
 export const mapFlatten = map(flatten);
 export const convertArrayOfArraysIntoShuffledArray = pipe([flatten, shuffle]);
@@ -529,12 +540,6 @@ export const getRunningSumOfListOfTuples = curry(
   },
 );
 
-export const splitOnUnderscores = split("_");
-export const joinOnUnderscores = join("_");
-export const splitOnUnderscoresAndParseInts = pipe([
-  splitOnUnderscores,
-  convertArrayOfStringsIntoArrayOfIntegers,
-]);
 
 export const convertCharacterAtIndexIntoCharacterCode =
   Function.prototype.call.bind(String.prototype.charCodeAt);
@@ -1030,9 +1035,10 @@ export const createClubID = (
       countryIDRepeaterForClubIDs,
       domesticLeagueIDRepeaterForClubIDs,
       domesticLeagueLevelRepeaterForClubIDs,
+      identity,
       clubScheduleIDRepeater,      
     ]),
-    append([identity, season]),
+    append([season]),
     joinOnUnderscores,
   ])(clubNumber)
 }
@@ -1048,9 +1054,10 @@ export const createPlayerID = (
       domesticLeagueLevelRepeaterForPlayerIDs,
       clubIDRepeaterForPlayerIDs,
       positionGroupIDRepeaterForPlayerIDs,
+      
       identity,
     ]),
-    concat([season]),
+    append([season]),
     joinOnUnderscores,
   ])(playerNumber);
 };
@@ -1059,8 +1066,8 @@ export const convertPlayerIDIntoPlayerNameAsInteger = curry(
   (nameRangeLength: number, playerID: string): number => {
     return pipe([
       over([
-        property([PLAYERIDINDICES.Season]),
-        property([PLAYERIDINDICES.PlayerNumber]),
+        property([PLAYERBIODATA.Season]),
+        property([PLAYERBIODATA.PlayerNumber]),
       ]),
       calculateTheSumOfArrayOfStringIntegers,
       mod(nameRangeLength),

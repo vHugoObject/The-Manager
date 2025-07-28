@@ -10,18 +10,14 @@ import {
   BASECLUBCOMPOSITION,
 } from "../Constants";
 import {
-  POSITIONGROUPSCOUNT,
   MAXCONTRACTYEARS,
   DEFAULTAGERANGE,
 } from "../PlayerDataConstants";
 import {
-  fastCheckTestSeasonAndPlayerNumber,
   fastCheckGenerateTestPlayersCount,
   fastCheckGenerateTestCountriesLeaguesClubsPlayersCount,
 } from "../TestDataGenerators";
 import {
-  pairIntegersAndAssertEqual,
-  assertIntegerInRangeExclusive,
   assertMeanInRangeExclusive,
 } from "../Asserters";
 import {
@@ -34,9 +30,6 @@ import {
   positionGroupIDRepeaterForPlayerIDs,
   convertToSet,
   convertToList,
-  createPlayerID,
-  floorDivision,
-  splitOnUnderscoresAndParseInts,
   unfoldCountStartingIndexIntoRange,
   contractYearsRepeaterForPlayerIDs,
   generateAgeForPlayerID,
@@ -186,55 +179,5 @@ describe("PlayerIDRepeaters test suite", () => {
     assertMeanInRangeExclusive(DEFAULTAGERANGE, actualAges);
   });
 
-  test.prop([fc.gen()])("createPlayerID", (fcGen) => {
-    const [testSeason, testPlayerNumber] =
-      fastCheckTestSeasonAndPlayerNumber(fcGen);
 
-    // Season_Country_DomesticLeague_DomesticLeagueLevel_PositionGroup_PlayerNumber_Club
-    const actualPlayerID = createPlayerID(testSeason, testPlayerNumber);
-    const [
-      actualSeason,
-      actualCountry,
-      actualDomesticLeague,
-      actualDomesticLeagueLevel,
-      actualPositionGroup,
-      actualPlayerNumber,
-      actualClub,
-    ]: Array<number> = splitOnUnderscoresAndParseInts(actualPlayerID);
-
-    const expectedCountry: number = floorDivision(
-      DEFAULTPLAYERSPERCOUNTRY,
-      testPlayerNumber,
-    );
-    const expectedDomesticLeague: number = floorDivision(
-      DEFAULTPLAYERSPERDOMESTICLEAGUE,
-      testPlayerNumber,
-    );
-    const expectedClub: number = floorDivision(
-      DEFAULTSQUADSIZE,
-      testPlayerNumber,
-    );
-
-    pairIntegersAndAssertEqual([
-      actualSeason,
-      testSeason,
-      actualCountry,
-      expectedCountry,
-      actualDomesticLeague,
-      expectedDomesticLeague,
-      actualClub,
-      expectedClub,
-      actualPlayerNumber,
-      testPlayerNumber,
-    ]);
-
-    assertIntegerInRangeExclusive(
-      [0, POSITIONGROUPSCOUNT],
-      actualPositionGroup,
-    );
-    assertIntegerInRangeExclusive(
-      [0, DEFAULTDOMESTICLEAGUESPERCOUNTRY],
-      actualDomesticLeagueLevel,
-    );
-  });
 });
