@@ -5,4 +5,7 @@ import { fc } from "@fast-check/vitest";
 export const VitestTimeoutMs = 120000; // 120s
 
 export const expect = baseExpect.extend(matchers);
-fc.configureGlobal({ interruptAfterTimeLimit: VitestTimeoutMs, markInterruptAsFailure: true });
+fc.configureGlobal({
+  interruptAfterTimeLimit: VitestTimeoutMs,
+  markInterruptAsFailure: true,
+});

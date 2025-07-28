@@ -15,8 +15,9 @@ import {
   last,
   multiply,
 } from "lodash/fp";
-import { pairSetsAndAssertStrictEqual,
-  assertArrayOfIntegersInRangeExclusive
+import {
+  pairSetsAndAssertStrictEqual,
+  assertArrayOfIntegersInRangeExclusive,
 } from "../Asserters";
 import {
   fastCheckTestSingleStringIDGenerator,
@@ -28,7 +29,7 @@ import {
   fastCheckTestStringArrayWithDefinedStringsPerChunk,
   fastCheckRandomItemFromArray,
   fastCheckTestIntegerArrayWithDefinedIntegersPerChunk,
-  fastCheckRandomIntegerBetweenOneAnd
+  fastCheckRandomIntegerBetweenOneAnd,
 } from "../TestDataGenerators";
 import {
   convertRangeSizeAndMinIntoRange,
@@ -36,7 +37,7 @@ import {
   zipAllAndGetInitial,
   joinOnUnderscores,
   unfold,
-  nonZeroBoundedModularAddition
+  nonZeroBoundedModularAddition,
 } from "../Transformers";
 import {
   getCountsForASetOfIDPrefixes,
@@ -51,7 +52,7 @@ import {
   getCountOfItemsFromArrayThatAreGreaterThanZero,
   getLengthOfLinearRange,
   getItemAtRangeIndex,
-  getRangeStep
+  getRangeStep,
 } from "../Getters";
 
 describe("PrimitiveGetters test suite", () => {
@@ -246,12 +247,12 @@ describe("PrimitiveGetters test suite", () => {
         expect(actualCounts).toStrictEqual(expectedCounts);
       },
     );
-  })
-    describe("getCountOfUniqueItemsPerArrayChunk", () => {
-      test.prop([fc.gen(), fc.integer({ min: 2, max: 20 })])(
+  });
+  describe("getCountOfUniqueItemsPerArrayChunk", () => {
+    test.prop([fc.gen(), fc.integer({ min: 2, max: 20 })])(
       "for strings",
       (fcGen, testUniqueStringCount) => {
-	const [testArray, testItemChunkCountTuples, testChunkSize]: [
+        const [testArray, testItemChunkCountTuples, testChunkSize]: [
           Array<string>,
           Array<[string, number]>,
           number,
@@ -259,27 +260,25 @@ describe("PrimitiveGetters test suite", () => {
           fcGen,
           testUniqueStringCount,
         );
-	
-        const actualCounts: Array<number> =
-          getCountOfUniqueItemsPerArrayChunk(
-            testChunkSize,
-            testArray,
-          );
 
-	const expectedCounts: Array<number> = pipe([
-	  map(last),
-	  zipAll,
-	  map(getCountOfItemsFromArrayThatAreGreaterThanZero),
-	])(testItemChunkCountTuples)
-	
-	expect(actualCounts).toEqual(expectedCounts)
-	
+        const actualCounts: Array<number> = getCountOfUniqueItemsPerArrayChunk(
+          testChunkSize,
+          testArray,
+        );
+
+        const expectedCounts: Array<number> = pipe([
+          map(last),
+          zipAll,
+          map(getCountOfItemsFromArrayThatAreGreaterThanZero),
+        ])(testItemChunkCountTuples);
+
+        expect(actualCounts).toEqual(expectedCounts);
       },
-      );
-      test.prop([fc.gen(), fc.integer({ min: 2, max: 20 })])(
+    );
+    test.prop([fc.gen(), fc.integer({ min: 2, max: 20 })])(
       "for integers",
       (fcGen, testUniqueIntegersCount) => {
-	const [testArray, testItemChunkCountTuples, testChunkSize]: [
+        const [testArray, testItemChunkCountTuples, testChunkSize]: [
           Array<number>,
           Array<[number, number]>,
           number,
@@ -287,42 +286,49 @@ describe("PrimitiveGetters test suite", () => {
           fcGen,
           testUniqueIntegersCount,
         );
-	
-        const actualCounts: Array<number> =
-          getCountOfUniqueItemsPerArrayChunk(
-            testChunkSize,
-            testArray,
-          );
 
-	const expectedCounts: Array<number> = pipe([
-	  map(last),
-	  zipAll,
-	  map(getCountOfItemsFromArrayThatAreGreaterThanZero),
-	])(testItemChunkCountTuples)
-	
-	expect(actualCounts).toEqual(expectedCounts)
-	
+        const actualCounts: Array<number> = getCountOfUniqueItemsPerArrayChunk(
+          testChunkSize,
+          testArray,
+        );
+
+        const expectedCounts: Array<number> = pipe([
+          map(last),
+          zipAll,
+          map(getCountOfItemsFromArrayThatAreGreaterThanZero),
+        ])(testItemChunkCountTuples);
+
+        expect(actualCounts).toEqual(expectedCounts);
       },
-      );
-    })
+    );
+  });
 
   describe("Range stuff", () => {
-      test.prop([fc.gen(), fc.integer({ min: 100, max: 1000 }), fc.integer({ min: 1, max: 20 })])(
-      "getRangeStep",
-    (fcGen, testRangeSize, testCycles) => {
+    test.prop([
+      fc.gen(),
+      fc.integer({ min: 100, max: 1000 }),
+      fc.integer({ min: 1, max: 20 }),
+    ])("getRangeStep", (fcGen, testRangeSize, testCycles) => {
+      const [testRange, testItemsCount]: [[number, number], number] = over<
+        [number, number] | number
+      >([
+        fastCheckTestLinearRangeGenerator,
+        fastCheckRandomIntegerBetweenOneAnd,
+      ])(fcGen, testRangeSize) as [[number, number], number];
 
-      const [testRange, testItemsCount]: [[number, number], number] = over<[number, number]|number>([fastCheckTestLinearRangeGenerator, fastCheckRandomIntegerBetweenOneAnd])(fcGen, testRangeSize) as [[number, number], number]
-      
-      const actualStep: number = getRangeStep(testRange, testCycles, testItemsCount)
-      const actualExpandedRange: Array<number> = unfold(pipe([multiply(actualStep), nonZeroBoundedModularAddition(testRange, 0)]), testItemsCount)
-      assertArrayOfIntegersInRangeExclusive(testRange, actualExpandedRange)
-
-    },
+      const actualStep: number = getRangeStep(
+        testRange,
+        testCycles,
+        testItemsCount,
       );
-    
-
-
-
-  })
+      const actualExpandedRange: Array<number> = unfold(
+        pipe([
+          multiply(actualStep),
+          nonZeroBoundedModularAddition(testRange, 0),
+        ]),
+        testItemsCount,
+      );
+      assertArrayOfIntegersInRangeExclusive(testRange, actualExpandedRange);
+    });
+  });
 });
-

@@ -5,7 +5,6 @@ import {
   convertArrayToSetThenGetSize,
 } from "../Common/Transformers";
 
-
 export const pairIntegersAndAssertEqual = pipe([
   chunk(2),
   forEach(([actual, expected]: [number, number]) => {
@@ -32,14 +31,17 @@ export const convertArraysToSetsAndAssertStrictEqual = pipe([
   pairSetsAndAssertStrictEqual,
 ]);
 
-export const assertSubset = <T>([expectedSubset, expectedSuperset]: [Set<T>, Set<T>]) => {
+export const assertSubset = <T>([expectedSubset, expectedSuperset]: [
+  Set<T>,
+  Set<T>,
+]) => {
   expect(expectedSubset.isSubsetOf(expectedSuperset)).toBeTruthy();
-}
+};
 
 export const convertArraysToSetsAndAssertSubset = pipe([
   convertArrayOfArraysToArrayOfSets,
-  assertSubset
-])
+  assertSubset,
+]);
 
 export const assertIntegerInRangeInclusive = curry(
   ([min, max]: [number, number], integer: number) => {
@@ -53,7 +55,6 @@ export const assertArrayOfIntegersInRangeInclusive = curry(
     map(assertIntegerInRangeInclusive(range))(integers);
   },
 );
-
 
 export const assertIntegerInRangeExclusive = curry(
   ([min, max]: [number, number], integer: number) => {

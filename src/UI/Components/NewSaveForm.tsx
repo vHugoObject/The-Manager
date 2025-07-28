@@ -1,14 +1,14 @@
 import { mapIndexed } from "futil-js";
-import { pipe } from "lodash/fp"
+import { pipe } from "lodash/fp";
 import { useState } from "react";
 import {
   getClubsOfDomesticLeagueFromBaseCountries,
   getDomesticLeaguesOfCountryFromBaseCountries,
-  getEventTargetValue
+  getEventTargetValue,
 } from "../../Common/Getters";
-import {  
+import {
   zipAllAndGetFirstArray,
-  joinOnUnderscores
+  joinOnUnderscores,
 } from "../../Common/Transformers";
 import { BaseCountries } from "../../Common/Types";
 
@@ -32,9 +32,7 @@ export const CreateCountryOptions = ({
   countriesLeaguesClubs: BaseCountries;
 }): JSX.Element => {
   const countryNames = zipAllAndGetFirstArray(countriesLeaguesClubs);
-  return (
-    <CreateEntityOptions strings={countryNames} />
-  );
+  return <CreateEntityOptions strings={countryNames} />;
 };
 
 export const CreateDomesticLeagueOptions = ({
@@ -49,11 +47,7 @@ export const CreateDomesticLeagueOptions = ({
     countriesLeaguesClubs,
   );
 
-  return (
-    <CreateEntityOptions
-      strings={domesticLeagueNames}
-    />
-  );
+  return <CreateEntityOptions strings={domesticLeagueNames} />;
 };
 
 export const CreateClubOptions = ({
@@ -70,7 +64,6 @@ export const CreateClubOptions = ({
     countriesLeaguesClubs,
   );
 
-
   return <CreateEntityOptions strings={clubNames} />;
 };
 
@@ -79,31 +72,36 @@ export const NewSaveForm = ({
 }: {
   countriesLeaguesClubs: BaseCountries;
 }) => {
-
-
   const [playerName, setPlayerName] = useState("");
   const [countryValue, setCountryValue] = useState("0");
   const [domesticLeagueValue, setDomesticLeagueValue] = useState("0");
   const [clubValue, setClubValue] = useState("0");
 
-  
   const handleSubmit = (event) => {
-    
-    event.preventDefault();    
-    const playerID: string = joinOnUnderscores([countryValue, domesticLeagueValue, clubValue, "2025"])
+    event.preventDefault();
+    const playerID: string = joinOnUnderscores([
+      countryValue,
+      domesticLeagueValue,
+      clubValue,
+      "2025",
+    ]);
     const saveArguments: Record<string, string> = {
       name: playerName,
       playerID,
-    }
-  }
+    };
+  };
 
   return (
     <div>
       <form method="post">
         <label>
           Choose a name:
-          <input type="text" name="name" value={playerName}
-	    onChange={pipe([getEventTargetValue, setPlayerName])} />
+          <input
+            type="text"
+            name="name"
+            value={playerName}
+            onChange={pipe([getEventTargetValue, setPlayerName])}
+          />
         </label>
 
         <label>
@@ -144,7 +142,7 @@ export const NewSaveForm = ({
             required={true}
             name="club"
             value={"0"}
-	    onChange={(event): void => {
+            onChange={(event): void => {
               setClubValue(event.target.value);
             }}
           >

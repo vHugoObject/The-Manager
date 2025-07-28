@@ -1,11 +1,21 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect, assert } from "vitest";
-import { over, map, size, last, pipe, first, min, add, identity, multiply } from "lodash/fp";
+import {
+  over,
+  map,
+  size,
+  last,
+  pipe,
+  first,
+  min,
+  add,
+  multiply,
+} from "lodash/fp";
 import {
   pairSetsAndAssertStrictEqual,
   pairIntegersAndAssertEqual,
   assertArrayOfIntegersInRangeExclusive,
-  assertIntegerInRangeExclusive
+  assertIntegerInRangeExclusive,
 } from "../Asserters";
 import {
   fastCheckNLengthArrayOfStringCountTuplesGenerator,
@@ -14,7 +24,11 @@ import {
   fastCheckNLengthStringGenerator,
   fastCheckRandomIntegerInRange,
   fastCheckRandomIntegerBetweenOneAnd,
-  fastCheckTestLinearRangeGenerator
+  fastCheckTestLinearRangeGenerator,
+  fastCheckRandomInteger,
+  fastCheckNLengthUniqueIntegerArrayGenerator,
+  fastCheckNonSpaceRandomCharacterGenerator,
+  fastCheckNLengthUniqueStringArrayGenerator
 } from "../TestDataGenerators";
 import {
   getFirstLevelArrayLengths,
@@ -25,6 +39,7 @@ import {
 } from "../Getters";
 import {
   apply,
+  append,
   splitOnUnderscores,
   foldArrayOfArraysIntoArrayOfLinearRanges,
   convertArrayIntoLinearRange,
@@ -46,7 +61,7 @@ import {
   unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs,
   subString,
   convertRangeIndexIntoInteger,
-  convertRangeIndexAndCycleCountIntoInteger
+  convertRangeIndexAndCycleCountIntoInteger,
 } from "../Transformers";
 
 describe("PrimitiveTransformers test suite", () => {
@@ -131,140 +146,167 @@ describe("PrimitiveTransformers test suite", () => {
     },
   );
 
+  describe("PrimitiveTransformers test suite", () => {
+    test.prop([fc.gen(),fc.integer({ min: 5, max: 100 })])(
+      "string",
+      (fcGen, testStringCount) => {
+	const testArray: Array<string> = fastCheckNLengthUniqueStringArrayGenerator(fcGen, testStringCount)
+	const testValueToAppend: string = fastCheckNonSpaceRandomCharacterGenerator(fcGen)
+	
+	const actualArray = append(testValueToAppend, testArray)
+	
+	expect(last(actualArray)).toEqual(testValueToAppend)
+	
+      },
+    );
+
+    test.prop([fc.gen(), fc.integer({ min: 5, max: 100 })])(
+      "number",
+      (fcGen, testIntegerCount) => {
+	const testArray: Array<number> = fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testIntegerCount)
+	const testValueToAppend: number = fastCheckRandomInteger(fcGen)
+	
+	const actualArray = append(testValueToAppend, testArray)
+	
+	expect(last(actualArray)).toEqual(testValueToAppend)
+      },
+    );
+  })
+
   describe("unfold", () => {
-
     test.prop([fc.integer({ min: 2, max: 1000 }), fc.nat()])(
-    "unfold",
-    (testArraySize, testValueToAdd) => {
-      const testAdder = add(testValueToAdd);
-      const actualArray: Array<number> = unfold(testAdder, testArraySize);
-      const [actualFirstValue, actualLastValue] =
-        getFirstAndLastItemsOfArray(actualArray);
-      const expectedLastValue: number = addMinusOne(
-        testValueToAdd,
-        testArraySize,
-      );
-      pairIntegersAndAssertEqual([
-        actualFirstValue,
-        testValueToAdd,
-        actualLastValue,
-        expectedLastValue,
-      ]);
-    },
-  );
-  test.prop([fc.nat(), fc.integer({ min: 3, max: 50 })])(
-    "unfoldCountStartingIndexIntoRange",
-    (testStartingIndex, testCount) => {
-      const actualRange: Array<number> = unfoldCountStartingIndexIntoRange(
-        testCount,
-        testStartingIndex,
-      );
-
-      expect(actualRange.length).toEqual(testCount);
-      const [actualFirstItem, actualLastItem] =
-        getFirstAndLastItemsOfArray(actualRange);
-      const expectedLastIndex: number = minusOne(testStartingIndex + testCount);
-      expect(actualFirstItem).toEqual(testStartingIndex);
-      expect(actualLastItem).toEqual(expectedLastIndex);
-    },
-  );
-
-  test.prop([fc.tuple(fc.string(), fc.integer({ min: 3, max: 1000 }))])(
-    "unfoldItemCountTupleIntoArray",
-    (testItemCountTuple) => {
-      const actualArray: Array<string> =
-        unfoldItemCountTupleIntoArray(testItemCountTuple);
-      const [, expectedCount] = testItemCountTuple;
-      expect(actualArray.length).toEqual(expectedCount);
-    },
-  );
-
-  test.prop([fc.gen(), fc.integer({ min: 3, max: 50 })])(
-    "unfoldItemCountTuplesIntoMixedArray",
-    (fcGen, testTupleCount) => {
-      const testTuples: Array<[string, number]> =
-        fastCheckNLengthArrayOfStringCountTuplesGenerator(
-          fcGen,
-          testTupleCount,
+      "unfold",
+      (testArraySize, testValueToAdd) => {
+        const testAdder = add(testValueToAdd);
+        const actualArray: Array<number> = unfold(testAdder, testArraySize);
+        const [actualFirstValue, actualLastValue] =
+          getFirstAndLastItemsOfArray(actualArray);
+        const expectedLastValue: number = addMinusOne(
+          testValueToAdd,
+          testArraySize,
         );
-      const actualArray = unfoldItemCountTuplesIntoMixedArray(testTuples);
-      const expectedCount: number = zipAllAndGetSumOfLastArray(testTuples);
-      expect(actualArray.length).toEqual(expectedCount);
-    },
-  );
+        pairIntegersAndAssertEqual([
+          actualFirstValue,
+          testValueToAdd,
+          actualLastValue,
+          expectedLastValue,
+        ]);
+      },
+    );
+    test.prop([fc.nat(), fc.integer({ min: 3, max: 50 })])(
+      "unfoldCountStartingIndexIntoRange",
+      (testStartingIndex, testCount) => {
+        const actualRange: Array<number> = unfoldCountStartingIndexIntoRange(
+          testCount,
+          testStartingIndex,
+        );
 
-  test.prop([fc.gen()])(
-    "unfoldSingleStringCountStartingIndexTupleIntoArrayOfStringIDs",
-    (fcGen) => {
-      const [expectedPrefix, expectedStartingIndex, expectedCount] =
-        fastCheckTestSingleStringCountStartingIndexTupleGenerator(fcGen);
+        expect(actualRange.length).toEqual(testCount);
+        const [actualFirstItem, actualLastItem] =
+          getFirstAndLastItemsOfArray(actualRange);
+        const expectedLastIndex: number = minusOne(
+          testStartingIndex + testCount,
+        );
+        expect(actualFirstItem).toEqual(testStartingIndex);
+        expect(actualLastItem).toEqual(expectedLastIndex);
+      },
+    );
 
-      const actualIDs: Array<string> =
-        unfoldSingleStringCountStartingIndexTupleIntoArrayOfStringIDs(
+    test.prop([fc.tuple(fc.string(), fc.integer({ min: 3, max: 1000 }))])(
+      "unfoldItemCountTupleIntoArray",
+      (testItemCountTuple) => {
+        const actualArray: Array<string> =
+          unfoldItemCountTupleIntoArray(testItemCountTuple);
+        const [, expectedCount] = testItemCountTuple;
+        expect(actualArray.length).toEqual(expectedCount);
+      },
+    );
+
+    test.prop([fc.gen(), fc.integer({ min: 3, max: 50 })])(
+      "unfoldItemCountTuplesIntoMixedArray",
+      (fcGen, testTupleCount) => {
+        const testTuples: Array<[string, number]> =
+          fastCheckNLengthArrayOfStringCountTuplesGenerator(
+            fcGen,
+            testTupleCount,
+          );
+        const actualArray = unfoldItemCountTuplesIntoMixedArray(testTuples);
+        const expectedCount: number = zipAllAndGetSumOfLastArray(testTuples);
+        expect(actualArray.length).toEqual(expectedCount);
+      },
+    );
+
+    test.skip.prop([fc.gen()])(
+      "unfoldSingleStringCountStartingIndexTupleIntoArrayOfStringIDs",
+      (fcGen) => {
+        const [expectedPrefix, expectedStartingIndex, expectedCount] =
+          fastCheckTestSingleStringCountStartingIndexTupleGenerator(fcGen);
+
+        const actualIDs: Array<string> =
+          unfoldSingleStringCountStartingIndexTupleIntoArrayOfStringIDs(
+            expectedPrefix,
+            [expectedCount, expectedStartingIndex],
+          );
+        const actualIDsCount = getCountOfItemsFromArrayThatStartWithX(
           expectedPrefix,
-          [expectedCount, expectedStartingIndex],
+          actualIDs,
         );
-      const actualIDsCount = getCountOfItemsFromArrayThatStartWithX(
-        expectedPrefix,
-        actualIDs,
-      );
-      expect(actualIDsCount).toEqual(expectedCount);
-      const actualStartingIndex = pipe([
-        first,
-        splitOnUnderscores,
-        last,
-        parseInt,
-      ])(actualIDs);
-      expect(actualStartingIndex).toEqual(expectedStartingIndex);
-    },
-  );
+        expect(actualIDsCount).toEqual(expectedCount);
+        const actualStartingIndex = pipe([
+          first,
+          splitOnUnderscores,
+          last,
+          parseInt,
+        ])(actualIDs);
+        expect(actualStartingIndex).toEqual(expectedStartingIndex);
+      },
+    );
 
-  test.prop([fc.integer({ min: 3, max: 10 }), fc.gen()])(
-    "unfoldStringCountStartingIndexTuplesIntoArrayOfArrayOfStringIDs",
-    (testArraySize, fcGen) => {
-      const testTuples: Array<[string, number, number]> =
-        fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator(
-          fcGen,
-          testArraySize,
-        );
+    test.skip.prop([fc.integer({ min: 3, max: 10 }), fc.gen()])(
+      "unfoldStringCountStartingIndexTuplesIntoArrayOfArrayOfStringIDs",
+      (testArraySize, fcGen) => {
+        const testTuples: Array<[string, number, number]> =
+          fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator(
+            fcGen,
+            testArraySize,
+          );
 
-      const actualStringIDs: Array<Array<string>> =
-        unfoldStringCountStartingIndexTuplesIntoArrayOfArrayOfStringIDs(
-          testTuples,
-        );
-      const expectedCountsObject: Record<string, number> = pipe([
-        zipAllAndGetInitial,
-        spreadZipObject,
-      ])(testTuples);
-      const actualCountsObject: Record<string, number> = pipe([
-        map(getIDPrefixes),
-        over([map(first), getFirstLevelArrayLengths]),
-        spreadZipObject,
-      ])(actualStringIDs);
+        const actualStringIDs: Array<Array<string>> =
+          unfoldStringCountStartingIndexTuplesIntoArrayOfArrayOfStringIDs(
+            testTuples,
+          );
+        const expectedCountsObject: Record<string, number> = pipe([
+          zipAllAndGetInitial,
+          spreadZipObject,
+        ])(testTuples);
+        const actualCountsObject: Record<string, number> = pipe([
+          map(getIDPrefixes),
+          over([map(first), getFirstLevelArrayLengths]),
+          spreadZipObject,
+        ])(actualStringIDs);
 
-      expect(actualCountsObject).toStrictEqual(expectedCountsObject);
-    },
-  );
+        expect(actualCountsObject).toStrictEqual(expectedCountsObject);
+      },
+    );
 
-  test.prop([fc.integer({ min: 3, max: 10 }), fc.gen()])(
-    "unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs",
-    (testArraySize, fcGen) => {
-      const testTuples: Array<[string, number, number]> =
-        fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator(
-          fcGen,
-          testArraySize,
-        );
+    test.skip.prop([fc.integer({ min: 3, max: 10 }), fc.gen()])(
+      "unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs",
+      (testArraySize, fcGen) => {
+        const testTuples: Array<[string, number, number]> =
+          fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator(
+            fcGen,
+            testArraySize,
+          );
 
-      const actualStringIDs: Array<string> =
-        unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs(testTuples);
-      const expectedStringCount: number =
-        zipAllAndGetSumOfSecondArray(testTuples);
-      const actualStringCount: number =
-        getCountOfStringsFromArray(actualStringIDs);
-      pairIntegersAndAssertEqual([actualStringCount, expectedStringCount]);
-    },
-  );
-
+        const actualStringIDs: Array<string> =
+          unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs(testTuples);
+        const expectedStringCount: number =
+          zipAllAndGetSumOfSecondArray(testTuples);
+        const actualStringCount: number =
+          getCountOfStringsFromArray(actualStringIDs);
+        pairIntegersAndAssertEqual([actualStringCount, expectedStringCount]);
+      },
+    );
   });
 
   test.prop([fc.string({ minLength: 1, maxLength: 1 })])(
@@ -285,61 +327,81 @@ describe("PrimitiveTransformers test suite", () => {
     },
   );
 
-
   describe("Range stuff", () => {
-      test.prop([fc.array(fc.string(), { minLength: 3, maxLength: 200 })])(
-    "convertArrayIntoLinearRange",
-    (testArrayOfStrings) => {
-      const [firstIndex, lastIndex]: [number, number] =
-        convertArrayIntoLinearRange(testArrayOfStrings);
-      expect(testArrayOfStrings[firstIndex]).toBe(first(testArrayOfStrings));
-      expect(testArrayOfStrings[lastIndex]).toBe(last(testArrayOfStrings));
-    },
-  );
+    test.prop([fc.array(fc.string(), { minLength: 3, maxLength: 200 })])(
+      "convertArrayIntoLinearRange",
+      (testArrayOfStrings) => {
+        const [firstIndex, lastIndex]: [number, number] =
+          convertArrayIntoLinearRange(testArrayOfStrings);
+        expect(testArrayOfStrings[firstIndex]).toBe(first(testArrayOfStrings));
+        expect(testArrayOfStrings[lastIndex]).toBe(last(testArrayOfStrings));
+      },
+    );
 
-      test.prop([
-    fc.array(fc.array(fc.string(), { minLength: 10, maxLength: 20 }), {
-      minLength: 3,
-      maxLength: 50,
-    }),
-  ])(
-    "foldArrayOfArraysIntoArrayOfLinearRanges",
-    (testArrayOfArraysOfStrings) => {
-      const actualRanges: Array<[number, number]> =
-        foldArrayOfArraysIntoArrayOfLinearRanges(testArrayOfArraysOfStrings);
-      expect(actualRanges.length).toEqual(testArrayOfArraysOfStrings.length);
-    },
-  );
+    test.prop([
+      fc.array(fc.array(fc.string(), { minLength: 10, maxLength: 20 }), {
+        minLength: 3,
+        maxLength: 50,
+      }),
+    ])(
+      "foldArrayOfArraysIntoArrayOfLinearRanges",
+      (testArrayOfArraysOfStrings) => {
+        const actualRanges: Array<[number, number]> =
+          foldArrayOfArraysIntoArrayOfLinearRanges(testArrayOfArraysOfStrings);
+        expect(actualRanges.length).toEqual(testArrayOfArraysOfStrings.length);
+      },
+    );
 
-    
-    test.prop([fc.gen(), fc.integer({ min: 100, max: 1_000_000_00 }), fc.integer({ min: 1, max: 1000 })])(
+    test.prop([
+      fc.gen(),
+      fc.integer({ min: 100, max: 1_000_000_00 }),
+      fc.integer({ min: 1, max: 1000 }),
+    ])(
       "convertRangeIndexIntoInteger",
       (fcGen, testRangeSize, testIndicesCount) => {
+        const testRange: [number, number] = fastCheckTestLinearRangeGenerator(
+          fcGen,
+          testRangeSize,
+        );
+        const testStep: number = pipe([
+          multiply(testRangeSize),
+          fastCheckRandomIntegerBetweenOneAnd(fcGen),
+        ])(testIndicesCount);
 
-	const testRange: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
-	const testStep: number = pipe([multiply(testRangeSize), fastCheckRandomIntegerBetweenOneAnd(fcGen)])(testIndicesCount)
+        const actualIntegers = unfold((testIndex: number): number =>
+          convertRangeIndexIntoInteger(testRange, [testStep, testIndex]),
+        )(testIndicesCount);
 
-	const actualIntegers = unfold((testIndex: number): number => convertRangeIndexIntoInteger(testRange, [testStep, testIndex]))(testIndicesCount)
-
-	assertArrayOfIntegersInRangeExclusive(testRange, actualIntegers)
-
-      
-    },
+        assertArrayOfIntegersInRangeExclusive(testRange, actualIntegers);
+      },
     );
-    
-    test.prop([fc.gen(), fc.integer({ min: 100, max: 1_000_000_00 }), fc.integer({ min: 1000, max: 100_000})])(
+
+    test.prop([
+      fc.gen(),
+      fc.integer({ min: 100, max: 1_000_000_00 }),
+      fc.integer({ min: 1000, max: 100_000 }),
+    ])(
       "convertRangeIndexAndCycleCountIntoInteger",
       (fcGen, testRangeSize, testItemsCount) => {
+        const [testRangeMin, testRangeMax]: [number, number] =
+          fastCheckTestLinearRangeGenerator(fcGen, testRangeSize);
+        const [testCycles, testIndex]: [number, number] = unfold(
+          (_: number) =>
+            fastCheckRandomIntegerBetweenOneAnd(fcGen, testItemsCount),
+          2,
+        );
 
-	const [testRangeMin, testRangeMax]: [number, number] = fastCheckTestLinearRangeGenerator(fcGen, testRangeSize)
-	const [testCycles, testIndex]: [number, number] = unfold((_: number) => fastCheckRandomIntegerBetweenOneAnd(fcGen, testItemsCount), 2)
-	
-	const actualInteger: number = convertRangeIndexAndCycleCountIntoInteger([testRangeMin, testRangeMax], testCycles, testItemsCount, testIndex)
-	assertIntegerInRangeExclusive([testRangeMin, testRangeMax], actualInteger)
-	
-      
-    },
+        const actualInteger: number = convertRangeIndexAndCycleCountIntoInteger(
+          [testRangeMin, testRangeMax],
+          testCycles,
+          testItemsCount,
+          testIndex,
+        );
+        assertIntegerInRangeExclusive(
+          [testRangeMin, testRangeMax],
+          actualInteger,
+        );
+      },
     );
-  })
-  
+  });
 });

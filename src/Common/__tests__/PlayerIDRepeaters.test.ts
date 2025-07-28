@@ -42,7 +42,7 @@ import {
   generateAgeForPlayerID,
 } from "../Transformers";
 
-describe("PlayerIDCreation test suite", () => {
+describe("PlayerIDRepeaters test suite", () => {
   test.prop([fc.gen()])("countryIDRepeaterForPlayerIDs", (fcGen) => {
     const [testPlayersCount, testCountriesCount] =
       fastCheckGenerateTestPlayersCount(fcGen);

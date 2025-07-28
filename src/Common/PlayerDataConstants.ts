@@ -291,3 +291,12 @@ export const PLAYERIDDATARANGESBYPOSITION: Record<
     [PLAYERIDINDICES.GKReflexes]: POSITIONSECONDARYSKILLSRANGE,
   },
 };
+
+export enum PLAYERSTATISTICSINDICES {
+  Minutes="0",
+  Goals="1",
+  Assists="2",
+  Touches="3",
+  Tackles="4",
+  Passes="5"
+}

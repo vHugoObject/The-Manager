@@ -47,8 +47,8 @@ import {
   inRange,
   partialRight,
   round,
-  ceil,
-  floor
+  flip,
+  floor,
 } from "lodash/fp";
 import {
   addDays,
@@ -99,12 +99,12 @@ import {
   DEFAULTATTENDANCERANGE,
   DEFAULTADJUSTMENTPERDIVISION,
   DEFAULTTICKETSPRICERANGE,
-  DEFAULTCLUBDATARANGES
-} from "./Constants";
+  DEFAULTCLUBDATARANGES,
+} from "./Constants"
 import {
   getFirstTwoArrayValues,
   getLastTwoArrayValues,
-  getRangeStep
+  getRangeStep,
 } from "./Getters";
 
 export const mapSum = map(sum);
@@ -237,6 +237,7 @@ export const unfoldStringCountStartingIndexTuplesIntoShuffledArrayOfStringIDs =
 
 export const apply = <T>(func: (arg: T) => T, arg: T) => func(arg);
 
+
 export const zipApply = zipWith(apply);
 export const spreadZipApply = spread(zipApply);
 
@@ -307,6 +308,9 @@ export const zipAllAndGetFirstArrayAsSet = zipAllAndTransformXArrayWithY([
   first,
   convertToSet,
 ]);
+
+
+export const append = flip(concat)
 
 export const convertConcatenatedArraysIntoSet = pipe([concat, convertToSet]);
 export const convertFlattenedArrayIntoSet = pipe([flatten, convertToSet]);
@@ -465,14 +469,30 @@ export const nonZeroBoundedModularAddition = curry(
   },
 );
 
+export const convertRangeIndexIntoInteger = curry(
+  (range: [number, number], [rangeStep, index]: [number, number]): number => {
+    return pipe([
+      multiply(rangeStep),
+      nonZeroBoundedModularAddition(range, 0),
+      round,
+    ])(index);
+  },
+);
 
-export const convertRangeIndexIntoInteger = curry((range: [number, number], [rangeStep, index]: [number, number]): number => {  
-  return pipe([multiply(rangeStep), nonZeroBoundedModularAddition(range, 0), round])(index)
-})
-
-export const convertRangeIndexAndCycleCountIntoInteger = curry((range: [number, number], cycles: number, itemsCount: number, index: number): number => {  
-  return pipe([getRangeStep(range, cycles), concat([index]), convertRangeIndexIntoInteger(range)])(itemsCount)
-})
+export const convertRangeIndexAndCycleCountIntoInteger = curry(
+  (
+    range: [number, number],
+    cycles: number,
+    itemsCount: number,
+    index: number,
+  ): number => {
+    return pipe([
+      getRangeStep(range, cycles),
+      concat([index]),
+      convertRangeIndexIntoInteger(range),
+    ])(itemsCount);
+  },
+);
 
 export const getRandomIntegerInRange = ([min, max]: [
   number,
@@ -508,7 +528,6 @@ export const getRunningSumOfListOfTuples = curry(
     );
   },
 );
-
 
 export const splitOnUnderscores = split("_");
 export const joinOnUnderscores = join("_");
@@ -953,54 +972,83 @@ export const getDefaultDefaultAdjustmentByDivision = partialRight(property, [
   DEFAULTADJUSTMENTPERDIVISION,
 ]);
 
-export const adjustRangeForDivision = curry((dataRange: [number, number], divisionNumber: string|number): [number, number] => {
-  return pipe([getDefaultDefaultAdjustmentByDivision, adjustRangeByPercentage(dataRange)])(divisionNumber)
-})
+export const adjustRangeForDivision = curry(
+  (
+    dataRange: [number, number],
+    divisionNumber: string | number,
+  ): [number, number] => {
+    return pipe([
+      getDefaultDefaultAdjustmentByDivision,
+      adjustRangeByPercentage(dataRange),
+    ])(divisionNumber);
+  },
+);
 
 export const getClubLeagueLevelAndScheduleID = over<number>([
   domesticLeagueLevelRepeaterForClubIDs,
   clubScheduleIDRepeater,
-])
+]);
 
 export const generateDataForClubID = curry(
   (dataRange: [number, number], clubIDNumber: number): number => {
-    
-    const [domesticLeagueLevel, clubScheduleIDNumber]: Array<number> = getClubLeagueLevelAndScheduleID(clubIDNumber)   
-    const adjustedRange: [number, number] = adjustRangeForDivision(dataRange, domesticLeagueLevel)
+    const [domesticLeagueLevel, clubScheduleIDNumber]: Array<number> =
+      getClubLeagueLevelAndScheduleID(clubIDNumber);
+    const adjustedRange: [number, number] = adjustRangeForDivision(
+      dataRange,
+      domesticLeagueLevel,
+    );
 
-    return convertRangeIndexAndCycleCountIntoInteger(adjustedRange, 1, DEFAULTCLUBSPERDOMESTICLEAGUE, clubScheduleIDNumber)    
+    return convertRangeIndexAndCycleCountIntoInteger(
+      adjustedRange,
+      1,
+      DEFAULTCLUBSPERDOMESTICLEAGUE,
+      clubScheduleIDNumber,
+    );
   },
 );
-
 
 export const [
   generateAttendanceForClubID,
   generateFacilitiesCostsForClubID,
   generateSponsorRevenueForClubID,
-  generateTicketPriceForClubID,    
+  generateTicketPriceForClubID,
   generateManagerPayForClubID,
   generateScoutingCostsForClubID,
   generateHealthCostsForClubID,
   generatePlayerDevelopmentCostsForClubID,
-  generateWageBillToRevenueRatioForClubID
-] = map(generateDataForClubID)(DEFAULTCLUBDATARANGES)
+  generateWageBillToRevenueRatioForClubID,
+] = map(generateDataForClubID)(DEFAULTCLUBDATARANGES);
 
 
+
+export const createClubID = (
+  season: number,
+  clubNumber: number,
+): string => {
+  return pipe([
+    over([
+      countryIDRepeaterForClubIDs,
+      domesticLeagueIDRepeaterForClubIDs,
+      domesticLeagueLevelRepeaterForClubIDs,
+      clubScheduleIDRepeater,      
+    ]),
+    append([identity, season]),
+    joinOnUnderscores,
+  ])(clubNumber)
+}
 
 export const createPlayerID = (
   season: number,
   playerNumber: number,
 ): string => {
-  // Season_Country_DomesticLeague_DomesticLeagueLevel_Club_PositionGroup_Position_PlayerNumber
-  // _age_managerEffect_contractYears_wages
   return pipe([
     over([
       countryIDRepeaterForPlayerIDs,
       domesticLeagueIDRepeaterForPlayerIDs,
       domesticLeagueLevelRepeaterForPlayerIDs,
+      clubIDRepeaterForPlayerIDs,
       positionGroupIDRepeaterForPlayerIDs,
       identity,
-      clubIDRepeaterForPlayerIDs,
     ]),
     concat([season]),
     joinOnUnderscores,
@@ -1026,7 +1074,3 @@ export const convertPlayerIDIntoPlayerLastNameAsInteger =
   convertPlayerIDIntoPlayerNameAsInteger(LASTNAMES.length);
 export const convertPlayerIDIntoPlayerCountryAsInteger =
   convertPlayerIDIntoPlayerNameAsInteger(COUNTRYNAMES.length);
-
-export const convertPlayerIDIntoPlayerPositionAsInteger = (
-  playerID: string,
-): number => {};
