@@ -1,83 +1,41 @@
 import { describe, expect, assert } from "vitest";
 import { test, fc } from "@fast-check/vitest";
-import {
-  zipAll,
-  pipe,
-  isEqual,
-  multiply,
-  over,
-  size,
-  sum,
-  isString,
-  max,
-  chunk,
-  first,
-  last,
-  property,
-  identity,
-  tail,
-  spread,
-} from "lodash/fp";
 import { BaseCountries } from "../Types";
 import {
   DEFAULTDOMESTICLEAGUESPERCOUNTRY,
   DEFAULTCLUBSPERCOUNTRY,
   DEFAULTPLAYERSPERCOUNTRY,
+  DEFAULTSQUADSIZE,
 } from "../Constants";
-import { PositionGroup } from "../PlayerDataConstants";
+import { pipe, multiply, over, size, sum, identity, add } from "lodash/fp";
 import {
   getCountOfStringsFromArray,
-  getCountOfIntegersFromArray,
   getCountOfUniqueStringsFromArray,
-  getCountOfUniqueIntegersFromArray,
   getFirstLevelArrayLengths,
-  getCountOfItemsFromArrayForPredicate,
-  getSizeMinAndMaxOfArray,
   getSizeOfCompactedArray,
+  getMinAndMaxOfArray,
   getSecondLevelArrayLengths,
-  getCountOfNumbersFromArray,
-  getCountOfObjectValues,
-  getCountOfFloatsBetweenZeroAndOne,
   getDomesticLeaguesOfCountryFromBaseCountries,
   getClubsOfDomesticLeagueFromBaseCountries,
 } from "../Getters";
 import {
-  convertFlattenedArrayIntoSet,
-  convertCharacterIntoCharacterCode,
-  addOne,
-  zipApply,
   zipAllAndGetMinOfSecondArray,
   zipAllAndGetFirstArrayAsSet,
   convertArrayOfArraysToArrayOfSets,
+  mod
 } from "../Transformers";
 import {
   convertArraysToSetsAndAssertStrictEqual,
-  convertArraysToSetsAndAssertSubset,
-  assertIntegerInRangeInclusive,
   parseIntAndAssertIntegerInRangeInclusive,
-  assertIntegerInRangeExclusive,
-  assertAllArrayValuesAreUnique,
+  assertIntegerInRangeInclusive,
 } from "../Asserters";
 import {
   fastCheckTestClubsForBaseCountriesGenerator,
   fastCheckTestDomesticLeaguesForBaseCountriesGenerator,
   fastCheckTestCountriesForBaseCountriesGenerator,
   fastCheckTestBaseCountriesGenerator,
-  fastCheckRandomCharacterGenerator,
-  fastCheckNLengthArrayOfDoublesInRange,
-  fastCheckRandomDoubleInRange,
-  fastCheckTestLinearRangeGenerator,
-  fastCheckNLengthUniqueIntegerArrayGenerator,
-  fastCheckListOfXNatNumbersWithMaxGenerator,
-  fastCheckNUniqueIntegersFromRangeAsArrayGenerator,
   fastCheckNLengthUniqueStringArrayGenerator,
-  fastCheckNLengthArrayOfStringCountTuplesGenerator,
-  fastCheckTestLinearRangeWithMinimumGenerator,
-  fastCheckArrayOfNIntegerArraysGenerator,
   fastCheckTestMixedArrayOfStringIDsGenerator,
-  fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator,
-  fastCheckNLengthArrayOfItemCountIndexTuplesGivenItemsAndRangeOfCountsGenerator,
-  fastCheckNLengthArrayOfItemCountTuplesGivenItemsAndRangeOfCountsGenerator,
   fastCheckTestMixedArrayOfStringIDsGivenStringsGenerator,
   fastCheckTestMixedArrayOfPositionGroupIDsGenerator,
   fastCheckTestRandomBaseCountryIndex,
@@ -86,310 +44,22 @@ import {
   fastCheckTestCompletelyRandomBaseDomesticLeagueIndex,
   fastCheckTestCompletelyRandomBaseClubIndex,
   fastCheckTestCompletelyRandomBaseClub,
-  fastCheckNLengthStringGenerator,
   fastCheckTestSeasonAndPlayerNumber,
-  fastCheckTestPlayerIDGenerator,
   fastCheckGenerateTestDomesticLeaguesCount,
   fastCheckGenerateTestClubsCount,
   fastCheckGenerateTestPlayersCount,
   fastCheckGenerateTestCountriesCount,
   fastCheckGenerateTestCountriesLeaguesClubsPlayersCount,
-  fastCheckArrayOfNFloatsBetweenZeroAndOne,
-  fastCheckTestStringArrayWithDefinedStringsPerChunk,
-  fastCheckRandomItemFromArray,
-  fastCheckRandomObjectKey,
-  fastCheckTestIntegerArrayWithDefinedIntegersPerChunk,
-  fastCheckGetRandomArrayChunk,
-  fastCheckRandomItemFromArrayWithIndex,
-  fastCheckRandomArrayChunkSize,
-  fastCheckNRandomArrayIndices,
-  fastCheckTestSeasonAndClubNumber
+  fastCheckTestSeasonAndClubNumber,
+  fastCheckTestPlayerIDGenerator,
+  fastCheckTestClubIDGenerator,
+  fastCheckTestArrayOfPlayerIDsGenerator,
+  fastCheckTestArrayOfClubIDsGenerator,
+  fastCheckRandomClubAndPlayerNumberGenerator,
+  fastCheckGenerateAllPlayerNumbersOfRandomClub,
 } from "../TestDataGenerators";
 
-describe("TestDataGenerators test suite", () => {
-  const POSITIONGROUPCOUNT: number = getCountOfObjectValues(PositionGroup);
-
-  const getActualStringIndexAndCountArray = pipe([
-    zipAll,
-    zipApply([
-      getCountOfStringsFromArray,
-      getCountOfIntegersFromArray,
-      getCountOfIntegersFromArray,
-    ]),
-  ]);
-  const getActualStringAndCountArray = pipe([
-    zipAll,
-    zipApply([getCountOfStringsFromArray, getCountOfIntegersFromArray]),
-    convertFlattenedArrayIntoSet,
-  ]);
-
-  test.prop([
-    fc.tuple(
-      fc.integer({ min: 1, max: 49 }),
-      fc.integer({ min: 50, max: 100 }),
-    ),
-    fc.gen(),
-  ])("fastCheckRandomDoubleInRange", (testRange, fcGen) => {
-    const actualDouble: number = fastCheckRandomDoubleInRange(testRange, fcGen);
-    assertIntegerInRangeInclusive(testRange, actualDouble);
-  });
-
-  test.prop([
-    fc.tuple(
-      fc.integer({ min: 1, max: 49 }),
-      fc.integer({ min: 50, max: 100 }),
-    ),
-    fc.integer({ min: 2, max: 50 }),
-    fc.gen(),
-  ])(
-    "fastCheckNLengthArrayOfDoublesInRange",
-    (testRange, testArrayLength, fcGen) => {
-      const actualDoubles: Array<number> =
-        fastCheckNLengthArrayOfDoublesInRange(
-          testRange,
-          testArrayLength,
-          fcGen,
-        );
-
-      const actualDoublesCount = getCountOfNumbersFromArray(actualDoubles);
-      expect(actualDoublesCount).toEqual(testArrayLength);
-    },
-  );
-
-  test.prop([
-    fc.tuple(
-      fc.integer({ min: 1, max: 49 }),
-      fc.integer({ min: 50, max: 100 }),
-    ),
-    fc.gen(),
-  ])("fastCheckRandomCharacterGenerator", (testUTFRange, fcGen) => {
-    const actualCharacter: string = fastCheckRandomCharacterGenerator(
-      testUTFRange,
-      fcGen,
-    );
-    const actualCharacterCode: number =
-      convertCharacterIntoCharacterCode(actualCharacter);
-    assertIntegerInRangeInclusive(testUTFRange, actualCharacterCode);
-  });
-
-  test.prop([fc.integer({ min: 1, max: 100 }), fc.gen()])(
-    "fastCheckNLengthStringGenerator",
-    (testStringLength, fcGen) => {
-      const [actualString, _]: [string, Array<string>] =
-        fastCheckNLengthStringGenerator(fcGen, testStringLength);
-      expect(isString(actualString)).toBeTruthy();
-      expect(actualString.length).toEqual(testStringLength);
-    },
-  );
-
-  test.prop([fc.integer({ min: 5, max: 100 }), fc.gen()])(
-    "fastCheckRandomItemFromArrayWithIndex",
-    (testArraySize, fcGen) => {
-      const testArray: Array<string> =
-        fastCheckNLengthUniqueStringArrayGenerator(fcGen, testArraySize);
-
-      const [actualItem, actualIndex] = fastCheckRandomItemFromArrayWithIndex(
-        fcGen,
-        testArray,
-      );
-      expect(property([actualIndex], testArray)).toBe(actualItem);
-    },
-  );
-
-  test.prop([fc.integer({ min: 2 }), fc.gen()])(
-    "fastCheckTestLinearRangeGenerator",
-    (testRangeSize, fcGen) => {
-      const actualLinearRange: [number, number] =
-        fastCheckTestLinearRangeGenerator(fcGen, testRangeSize);
-      const [actualRangeMin, actualRangeMax] = actualLinearRange;
-      const expectedRangeMax: number = addOne(actualRangeMin + testRangeSize);
-      assert.isNumber(actualRangeMin);
-      expect(actualRangeMax).toEqual(expectedRangeMax);
-    },
-  );
-
-  test.prop([fc.integer({ min: 2 }), fc.nat(), fc.gen()])(
-    "fastCheckTestLinearRangeWithMinimumGenerator",
-    (testRangeSize, testRangeMin, fcGen) => {
-      const actualLinearRange: [number, number] =
-        fastCheckTestLinearRangeWithMinimumGenerator(fcGen, [
-          testRangeMin,
-          testRangeSize,
-        ]);
-      const [actualRangeMin] = actualLinearRange;
-      expect(actualRangeMin).toBeGreaterThanOrEqual(testRangeMin);
-    },
-  );
-
-  test.prop([fc.integer({ min: 2, max: 1000 }), fc.gen()])(
-    "fastCheckNLengthUniqueIntegerArrayGenerator",
-    (testArraySize, fcGen) => {
-      const actualArray: Array<number> =
-        fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testArraySize);
-
-      const actualIntegerCount: number =
-        getCountOfUniqueIntegersFromArray(actualArray);
-      expect(actualIntegerCount).toEqual(testArraySize);
-    },
-  );
-
-  test.prop([
-    fc.integer({ min: 2, max: 1000 }),
-    fc.integer({ min: 3, max: 1000 }),
-    fc.gen(),
-  ])(
-    "fastCheckListOfXNatNumbersWithMaxGenerator",
-    (testArraySize, testMaxValue, fcGen) => {
-      const actualArray: Array<number> =
-        fastCheckListOfXNatNumbersWithMaxGenerator(
-          fcGen,
-          testMaxValue,
-          testArraySize,
-        );
-      const [actualIntegerCount, actualMax] = over([
-        getCountOfIntegersFromArray,
-        max,
-      ])(actualArray);
-      expect(actualIntegerCount).toEqual(testArraySize);
-      expect(actualMax).toBeLessThan(testMaxValue);
-    },
-  );
-
-  test.prop([
-    fc.integer({ min: 2, max: 1000 }),
-    fc.integer({ min: 2, max: 1000 }),
-    fc.gen(),
-  ])(
-    "fastCheckNUniqueIntegersFromRangeAsArrayGenerator",
-    (testArraySize, testRangeSize, fcGen) => {
-      const testRange: [number, number] = fastCheckTestLinearRangeGenerator(
-        fcGen,
-        testRangeSize,
-      );
-
-      const actualArray: Array<number> =
-        fastCheckNUniqueIntegersFromRangeAsArrayGenerator(fcGen, [
-          testRange,
-          testArraySize,
-        ]);
-
-      const [expectedMin, expectedMax] = testRange;
-
-      const [actualIntegerCount, actualMin, actualMax] =
-        getSizeMinAndMaxOfArray(actualArray);
-      expect(actualIntegerCount).toEqual(testArraySize);
-      expect(actualMin).toBeGreaterThanOrEqual(expectedMin);
-      expect(actualMax).toBeLessThanOrEqual(expectedMax);
-    },
-  );
-
-  test.prop([fc.integer({ min: 2, max: 1000 }), fc.gen()])(
-    "fastCheckNLengthArrayOfStringCountTuplesGenerator",
-    (testArraySize, fcGen) => {
-      const actualArray: Array<[string, number]> =
-        fastCheckNLengthArrayOfStringCountTuplesGenerator(fcGen, testArraySize);
-
-      const actualStringAndCountArray: Array<number> =
-        getActualStringAndCountArray(actualArray);
-      convertArraysToSetsAndAssertStrictEqual([
-        actualStringAndCountArray,
-        [testArraySize],
-      ]);
-    },
-  );
-
-  test.prop([fc.integer({ min: 2, max: 1000 }), fc.gen()])(
-    "fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator",
-    (testArraySize, fcGen) => {
-      const actualArray: Array<[string, number, number]> =
-        fastCheckNLengthArrayOfStringCountStartingIndexTuplesGenerator(
-          fcGen,
-          testArraySize,
-        );
-
-      const actualCounts: Array<number> =
-        getActualStringIndexAndCountArray(actualArray);
-
-      convertArraysToSetsAndAssertStrictEqual([actualCounts, [testArraySize]]);
-    },
-  );
-
-  test.prop([
-    fc.integer({ min: 2, max: 25 }),
-    fc.integer({ min: 2, max: 50 }),
-    fc.gen(),
-  ])(
-    "fastCheckArrayOfNIntegerArraysGenerator",
-    (testCountOfArrays, testSizeOfArrays, fcGen) => {
-      const actualArray: Array<Array<number>> =
-        fastCheckArrayOfNIntegerArraysGenerator(fcGen, [
-          testCountOfArrays,
-          testSizeOfArrays,
-        ]);
-      const actualArraySize: number = pipe([
-        getFirstLevelArrayLengths,
-        getCountOfItemsFromArrayForPredicate(isEqual(testSizeOfArrays)),
-      ])(actualArray);
-
-      expect(actualArraySize).toEqual(testCountOfArrays);
-    },
-  );
-
-  test.prop([
-    fc.integer({ min: 3, max: 10 }),
-    fc.integer({ min: 3, max: 10 }),
-    fc.integer({ min: 3, max: 100 }),
-    fc.gen(),
-  ])(
-    "fastCheckNLengthArrayOfItemCountTuplesGivenItemsAndRangeOfCountsGenerator",
-    (testStringCount, testMinItemCount, testRangeSize, fcGen) => {
-      const testStrings: Array<string> =
-        fastCheckNLengthUniqueStringArrayGenerator(fcGen, testStringCount);
-
-      const actualTuples: Array<[string, number]> =
-        fastCheckNLengthArrayOfItemCountTuplesGivenItemsAndRangeOfCountsGenerator(
-          testStrings,
-          fcGen,
-          [testMinItemCount, testRangeSize],
-        );
-
-      const actualStringAndCountArray: Array<number> =
-        getActualStringAndCountArray(actualTuples);
-      convertArraysToSetsAndAssertStrictEqual([
-        actualStringAndCountArray,
-        [testStringCount],
-      ]);
-    },
-  );
-
-  test.prop([
-    fc.integer({ min: 2, max: 10 }),
-    fc.integer({ min: 2, max: 10 }),
-    fc.integer({ min: 1, max: 100 }),
-    fc.gen(),
-  ])(
-    "fastCheckNLengthArrayOfItemCountIndexTuplesGivenItemsAndRangeOfCountsGenerator",
-    (testStringCount, testMinItemCount, testRangeSize, fcGen) => {
-      const testStrings: Array<string> =
-        fastCheckNLengthUniqueStringArrayGenerator(fcGen, testStringCount);
-
-      const actualTuples: Array<[string, number, number]> =
-        fastCheckNLengthArrayOfItemCountIndexTuplesGivenItemsAndRangeOfCountsGenerator(
-          testStrings,
-          fcGen,
-          [testMinItemCount, testRangeSize],
-        );
-
-      const actualStringIndexAndCountArray =
-        getActualStringIndexAndCountArray(actualTuples);
-
-      convertArraysToSetsAndAssertStrictEqual([
-        actualStringIndexAndCountArray,
-        [testStringCount],
-      ]);
-    },
-  );
-
+describe("TestEntityGenerators", () => {
   test.prop([
     fc.integer({ min: 2, max: 10 }),
     fc.integer({ min: 2, max: 10 }),
@@ -716,12 +386,6 @@ describe("TestDataGenerators test suite", () => {
           testCountriesDomesticLeaguesClubsCount,
         );
 
-      const [
-        expectedCountriesCount,
-        expectedDomesticLeaguesPerCountryCount,
-        expectedClubsPerDomesticLeague,
-      ]: [number, number, number] = testCountriesDomesticLeaguesClubsCount;
-
       const actualFullClubAddress: [string, string, string] =
         fastCheckTestCompletelyRandomBaseClubIndex(
           fcGen,
@@ -785,18 +449,11 @@ describe("TestDataGenerators test suite", () => {
     expect(actualPlayerNumber).toBeGreaterThanOrEqual(0);
   });
 
-
   test.prop([fc.gen()])("fastCheckTestSeasonAndClubNumber", (fcGen) => {
     const [actualSeason, actualClubNumber] =
       fastCheckTestSeasonAndClubNumber(fcGen);
     expect(actualSeason).toBeGreaterThanOrEqual(0);
     expect(actualClubNumber).toBeGreaterThanOrEqual(0);
-  });
-
-  
-  test.prop([fc.gen()])("fastCheckTestPlayerIDGenerator", (fcGen) => {
-    const actualPlayerID: string = fastCheckTestPlayerIDGenerator(fcGen);
-    assert.isString(actualPlayerID);
   });
 
   test.prop([fc.gen()])("fastCheckGenerateTestCountriesCount", (fcGen) => {
@@ -850,156 +507,66 @@ describe("TestDataGenerators test suite", () => {
     );
   });
 
-  test.prop([fc.gen(), fc.integer({ min: 3, max: 50 })])(
-    "fastCheckArrayOfNFloatsBetweenZeroAndOne",
-    (fcGen, testFloatCount) => {
-      const actualFloats: Array<number> =
-        fastCheckArrayOfNFloatsBetweenZeroAndOne(fcGen, testFloatCount);
+  describe("idGenerators", () => {
+    test.prop([fc.gen()])("fastCheckTestPlayerIDGenerator", (fcGen) => {
+      const actualPlayerID: string = fastCheckTestPlayerIDGenerator(fcGen);
+      assert.isString(actualPlayerID);
+      expect(actualPlayerID).toContain("_");
+    });
 
-      expect(getCountOfFloatsBetweenZeroAndOne(actualFloats)).toEqual(
-        testFloatCount,
-      );
-    },
-  );
+    test.prop([fc.gen()])("fastCheckTestClubIDGenerator", (fcGen) => {
+      const actualID: string = fastCheckTestClubIDGenerator(fcGen);
+      assert.isString(actualID);
+      expect(actualID).toContain("_");
+    });
 
-  describe("fastCheckTestArrayWithDefinedItemsPerChunk test suite", () => {
-    test.prop([fc.gen(), fc.integer({ min: 2, max: 10 })])(
-      "fastCheckTestStringArrayWithDefinedStringsPerChunk",
-      (fcGen, testUniqueStringsCount) => {
-        const [actualArray, actualItemCountPerChunkTuples, actualChunkSize]: [
-          Array<string>,
-          Array<[string, Array<number>]>,
-          number,
-        ] = fastCheckTestStringArrayWithDefinedStringsPerChunk(
+    test.prop([fc.gen(), fc.integer({ min: 5, max: 100 })])(
+      "fastCheckTestArrayOfClubIDsGenerator",
+      (fcGen, testClubsCount) => {
+        const actualIDs: Array<string> = fastCheckTestArrayOfClubIDsGenerator(
           fcGen,
-          testUniqueStringsCount,
+          testClubsCount,
         );
-
-        const [testItem, [testChunkIndex, expectedItemCount]] = pipe([
-          fastCheckRandomItemFromArray(fcGen),
-          over([
-            first,
-            pipe([
-              last,
-              over([fastCheckRandomObjectKey(fcGen), identity]),
-              over([first, spread(property)]),
-            ]),
-          ]),
-        ])(actualItemCountPerChunkTuples);
-
-        const testPredicate = isEqual(testItem);
-        const actualItemCount = pipe([
-          chunk(actualChunkSize),
-          property([testChunkIndex]),
-          getCountOfItemsFromArrayForPredicate(testPredicate),
-        ])(actualArray);
-
-        expect(actualItemCount).toEqual(expectedItemCount);
+        const actualStringCount = getCountOfStringsFromArray(actualIDs);
+        expect(actualStringCount).toEqual(testClubsCount);
       },
     );
-    test.prop([fc.gen(), fc.integer({ min: 2, max: 10 })])(
-      "fastCheckTestIntegerArrayWithDefinedIntegersPerChunk",
-      (fcGen, testUniqueIntegersCount) => {
-        const [actualArray, actualItemCountPerChunkTuples, actualChunkSize]: [
-          Array<number>,
-          Array<[number, Array<number>]>,
-          number,
-        ] = fastCheckTestIntegerArrayWithDefinedIntegersPerChunk(
+
+    test.prop([fc.gen(), fc.integer({ min: 5, max: 100 })])(
+      "fastCheckTestArrayOfPlayerIDsGenerator",
+      (fcGen, testPlayersCount) => {
+        const actualIDs: Array<string> = fastCheckTestArrayOfPlayerIDsGenerator(
           fcGen,
-          testUniqueIntegersCount,
+          testPlayersCount,
         );
+        const actualStringCount = getCountOfStringsFromArray(actualIDs);
+        expect(actualStringCount).toEqual(testPlayersCount);
+      },
+    );
 
-        const [testItem, [testChunkIndex, expectedItemCount]] = pipe([
-          fastCheckRandomItemFromArray(fcGen),
-          over([
-            first,
-            pipe([
-              last,
-              over([fastCheckRandomObjectKey(fcGen), identity]),
-              over([first, spread(property)]),
-            ]),
-          ]),
-        ])(actualItemCountPerChunkTuples);
+    test.prop([fc.gen()])(
+      "fastCheckRandomClubAndPlayerNumberGenerator",
+      (fcGen) => {
+        const [actualClubNumber, actualPlayerNumber]: Array<number> =
+          fastCheckRandomClubAndPlayerNumberGenerator(fcGen);
 
-        const testPredicate = isEqual(testItem);
-        const actualItemCount = pipe([
-          chunk(actualChunkSize),
-          property([testChunkIndex]),
-          getCountOfItemsFromArrayForPredicate(testPredicate),
-        ])(actualArray);
-        expect(actualItemCount).toEqual(expectedItemCount);
+        const expectedRange: [number, number] = pipe([
+          multiply(actualClubNumber),
+          over<number>([identity, add(DEFAULTSQUADSIZE)]),
+        ])(DEFAULTSQUADSIZE) as [number, number];
+        assertIntegerInRangeInclusive(expectedRange, actualPlayerNumber);
       },
     );
   });
 
-  test.prop([fc.gen(), fc.integer({ min: 2, max: 20 })])(
-    "fastCheckGetRandomArrayChunk",
-    (fcGen, testUniqueIntegersCount) => {
-      const [testArray, testItemCountPerChunkTuples, testChunkSize]: [
-        Array<number>,
-        Array<[number, Array<number>]>,
-        number,
-      ] = fastCheckTestIntegerArrayWithDefinedIntegersPerChunk(
-        fcGen,
-        testUniqueIntegersCount,
-      );
-
-      const [actualChunk, actualChunkNumber]: [Array<number>, number] =
-        fastCheckGetRandomArrayChunk(fcGen, [testArray, testChunkSize]);
-      const [testItem, expectedPerChunkCounts] = fastCheckRandomItemFromArray(
-        fcGen,
-        testItemCountPerChunkTuples,
-      );
-
-      convertArraysToSetsAndAssertSubset([actualChunk, testArray]);
-
-      const expectedCountForTestItem: number = property(
-        [actualChunkNumber],
-        expectedPerChunkCounts,
-      );
-      const testItemPredicate = isEqual(testItem);
-
-      const actualCountForTestItem = getCountOfItemsFromArrayForPredicate(
-        testItemPredicate,
-        actualChunk,
-      );
-
-      expect(actualCountForTestItem).toEqual(expectedCountForTestItem);
-    },
-  );
-
-  test.prop([fc.gen(), fc.integer({ min: 2, max: 100 })])(
-    "fastCheckRandomArrayChunkSize",
-    (fcGen, testArraySize) => {
-      const testArray: Array<number> =
-        fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testArraySize);
-
-      const actualChunkSize: number = fastCheckRandomArrayChunkSize(
-        fcGen,
-        testArray,
-      );
-      assertIntegerInRangeExclusive([0, testArray.length], actualChunkSize);
-    },
-  );
-
-  test.prop([fc.gen(), fc.integer({ min: 2, max: 100 })])(
-    "fastCheckNRandomArrayIndices",
-    (fcGen, testArraySize) => {
-      const testArray: Array<number> =
-        fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testArraySize);
-
-      const testIndicesCount: number = fastCheckRandomArrayChunkSize(
-        fcGen,
-        testArray,
-      );
-
-      const actualIndices: Array<string> = fastCheckNRandomArrayIndices(
-        fcGen,
-        testIndicesCount,
-        testArray,
-      );
-      assert.lengthOf(actualIndices, testIndicesCount);
-      assertAllArrayValuesAreUnique(actualIndices);
+  test.prop([fc.gen()])(
+    "fastCheckGenerateAllPlayerNumbersOfRandomClub",
+    (fcGen) => {
+      const actualPlayerNumbers: Array<number> =
+        fastCheckGenerateAllPlayerNumbersOfRandomClub(identity, fcGen);
+      const [actualMin, actualMax] = getMinAndMaxOfArray(actualPlayerNumbers);
+      expect(mod(DEFAULTSQUADSIZE, actualMax+1)).toEqual(0)
+      expect(add(actualMin-1, DEFAULTSQUADSIZE)).toEqual(actualMax)
     },
   );
 });

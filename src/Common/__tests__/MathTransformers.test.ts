@@ -10,6 +10,8 @@ import {
   add,
   head,
   subtract,
+  partialRight,
+  sum
 } from "lodash/fp";
 import {
   fastCheckTestLinearRangeGenerator,
@@ -18,10 +20,13 @@ import {
   fastCheckArrayOfNFloatsBetweenZeroAndOne,
   fastCheckRandomIntegerInRange,
   fastCheckTestLinearRangeWithMinimumGenerator,
+  fastCheckRandomIntegerBetweenOneAnd,
 } from "../TestDataGenerators";
 import {
+  assertArrayOfIntegersInRangeExclusive,
   assertIntegerInRangeInclusive,
   assertIntegerInRangeExclusive,
+  assertBetweenZeroAndOneHundred,
 } from "../Asserters";
 import { getMinAndMaxOfArray } from "../Getters";
 import {
@@ -40,6 +45,12 @@ import {
   weightedMean,
   normalizeArrayOfNumbers,
   adjustRangeByPercentage,
+  convertRangeIndexIntoInteger,
+  convertRangeIndexAndCycleCountIntoInteger,
+  unfold,
+  generalizedPentagonalNumbersFromFive,
+  sumOfFirstNGeneralizedPentagonalNumbersFromFive,
+  percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange,
 } from "../Transformers";
 
 describe("MathTransformers test suite", () => {
@@ -299,7 +310,10 @@ describe("MathTransformers test suite", () => {
     "adjustRangeByPercentage",
     (fcGen, testRangeSize) => {
       const [testMin, testMax]: [number, number] =
-        fastCheckTestLinearRangeWithMinimumGenerator(fcGen, [1, testRangeSize]);
+        fastCheckTestLinearRangeWithMinimumGenerator(fcGen, [
+          10,
+          testRangeSize,
+        ]);
       const testPercentage: number =
         fastCheckRandomFloatBetweenZeroAndOne(fcGen);
       const [actualMin, actualMax] = adjustRangeByPercentage(
@@ -313,4 +327,101 @@ describe("MathTransformers test suite", () => {
       expect(actualMax).toBeLessThanOrEqual(testMax);
     },
   );
+
+  test.prop([
+    fc.gen(),
+    fc.integer({ min: 100, max: 1_000_000_00 }),
+    fc.integer({ min: 1, max: 1000 }),
+  ])(
+    "convertRangeIndexIntoInteger",
+    (fcGen, testRangeSize, testIndicesCount) => {
+      const testRange: [number, number] = fastCheckTestLinearRangeGenerator(
+        fcGen,
+        testRangeSize,
+      );
+      const testStep: number = pipe([
+        multiply(testRangeSize),
+        fastCheckRandomIntegerBetweenOneAnd(fcGen),
+      ])(testIndicesCount);
+
+      const actualIntegers = unfold((testIndex: number): number =>
+        convertRangeIndexIntoInteger(testRange, [testStep, testIndex]),
+      )(testIndicesCount);
+
+      assertArrayOfIntegersInRangeExclusive(testRange, actualIntegers);
+    },
+  );
+
+  test.prop([
+    fc.gen(),
+    fc.integer({ min: 100, max: 1_000_000_00 }),
+    fc.integer({ min: 1000, max: 100_000 }),
+  ])(
+    "convertRangeIndexAndCycleCountIntoInteger",
+    (fcGen, testRangeSize, testItemsCount) => {
+      const [testRangeMin, testRangeMax]: [number, number] =
+        fastCheckTestLinearRangeGenerator(fcGen, testRangeSize);
+      const [testCycles, testIndex]: [number, number] = unfold(
+        (_: number) =>
+          fastCheckRandomIntegerBetweenOneAnd(fcGen, testItemsCount),
+        2,
+      );
+
+      const actualInteger: number = convertRangeIndexAndCycleCountIntoInteger(
+        testCycles,
+        [testRangeMin, testRangeMax],
+        testItemsCount,
+        testIndex,
+      );
+      assertIntegerInRangeInclusive(
+        [testRangeMin, testRangeMax],
+        actualInteger,
+      );
+    },
+  );
+
+  describe("pentagonal numbers", () => {
+    test.prop([fc.nat()])(
+      "generalizedPentagonalNumbersFromFive",
+      (testNatNumber) => {
+        const actualNumber: number =
+          generalizedPentagonalNumbersFromFive(testNatNumber);
+        expect(actualNumber).toBeGreaterThanOrEqual(7);
+      },
+    );
+
+    test.prop([fc.integer({ min: 2, max: 100 })])(
+      "sumOfFirstNGeneralizedPentagonalNumbersFromFive",
+      (testNatNumber) => {
+        const actualNumber: number =
+          sumOfFirstNGeneralizedPentagonalNumbersFromFive(testNatNumber);
+        expect(actualNumber).toBeGreaterThan(
+          generalizedPentagonalNumbersFromFive(testNatNumber),
+        );
+      },
+    );
+    
+    describe("pentagonal numbers", () => {
+    test.prop([fc.integer({ min: 1, max: 7 }), fc.integer({ min: 7, max: 7 })])(
+      "percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange",
+      (testNatNumber, testRangeMax) => {
+        const actualPercentage: number =
+          percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange(
+            testNatNumber,
+            testRangeMax,
+          );
+	
+        assertBetweenZeroAndOneHundred(actualPercentage);
+      },
+    );
+
+      test.prop([fc.constantFrom(7,4)])(
+      "do percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange",
+	(testRangeSize) => {
+          const actualPercentages: Array<number> = unfold(partialRight(percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange, [testRangeSize]))(testRangeSize)
+	  expect(sum(actualPercentages)).toEqual(1)
+      },
+    );
+    });
+  });
 });

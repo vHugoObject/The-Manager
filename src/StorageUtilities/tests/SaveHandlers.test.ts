@@ -175,7 +175,7 @@ describe("SaveHandlers test suite", async () => {
         createGoalkeepers,
         createDefenders,
         createMidfielders,
-        createAttackers,
+        createForwards,
       ];
       const funcsWithCounts: Array<[Function, number]> = zip(
         funcs,
@@ -283,7 +283,7 @@ describe("SaveHandlers test suite", async () => {
         createGoalkeepers,
         createDefenders,
         createMidfielders,
-        createAttackers,
+        createForwards,
       ];
       const funcsWithCounts: Array<[Function, number]> = zip(
         funcs,
@@ -388,7 +388,7 @@ describe("SaveHandlers test suite", async () => {
         createGoalkeepers,
         createDefenders,
         createMidfielders,
-        createAttackers,
+        createForwards,
       ];
       const funcsWithCounts: Array<[Function, number]> = zip(
         funcs,

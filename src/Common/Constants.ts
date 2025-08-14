@@ -48,7 +48,7 @@ export const DEFAULTTOTALPLAYERS = multiply(
 export const DEFAULTPLAYERSPEROUTFIELDPOSITIONGROUP: number = 7;
 export const DEFAULTGOALKEEPERPERCLUB: number = 4;
 // aligned with IDPREFIXES/PositionGroup enum
-export const BASECLUBCOMPOSITION: Array<number> = [7, 7, 7, 4];
+export const DEFAULTPLAYERSPERPOSITIONGROUP: Array<number> = [7, 7, 7, 4];
 
 export const DEFAULTMATCHCOMPOSITION: Array<number> = [1, 4, 3, 3];
 export const DEFENSESTRENGTHBALANCE: [number, number] = [5, 95];
@@ -113,10 +113,10 @@ export const DEFAULTSTEPS: number = multiply(
 );
 
 export enum CLUBIDINDICES {
-  CountryNumber="0",
-  DomesticLeagueID="1",
-  DomesticLeagueLevel="2",
-  ClubScheduleID="3",
-  ClubID="4",
-  Season="5"
+  CountryNumber = "0",
+  DomesticLeagueID = "1",
+  DomesticLeagueLevel = "2",
+  ClubScheduleID = "3",
+  ClubID = "4",
+  Season = "5",
 }

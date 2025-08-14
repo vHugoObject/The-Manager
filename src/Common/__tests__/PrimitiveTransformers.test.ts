@@ -15,7 +15,7 @@ import {
   pairSetsAndAssertStrictEqual,
   pairIntegersAndAssertEqual,
   assertArrayOfIntegersInRangeExclusive,
-  assertIntegerInRangeExclusive,
+  assertIntegerInRangeInclusive,
 } from "../Asserters";
 import {
   fastCheckNLengthArrayOfStringCountTuplesGenerator,
@@ -28,7 +28,7 @@ import {
   fastCheckRandomInteger,
   fastCheckNLengthUniqueIntegerArrayGenerator,
   fastCheckNonSpaceRandomCharacterGenerator,
-  fastCheckNLengthUniqueStringArrayGenerator
+  fastCheckNLengthUniqueStringArrayGenerator,
 } from "../TestDataGenerators";
 import {
   getFirstLevelArrayLengths,
@@ -60,8 +60,6 @@ import {
   zipAllAndGetSumOfSecondArray,
   unfoldStringCountStartingIndexTuplesIntoArrayOfStringIDs,
   subString,
-  convertRangeIndexIntoInteger,
-  convertRangeIndexAndCycleCountIntoInteger,
 } from "../Transformers";
 
 describe("PrimitiveTransformers test suite", () => {
@@ -147,31 +145,32 @@ describe("PrimitiveTransformers test suite", () => {
   );
 
   describe("PrimitiveTransformers test suite", () => {
-    test.prop([fc.gen(),fc.integer({ min: 5, max: 100 })])(
+    test.prop([fc.gen(), fc.integer({ min: 5, max: 100 })])(
       "string",
       (fcGen, testStringCount) => {
-	const testArray: Array<string> = fastCheckNLengthUniqueStringArrayGenerator(fcGen, testStringCount)
-	const testValueToAppend: string = fastCheckNonSpaceRandomCharacterGenerator(fcGen)
-	
-	const actualArray = append(testValueToAppend, testArray)
-	
-	expect(last(actualArray)).toEqual(testValueToAppend)
-	
+        const testArray: Array<string> =
+          fastCheckNLengthUniqueStringArrayGenerator(fcGen, testStringCount);
+        const testValueToAppend: string =
+          fastCheckNonSpaceRandomCharacterGenerator(fcGen);
+
+        const actualArray = append(testValueToAppend, testArray);
+        expect(last(actualArray)).toEqual(testValueToAppend);
       },
     );
 
     test.prop([fc.gen(), fc.integer({ min: 5, max: 100 })])(
       "number",
       (fcGen, testIntegerCount) => {
-	const testArray: Array<number> = fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testIntegerCount)
-	const testValueToAppend: number = fastCheckRandomInteger(fcGen)
-	
-	const actualArray = append(testValueToAppend, testArray)
-	
-	expect(last(actualArray)).toEqual(testValueToAppend)
+        const testArray: Array<number> =
+          fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testIntegerCount);
+        const testValueToAppend: number = fastCheckRandomInteger(fcGen);
+
+        const actualArray = append(testValueToAppend, testArray);
+
+        expect(last(actualArray)).toEqual(testValueToAppend);
       },
     );
-  })
+  });
 
   describe("unfold", () => {
     test.prop([fc.integer({ min: 2, max: 1000 }), fc.nat()])(
@@ -349,58 +348,6 @@ describe("PrimitiveTransformers test suite", () => {
         const actualRanges: Array<[number, number]> =
           foldArrayOfArraysIntoArrayOfLinearRanges(testArrayOfArraysOfStrings);
         expect(actualRanges.length).toEqual(testArrayOfArraysOfStrings.length);
-      },
-    );
-
-    test.prop([
-      fc.gen(),
-      fc.integer({ min: 100, max: 1_000_000_00 }),
-      fc.integer({ min: 1, max: 1000 }),
-    ])(
-      "convertRangeIndexIntoInteger",
-      (fcGen, testRangeSize, testIndicesCount) => {
-        const testRange: [number, number] = fastCheckTestLinearRangeGenerator(
-          fcGen,
-          testRangeSize,
-        );
-        const testStep: number = pipe([
-          multiply(testRangeSize),
-          fastCheckRandomIntegerBetweenOneAnd(fcGen),
-        ])(testIndicesCount);
-
-        const actualIntegers = unfold((testIndex: number): number =>
-          convertRangeIndexIntoInteger(testRange, [testStep, testIndex]),
-        )(testIndicesCount);
-
-        assertArrayOfIntegersInRangeExclusive(testRange, actualIntegers);
-      },
-    );
-
-    test.prop([
-      fc.gen(),
-      fc.integer({ min: 100, max: 1_000_000_00 }),
-      fc.integer({ min: 1000, max: 100_000 }),
-    ])(
-      "convertRangeIndexAndCycleCountIntoInteger",
-      (fcGen, testRangeSize, testItemsCount) => {
-        const [testRangeMin, testRangeMax]: [number, number] =
-          fastCheckTestLinearRangeGenerator(fcGen, testRangeSize);
-        const [testCycles, testIndex]: [number, number] = unfold(
-          (_: number) =>
-            fastCheckRandomIntegerBetweenOneAnd(fcGen, testItemsCount),
-          2,
-        );
-
-        const actualInteger: number = convertRangeIndexAndCycleCountIntoInteger(
-          [testRangeMin, testRangeMax],
-          testCycles,
-          testItemsCount,
-          testIndex,
-        );
-        assertIntegerInRangeExclusive(
-          [testRangeMin, testRangeMax],
-          actualInteger,
-        );
       },
     );
   });

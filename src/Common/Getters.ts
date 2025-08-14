@@ -45,18 +45,19 @@ import {
 } from "lodash/fp";
 import { Save, BaseCountries } from "./Types";
 import {
-  PositionGroup,
-  PLAYERIDDATARANGESBYPOSITION,
-  PLAYERIDINDICES,
-} from "./PlayerDataConstants";
-import {
-  DEFAULTMATCHCOMPOSITION,
+  DEFAULTPLAYERSPERPOSITIONGROUP,
   CLUBSDEPTH,
   COMPETITIONSDEPTH,
   BASECOUNTRIESDOMESTICLEAGUESINDEX,
   BASECOUNTRIESCLUBSINDEX,
   BASECOUNTRIESCOUNTRIESINDEX,
 } from "./Constants";
+import {
+  PositionGroup,
+  PLAYERBIODATARANGESBYPOSITION,
+  PLAYERBIODATA,
+  PREMIERLEAGUEPAYROLLPERPOSITIONGROUP,
+} from "./PlayerDataConstants";
 
 export const isTrue = isEqual(true);
 export const isFalse = isEqual(false);
@@ -64,8 +65,14 @@ export const isFalse = isEqual(false);
 export const countByIdentity = countBy(identity);
 export const countByStartsWith = countBy(startsWith);
 
+export const getEventTargetValue = property(["target", "value"]);
+
 export const getFirstAndTailOfArray = over([first, tail]);
-export const getSizeMinAndMaxOfArray = over([size, min, max]);
+export const getSizeMinAndMaxOfArray = over<number>([
+  size,
+  min<number>,
+  max<number>,
+]);
 export const getSizeOfFlattenedArray = pipe([flatten, size]);
 
 export const getFirstLevelArrayLengths = map(size);
@@ -79,7 +86,7 @@ export const getFirstLevelArrayLengthsAsSet = pipe([getFirstLevelArrayLengths]);
 export const getSecondLevelArrayLengths = pipe([flatMapDepth(map(size), 2)]);
 
 export const getFirstAndLastItemsOfArray = over([first, last]);
-export const getMinAndMaxOfArray = over([min, max]);
+export const getMinAndMaxOfArray = over<number>([min<number>, max<number>]);
 
 export const getLastTwoArrayValues = takeRight(2);
 export const getFirstTwoArrayValues = take(2);
@@ -89,7 +96,7 @@ export const getCountOfObjectKeys = pipe([Object.keys, size]);
 export const getCountOfObjectValues = pipe([Object.values, size]);
 
 export const getPartsOfIDAsArray = split("_");
-export const getCountOfIDParts = pipe([getPartsOfIDAsArray, size])
+export const getCountOfIDParts = pipe([getPartsOfIDAsArray, size]);
 export const getIDPrefix = pipe([getPartsOfIDAsArray, first]);
 export const getIDPrefixes = map(getIDPrefix);
 export const getIDSuffix = pipe([getPartsOfIDAsArray, last]);
@@ -302,28 +309,63 @@ export const getClubNameFromBaseCountries = curry(
   },
 );
 
-export const getPlayerIDDataRange = curry(
+export const getPlayerBioDataRange = curry(
   (
+    dataIndex: PLAYERBIODATA,
     positionGroup: PositionGroup,
-    dataIndex: PLAYERIDINDICES,
   ): [number, number] => {
-    return property([positionGroup, dataIndex])(PLAYERIDDATARANGESBYPOSITION);
+    return property([positionGroup, dataIndex])(PLAYERBIODATARANGESBYPOSITION);
   },
 );
 
-export const getValueFromID = curry((index: string, id: string): string => {
-  return pipe([split("_"), property([index])])(id);
-});
+export const [
+  getPositionGroupAgeRange,
+  getPositionGroupYearsLeftOnContractRange,
+  getPositionGroupWagesRange,
+  getPositionGroupHeightRange,
+  getPositionGroupWeightRange,
+  getPositionGroupManagerEffectRange,
+  getPositionGroupTacklingRange,
+  getPositionGroupPassingRange,
+  getPositionGroupShootingRange,
+  getPositionGroupDribblingRange,
+  getPositionGroupMarkingRange,
+  getPositionGroupVisionRange,
+  getPositionGroupStrengthRange,
+  getPositionGroupAttackingWorkRateRange,
+  getPositionGroupDefendingWorkRateRange,
+  getPositionGroupPositionalAwarenessRange,
+  getPositionGroupSprintSpeedRange,
+  getPositionGroupAgilityRange,
+  getPositionGroupGKPositioningRange,
+  getPositionGroupGKDivingRange,
+  getPositionGroupGKHandlingRange,
+  getPositionGroupGKReflexesRange,
+] = pipe([
+  Object.values,
+  map<PLAYERBIODATA, (positionGroup: PositionGroup) => [number, number]>(
+    getPlayerBioDataRange,
+  ),
+])(PLAYERBIODATA);
 
-export const getPositionGroupFromPlayerID = getValueFromID(
-  PLAYERIDINDICES.PositionGroup,
-);
-export const getSeasonFromPlayerID = getValueFromID(PLAYERIDINDICES.Season);
-export const getPlayerNumberFromPlayerID = getValueFromID(
-  PLAYERIDINDICES.PlayerNumber,
-);
-export const getDomesticLeagueLevelFromPlayerID = getValueFromID(
-  PLAYERIDINDICES.DomesticLeagueLevel,
+export const getPositionGroupPlayerCountPerSquad = partialRight(property, [
+  DEFAULTPLAYERSPERPOSITIONGROUP,
+]);
+
+export const getPositionGroupBaseWageBillPercentageForLeague = curry(
+  (payrollPerPosition: Array<number>, positionGroup: PositionGroup): number => {
+    return pipe([over([property([positionGroup]), sum]), spread(divide)])(
+      payrollPerPosition,
+    );
+  },
 );
 
-export const getEventTargetValue = property(["target", "value"]);
+export const getPositionGroupBaseWageBillPercentage =
+  getPositionGroupBaseWageBillPercentageForLeague(
+    PREMIERLEAGUEPAYROLLPERPOSITIONGROUP,
+  );
+
+export const getPositionGroupPlayerCountAndWageBillPercentage = over<number>([
+  getPositionGroupPlayerCountPerSquad,
+  getPositionGroupBaseWageBillPercentage,
+]);

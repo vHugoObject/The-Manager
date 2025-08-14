@@ -1,20 +1,17 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, assert, expect } from "vitest";
-import { fastCheckTestPlayerIDGenerator,
-    fastCheckTestSeasonAndPlayerNumber,
+import {
+  fastCheckTestPlayerIDGenerator,
+  fastCheckTestSeasonAndPlayerNumber,
 } from "../TestDataGenerators";
-import { assertIntegerInRangeExclusive
-} from "../Asserters";
+import { assertIntegerInRangeExclusive } from "../Asserters";
 import {
   FIRSTNAMESRANGE,
   LASTNAMESRANGE,
   COUNTRYNAMESRANGE,
   PLAYERIDINDICES,
 } from "../PlayerDataConstants";
-import {
-  getCountOfIDParts,
-  getCountOfObjectKeys
-} from "../Getters";
+import { getCountOfIDParts, getCountOfObjectKeys } from "../Getters";
 import {
   splitUnderscoresMapAndSum,
   createPlayerID,
@@ -24,23 +21,21 @@ import {
 } from "../Transformers";
 
 describe("PlayerIDTransformers test suite", () => {
-
   test.prop([fc.gen()])("createPlayerID", (fcGen) => {
     const [testSeason, testPlayerNumber] =
       fastCheckTestSeasonAndPlayerNumber(fcGen);
 
     const actualPlayerID: string = createPlayerID(testSeason, testPlayerNumber);
-    assert.isNumber(splitUnderscoresMapAndSum(actualPlayerID))
-    
-    const actualCountOfIDParts: number = getCountOfIDParts(actualPlayerID)    
-    expect(actualPlayerID).toContain(testSeason)
-    expect(actualPlayerID).toContain(testPlayerNumber)
-    const expectedCountOfIDParts: number = getCountOfObjectKeys(PLAYERIDINDICES)
-    expect(actualCountOfIDParts).toEqual(expectedCountOfIDParts)
-    
- 
+    assert.isNumber(splitUnderscoresMapAndSum(actualPlayerID));
+
+    const actualCountOfIDParts: number = getCountOfIDParts(actualPlayerID);
+    expect(actualPlayerID).toContain(testSeason);
+    expect(actualPlayerID).toContain(testPlayerNumber);
+    const expectedCountOfIDParts: number =
+      getCountOfObjectKeys(PLAYERIDINDICES);
+    expect(actualCountOfIDParts).toEqual(expectedCountOfIDParts);
   });
-  
+
   test.skip.prop([fc.gen()])(
     "convertPlayerIDIntoPlayerFirstNameAsInteger",
     (fcGen) => {

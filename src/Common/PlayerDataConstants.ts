@@ -1,62 +1,26 @@
 import { COUNTRYNAMES, FIRSTNAMES, LASTNAMES } from "./Names";
 
+export enum PLAYERIDINDICES {
+  CountryNumber = "0",
+  DomesticLeagueID = "1",
+  DomesticLeagueLevel = "2",
+  ClubID = "3",
+  SquadNumber = "4",
+  PositionGroup = "5",
+  Position = "6",
+  PlayerNumber = "7",
+  Season = "8",
+}
+
+export const COUNTRYNAMESRANGE: [number, number] = [0, COUNTRYNAMES.length];
+export const FIRSTNAMESRANGE: [number, number] = [0, FIRSTNAMES.length];
+export const LASTNAMESRANGE: [number, number] = [0, LASTNAMES.length];
+
 export enum PositionGroup {
   Forward = "0",
   Midfielder = "1",
   Defender = "2",
   Goalkeeper = "3",
-}
-
-export enum PLAYERIDINDICES {
-  CountryNumber="0",
-  DomesticLeagueID="1",
-  DomesticLeagueLevel="2", 
-  ClubID="3",
-  PositionGroup="4",
-  Position="5",
-  Season="6"
-}
-
-export enum PLAYERBIODATA {
-  FirstName = "0",
-  LastName = "1",
-  NationalTeam = "2",
-  Season = "0",
-  Country = "1",
-  DomesticLeague = "2",
-  DomesticLeagueLevel = "3",
-  Club = "4",
-  PositionGroup = "5",
-  Position = "6",
-  PlayerNumber = "7",
-
-  Age = "8",
-  ManagerEffect = "9",
-  YearsLeftOnContract = "10",
-  Wages = "11",
-
-  Tackling = "12",
-  Passing = "13",
-  Shooting = "14",
-  Dribbling = "15",
-
-  Marking = "16",
-  Vision = "17",
-  Strength = "18",
-
-  AttackingWorkRate = "19",
-  DefendingWorkRate = "20",
-  PositionalAwareness = "21",
-  SprintSpeed = "22",
-  Agility = "23",
-
-  GKPositioning = "24",
-  GKDiving = "25",
-  GKHandling = "26",
-  GKReflexes = "27",
-
-  Height = "28",
-  Weight = "29",
 }
 
 export enum ALLPOSITIONS {
@@ -81,6 +45,75 @@ export enum ALLPOSITIONS {
   SK = "13",
   // Ball-Playing Keeper
   BPK = "14",
+}
+
+// ranges are not inclusive
+// LW, RW, ST, CF
+export const FORWARDPOSITIONGROUPRANGES: [number, number] = [0, 4];
+// LM. RM, CM, CDM
+export const MIDFIELDERPOSITIONGROUPRANGES: [number, number] = [4, 8];
+// LB, RB, LCB, RCB
+export const DEFENDERPOSITIONGROUPRANGES: [number, number] = [8, 12];
+// LK, SK, BPK
+export const GOALKEEPERPOSITIONGROUPRANGES: [number, number] = [12, 15];
+
+export const DEFAULTMINAGE: number = 18;
+export const DEFAULTAGERANGE: [number, number] = [DEFAULTMINAGE, 38];
+export const MAXCONTRACTYEARS: number = 5;
+export const DEFAULTCONTRACTYEARSRANGE: [number, number] = [
+  1,
+  MAXCONTRACTYEARS + 1,
+];
+export const DEFAULTMANAGEREFFECT: [number, number] = [0, 10];
+export const DEFAULTHEIGHTRANGE: [number, number] = [160, 200];
+export const DEFAULTWEIGHRANGE: [number, number] = [60, 100];
+
+export const POSITIONGROUPSCOUNT: number = 4;
+export const POSITIONGROUPSRANGE: [number, number] = [0, POSITIONGROUPSCOUNT];
+
+export const POSITIONPRIMARYSKILLSRANGE: [number, number] = [50, 99];
+export const POSITIONSECONDARYSKILLSRANGE: [number, number] = [25, 75];
+export const BASICSKILLSRANGE: [number, number] = [25, 99];
+export const OTHERSKILLSRANGE: [number, number] = [25, 50];
+export const SKILLCEILINGADJUSTMENTBYDIVISION: Array<number> = [
+  1, 0.75, 0.5, 0.45, 0.4,
+];
+
+// Source: https://www.capology.com/uk/premier-league/payrolls/2024-2025/
+export const PREMIERLEAGUEPAYROLLPERPOSITIONGROUP: Array<number> = [
+  780_904_800, 428_838_800, 665_771_600, 158_085_200,
+];
+export const WAGERANGEFOROUTFIELDPLAYERS: [number, number] = [0, 7];
+export const WAGERANGEFORGOALKEEPERS: [number, number] = [0, 4];
+
+export enum PLAYERBIODATA {
+  Age = "0",
+  YearsLeftOnContract = "1",
+  Wages = "2",
+  Height = "3",
+  Weight = "4",
+  ManagerEffect = "5",
+  //above data is not adjusted per division
+
+  Tackling = "6",
+  Passing = "7",
+  Shooting = "8",
+  Dribbling = "9",
+
+  Marking = "10",
+  Vision = "11",
+  Strength = "12",
+
+  AttackingWorkRate = "13",
+  DefendingWorkRate = "14",
+  PositionalAwareness = "15",
+  SprintSpeed = "16",
+  Agility = "17",
+
+  GKPositioning = "18",
+  GKDiving = "19",
+  GKHandling = "20",
+  GKReflexes = "21",
 }
 
 export enum DEFENDINGSKILLS {
@@ -109,101 +142,17 @@ export enum ATTACKINGSKILLS {
   SprintSpeed = "14",
 }
 
-export const DEFAULTMINAGE: number = 18;
-export const DEFAULTAGERANGE: [number, number] = [DEFAULTMINAGE, 38];
-
-export const MAXCONTRACTYEARS: number = 5;
-
-export const FORWARDWAGESRANGE: [number, number] = [2_000, 500_000];
-export const DEFENDERWAGESRANGE: [number, number] = [2_000, 350_000];
-export const MIDFIELDERWAGESRANGE: [number, number] = [2_000, 350_000];
-export const GOALKEEPERWAGESRANGE: [number, number] = [2_000, 150_000];
-export const WAGECEILINGADJUSTMENTBYDIVISION: Array<number> = [
-  1, 0.75, 0.5, 0.45, 0.4,
-];
-
-export const TOTALPLAYERIDINDICIES: number =
-  Object.keys(PLAYERBIODATA).length;
-
-export const POSITIONGROUPSCOUNT: number = 4;
-export const POSITIONGROUPSRANGE: [number, number] = [0, 3];
-
-export const PLAYERBIODATARANGE: [number, number] = [
-  0,
-  TOTALPLAYERIDINDICIES - 1,
-];
-export const PLAYERSKILLSONLYINDICESRANGE: [number, number] = [11, 27];
-
-export const FIRSTNAMESRANGE: [number, number] = [0, FIRSTNAMES.length];
-export const LASTNAMESRANGE: [number, number] = [0, LASTNAMES.length];
-export const COUNTRYNAMESRANGE: [number, number] = [0, COUNTRYNAMES.length];
-
-export const HEIGHTRANGE: [number, number] = [160, 200];
-export const WEIGHTRANGE: [number, number] = [60, 100];
-
-export const POSITIONPRIMARYSKILLSRANGE: [number, number] = [50, 99];
-export const POSITIONSECONDARYSKILLSRANGE: [number, number] = [25, 75];
-export const BASICSKILLSRANGE: [number, number] = [25, 99];
-export const OTHERSKILLSRANGE: [number, number] = [25, 50];
-export const SKILLCEILINGADJUSTMENTBYDIVISION: Array<number> = [
-  1, 0.75, 0.5, 0.45, 0.4,
-];
-
-// ranges are not inclusive
-// LW, RW, ST, CF
-export const FORWARDPOSITIONGROUPRANGES: [number, number] = [0, 4];
-// LM. RM, CM, CDM
-export const MIDFIELDERPOSITIONGROUPRANGES: [number, number] = [4, 8];
-// LB, RB, LCB, RCB
-export const DEFENDERPOSITIONGROUPRANGES: [number, number] = [8, 12];
-// LK, SK, BPK
-export const GOALKEEPERPOSITIONGROUPRANGES: [number, number] = [12, 15];
-
 export const PLAYERBIODATARANGESBYPOSITION: Record<
-  PositionGroup,
-  Array<[number, number]>
-> = {
-  [PositionGroup.Forward]: [
-    FIRSTNAMESRANGE,
-    LASTNAMESRANGE,
-    COUNTRYNAMESRANGE,
-    FORWARDPOSITIONGROUPRANGES,
-    HEIGHTRANGE,
-    WEIGHTRANGE,
-  ],
-  [PositionGroup.Midfielder]: [
-    FIRSTNAMESRANGE,
-    LASTNAMESRANGE,
-    COUNTRYNAMESRANGE,
-    MIDFIELDERPOSITIONGROUPRANGES,
-    HEIGHTRANGE,
-    WEIGHTRANGE,
-  ],
-  [PositionGroup.Defender]: [
-    FIRSTNAMESRANGE,
-    LASTNAMESRANGE,
-    COUNTRYNAMESRANGE,
-    DEFENDERPOSITIONGROUPRANGES,
-    HEIGHTRANGE,
-    WEIGHTRANGE,
-  ],
-  [PositionGroup.Goalkeeper]: [
-    FIRSTNAMESRANGE,
-    LASTNAMESRANGE,
-    COUNTRYNAMESRANGE,
-    GOALKEEPERPOSITIONGROUPRANGES,
-    HEIGHTRANGE,
-    WEIGHTRANGE,
-  ],
-};
-
-export const PLAYERIDDATARANGESBYPOSITION: Record<
   PositionGroup,
   Record<string, [number, number]>
 > = {
   [PositionGroup.Forward]: {
-    [PLAYERBIODATA.PositionGroup]: FORWARDPOSITIONGROUPRANGES,
-    [PLAYERBIODATA.Wages]: FORWARDWAGESRANGE,
+    [PLAYERBIODATA.Age]: DEFAULTAGERANGE,
+    [PLAYERBIODATA.YearsLeftOnContract]: DEFAULTCONTRACTYEARSRANGE,
+    [PLAYERBIODATA.Wages]: WAGERANGEFOROUTFIELDPLAYERS,
+    [PLAYERBIODATA.Height]: DEFAULTHEIGHTRANGE,
+    [PLAYERBIODATA.Weight]: DEFAULTWEIGHRANGE,
+    [PLAYERBIODATA.ManagerEffect]: DEFAULTMANAGEREFFECT,
 
     [PLAYERBIODATA.Tackling]: POSITIONSECONDARYSKILLSRANGE,
     [PLAYERBIODATA.Passing]: POSITIONSECONDARYSKILLSRANGE,
@@ -226,8 +175,12 @@ export const PLAYERIDDATARANGESBYPOSITION: Record<
     [PLAYERBIODATA.GKReflexes]: POSITIONSECONDARYSKILLSRANGE,
   },
   [PositionGroup.Midfielder]: {
-    [PLAYERBIODATA.PositionGroup]: MIDFIELDERPOSITIONGROUPRANGES,
-    [PLAYERBIODATA.Wages]: MIDFIELDERWAGESRANGE,
+    [PLAYERBIODATA.Age]: DEFAULTAGERANGE,
+    [PLAYERBIODATA.YearsLeftOnContract]: DEFAULTCONTRACTYEARSRANGE,
+    [PLAYERBIODATA.Wages]: WAGERANGEFOROUTFIELDPLAYERS,
+    [PLAYERBIODATA.Height]: DEFAULTHEIGHTRANGE,
+    [PLAYERBIODATA.Weight]: DEFAULTWEIGHRANGE,
+    [PLAYERBIODATA.ManagerEffect]: DEFAULTMANAGEREFFECT,
 
     [PLAYERBIODATA.Tackling]: POSITIONSECONDARYSKILLSRANGE,
     [PLAYERBIODATA.Passing]: POSITIONSECONDARYSKILLSRANGE,
@@ -250,8 +203,12 @@ export const PLAYERIDDATARANGESBYPOSITION: Record<
     [PLAYERBIODATA.GKReflexes]: POSITIONSECONDARYSKILLSRANGE,
   },
   [PositionGroup.Defender]: {
-    [PLAYERBIODATA.PositionGroup]: DEFENDERPOSITIONGROUPRANGES,
-    [PLAYERBIODATA.Wages]: DEFENDERWAGESRANGE,
+    [PLAYERBIODATA.Age]: DEFAULTAGERANGE,
+    [PLAYERBIODATA.YearsLeftOnContract]: DEFAULTCONTRACTYEARSRANGE,
+    [PLAYERBIODATA.Wages]: WAGERANGEFOROUTFIELDPLAYERS,
+    [PLAYERBIODATA.Height]: DEFAULTHEIGHTRANGE,
+    [PLAYERBIODATA.Weight]: DEFAULTWEIGHRANGE,
+    [PLAYERBIODATA.ManagerEffect]: DEFAULTMANAGEREFFECT,
 
     [PLAYERBIODATA.Tackling]: POSITIONSECONDARYSKILLSRANGE,
     [PLAYERBIODATA.Passing]: POSITIONSECONDARYSKILLSRANGE,
@@ -274,8 +231,12 @@ export const PLAYERIDDATARANGESBYPOSITION: Record<
     [PLAYERBIODATA.GKReflexes]: POSITIONSECONDARYSKILLSRANGE,
   },
   [PositionGroup.Goalkeeper]: {
-    [PLAYERBIODATA.PositionGroup]: GOALKEEPERPOSITIONGROUPRANGES,
-    [PLAYERBIODATA.Wages]: GOALKEEPERWAGESRANGE,
+    [PLAYERBIODATA.Age]: DEFAULTAGERANGE,
+    [PLAYERBIODATA.YearsLeftOnContract]: DEFAULTCONTRACTYEARSRANGE,
+    [PLAYERBIODATA.Wages]: WAGERANGEFORGOALKEEPERS,
+    [PLAYERBIODATA.Height]: DEFAULTHEIGHTRANGE,
+    [PLAYERBIODATA.Weight]: DEFAULTWEIGHRANGE,
+    [PLAYERBIODATA.ManagerEffect]: DEFAULTMANAGEREFFECT,
 
     [PLAYERBIODATA.Tackling]: POSITIONSECONDARYSKILLSRANGE,
     [PLAYERBIODATA.Passing]: POSITIONSECONDARYSKILLSRANGE,
@@ -300,10 +261,10 @@ export const PLAYERIDDATARANGESBYPOSITION: Record<
 };
 
 export enum PLAYERSTATISTICSINDICES {
-  Minutes="0",
-  Goals="1",
-  Assists="2",
-  Touches="3",
-  Tackles="4",
-  Passes="5"
+  Minutes = "0",
+  Goals = "1",
+  Assists = "2",
+  Touches = "3",
+  Tackles = "4",
+  Passes = "5",
 }

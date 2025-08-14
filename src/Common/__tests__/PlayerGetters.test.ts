@@ -1,36 +1,93 @@
 import { test, fc } from "@fast-check/vitest";
-import { describe, expect, assert } from "vitest";
+import { describe, assert } from "vitest";
 import { assertNumbers } from "../Asserters";
-import { over } from "lodash/fp";
+import { over, partialRight } from "lodash/fp";
+import { PositionGroup } from "../PlayerDataConstants";
+import { assertBetweenZeroAndOneHundred } from "../Asserters";
 import {
   fastCheckRandomPositionGroup,
-  fastCheckGenerateRandomPlayerIDDataIndex,
-  fastCheckTestPlayerIDGenerator,
-  fastCheckGenerateRandomSkillIndex,
+  fastCheckRandomItemFromArray,
 } from "../TestDataGenerators";
-import { getPlayerIDDataRange, getValueFromID } from "../Getters";
+import {
+  getPositionGroupAgeRange,
+  getPositionGroupYearsLeftOnContractRange,
+  getPositionGroupWagesRange,
+  getPositionGroupHeightRange,
+  getPositionGroupWeightRange,
+  getPositionGroupManagerEffectRange,
+  getPositionGroupTacklingRange,
+  getPositionGroupPassingRange,
+  getPositionGroupShootingRange,
+  getPositionGroupDribblingRange,
+  getPositionGroupMarkingRange,
+  getPositionGroupVisionRange,
+  getPositionGroupStrengthRange,
+  getPositionGroupAttackingWorkRateRange,
+  getPositionGroupDefendingWorkRateRange,
+  getPositionGroupPositionalAwarenessRange,
+  getPositionGroupSprintSpeedRange,
+  getPositionGroupAgilityRange,
+  getPositionGroupGKPositioningRange,
+  getPositionGroupGKDivingRange,
+  getPositionGroupGKHandlingRange,
+  getPositionGroupGKReflexesRange,
+  getPositionGroupBaseWageBillPercentage,
+} from "../Getters";
 
 describe("PlayerGetters test suite", () => {
-  test.prop([fc.gen()])("getPlayerIDDataRange", (fcGen) => {
-    const [testPositionGroup, testPlayerDataIndex] = over([
-      fastCheckRandomPositionGroup,
-      fastCheckGenerateRandomSkillIndex,
-    ])(fcGen);
-    const actualRange: [number, number] = getPlayerIDDataRange(
-      testPositionGroup,
-      testPlayerDataIndex,
-    );
+  test("getPlayerBioDataRange", () => {
+    fc.assert(
+      fc.property(fc.gen(), (fcGen) => {
+        const testGetters = [
+          getPositionGroupAgeRange,
+          getPositionGroupYearsLeftOnContractRange,
+          getPositionGroupWagesRange,
+          getPositionGroupHeightRange,
+          getPositionGroupWeightRange,
+          getPositionGroupManagerEffectRange,
+          getPositionGroupTacklingRange,
+          getPositionGroupPassingRange,
+          getPositionGroupShootingRange,
+          getPositionGroupDribblingRange,
+          getPositionGroupMarkingRange,
+          getPositionGroupVisionRange,
+          getPositionGroupStrengthRange,
+          getPositionGroupAttackingWorkRateRange,
+          getPositionGroupDefendingWorkRateRange,
+          getPositionGroupPositionalAwarenessRange,
+          getPositionGroupSprintSpeedRange,
+          getPositionGroupAgilityRange,
+          getPositionGroupGKPositioningRange,
+          getPositionGroupGKDivingRange,
+          getPositionGroupGKHandlingRange,
+          getPositionGroupGKReflexesRange,
+        ];
 
-    assert.lengthOf(actualRange, 2);
-    assertNumbers(actualRange);
+        const [testGetter, testPositionGroup] = over<
+          (positionGroup: PositionGroup) => [number, number] | PositionGroup
+        >([
+          partialRight(fastCheckRandomItemFromArray, [testGetters]),
+          fastCheckRandomPositionGroup,
+        ])(fcGen) as [
+          (positionGroup: PositionGroup) => [number, number],
+          PositionGroup,
+        ];
+
+        const actualRange: [number, number] = testGetter(testPositionGroup);
+        assert.lengthOf(actualRange, 2);
+        assertNumbers(actualRange);
+      }),
+    );
   });
 
-  test.prop([fc.gen()], { numRuns: 0 })("getValueFromID", (fcGen) => {
-    const testPlayerID: string = fastCheckTestPlayerIDGenerator(fcGen);
-    const testValueNumber: string =
-      fastCheckGenerateRandomPlayerIDDataIndex(fcGen);
-    const actualValue: string = getValueFromID(testValueNumber, testPlayerID);
-    expect(actualValue).not.toBe("_");
-    assert.include(testPlayerID, actualValue);
+  test("getPositionGroupBaseWageBillPercentage", () => {
+    fc.assert(
+      fc.property(fc.gen(), (fcGen) => {
+        const testPositionGroup = fastCheckRandomPositionGroup(fcGen);
+        const actualWageBillPercentage: number =
+          getPositionGroupBaseWageBillPercentage(testPositionGroup);
+        assertBetweenZeroAndOneHundred(actualWageBillPercentage);
+      }),
+    );
   });
 });

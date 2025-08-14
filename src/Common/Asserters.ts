@@ -1,4 +1,4 @@
-import { chunk, forEach, pipe, curry, map, mean, inRange } from "lodash/fp";
+import { chunk, forEach, pipe, curry, map, mean, floor } from "lodash/fp";
 import { expect, assert } from "vitest";
 import {
   convertArrayOfArraysToArrayOfSets,
@@ -62,6 +62,17 @@ export const assertIntegerInRangeExclusive = curry(
     expect(integer).toBeLessThan(max);
   },
 );
+
+export const assertIntegerInRangeDoubleExclusive = curry(
+  ([min, max]: [number, number], integer: number) => {
+    expect(integer).toBeGreaterThan(min);
+    expect(integer).toBeLessThan(max);
+  },
+);
+
+export const assertBetweenZeroAndOneHundred = assertIntegerInRangeDoubleExclusive([
+  0, 100,
+]);
 
 export const assertArrayOfIntegersInRangeExclusive = curry(
   (range: [number, number], integers: Array<number>) => {
