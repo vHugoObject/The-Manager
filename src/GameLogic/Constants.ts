@@ -1,5 +1,5 @@
-import { multiply } from "lodash/fp";
-import { BaseCountry } from "./Types";
+import { multiply, subtract } from "lodash/fp";
+import { BaseCountries } from "./Types";
 import { ENGLAND } from "./England";
 
 export const NONSPACESCHARACTERRANGE: [number, number] = [96, 10000];
@@ -10,14 +10,17 @@ export const AUGUST: number = 7;
 export const SEPTEMBER: number = 8;
 export const DECEMBER: number = 11;
 
-export const startingCountries: Array<BaseCountry> = [ENGLAND];
+export enum BaseCountriesIndices {
+  COUNTRYINDEX = 0,
+  DOMESTICLEAGUESINDEX = 1,
+  CLUBSINDEX = 2,
+}
 
-export const BASECOUNTRIESCOUNTRIESINDEX: number = 0;
-export const BASECOUNTRIESDOMESTICLEAGUESINDEX: number = 1;
-export const BASECOUNTRIESCLUBSINDEX: number = 2;
-
+export const DEFAULTMATCHESPERDOMESTICLEAGUE: number = 38;
 export const DEFAULTDOMESTICLEAGUESPERCOUNTRY: number = 5;
-export const DEFAULTDOMESTICLEAGUESPERCOUNTRYIDRANGE: [number, number] = [0, 4];
+export const DEFAULTDOMESTICLEAGUESPERCOUNTRYNUMBERRANGE: [number, number] = [
+  0, 4,
+];
 export const DEFAULTCLUBSPERDOMESTICLEAGUE = 20;
 export const DEFAULTSQUADSIZE: number = 25;
 
@@ -36,10 +39,16 @@ export const DEFAULTPLAYERSPERCOUNTRY = multiply(
   DEFAULTSQUADSIZE,
 );
 
+export const DEFAULTTOTALDOMESTICLEAGUES = multiply(
+  DEFAULTDOMESTICLEAGUESPERCOUNTRY,
+  DEFAULTOTALCOUNTRIES,
+);
+
 export const DEFAULTTOTALCLUBS = multiply(
   DEFAULTCLUBSPERCOUNTRY,
   DEFAULTOTALCOUNTRIES,
 );
+
 export const DEFAULTTOTALPLAYERS = multiply(
   DEFAULTPLAYERSPERCOUNTRY,
   DEFAULTOTALCOUNTRIES,
@@ -47,10 +56,17 @@ export const DEFAULTTOTALPLAYERS = multiply(
 
 export const DEFAULTPLAYERSPEROUTFIELDPOSITIONGROUP: number = 7;
 export const DEFAULTGOALKEEPERPERCLUB: number = 4;
-// aligned with IDPREFIXES/PositionGroup enum
+// aligned with NumberPREFIXES/PositionGroup enum
 export const DEFAULTPLAYERSPERPOSITIONGROUP: Array<number> = [7, 7, 7, 4];
 
 export const DEFAULTMATCHCOMPOSITION: Array<number> = [1, 4, 3, 3];
+export const DEFAULTPLAYERSONFIELDPERSQUAD: number = 11;
+export const DEFAULTPLAYERSONBENCH = subtract(
+  DEFAULTSQUADSIZE,
+  DEFAULTPLAYERSONFIELDPERSQUAD,
+);
+export const DEFAULTMATCHLENGTH: number = 90;
+
 export const DEFENSESTRENGTHBALANCE: [number, number] = [5, 95];
 export const HOMEEFFECT: number = 0.383;
 export const U: number = -1.035;
@@ -61,7 +77,7 @@ export const POSSIBLEGOALS: Array<number> = [0, 1, 2, 3, 4, 5];
 export const DBNAME: string = "the-manager";
 export const SAVESTORE: string = "save-games";
 export const DBVERSION: number = 1;
-export const KEYPATH: string = "SaveID";
+export const KEYPATH: string = "SaveNumber";
 export const COMPETITIONSDEPTH: number = 1;
 export const CLUBSDEPTH: number = 2;
 export const PLAYERSDEPTH: number = 3;
@@ -112,11 +128,20 @@ export const DEFAULTSTEPS: number = multiply(
   DEFAULTCYCLESPERDOMESTICLEAGUE,
 );
 
-export enum CLUBIDINDICES {
-  CountryNumber = "0",
-  DomesticLeagueID = "1",
-  DomesticLeagueLevel = "2",
-  ClubScheduleID = "3",
-  ClubID = "4",
-  Season = "5",
-}
+export const BASECOUNTRIES: BaseCountries = [ENGLAND];
+
+export const CLUBKEYS: Array<string> = [
+  "Country",
+  "DomesticLeagueLevel",
+  "DomesticLeagueNumber",
+  "ScheduleNumber",
+  "Attendance",
+  "FaciltiesCosts",
+  "SponsorPayment",
+  "TicketPrice",
+  "ManagerPay",
+  "ScoutingCosts",
+  "HealthCosts",
+  "PlayerDevelopmentCosts",
+  "Players",
+];

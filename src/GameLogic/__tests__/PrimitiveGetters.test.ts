@@ -51,7 +51,6 @@ import {
   getCountOfUniqueItemsPerArrayChunk,
   getCountOfItemsFromArrayThatAreGreaterThanZero,
   getLengthOfLinearRange,
-  getItemAtRangeIndex,
   getRangeStep,
 } from "../Getters";
 

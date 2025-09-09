@@ -48,9 +48,8 @@ import {
   DEFAULTPLAYERSPERPOSITIONGROUP,
   CLUBSDEPTH,
   COMPETITIONSDEPTH,
-  BASECOUNTRIESDOMESTICLEAGUESINDEX,
-  BASECOUNTRIESCLUBSINDEX,
-  BASECOUNTRIESCOUNTRIESINDEX,
+  BaseCountriesIndices,
+  DEFAULTDOMESTICLEAGUESPERCOUNTRY,
 } from "./Constants";
 import {
   PositionGroup,
@@ -94,34 +93,6 @@ export const getSumOfFlattenedArray = pipe([flatten, sum]);
 
 export const getCountOfObjectKeys = pipe([Object.keys, size]);
 export const getCountOfObjectValues = pipe([Object.values, size]);
-
-export const getPartsOfIDAsArray = split("_");
-export const getCountOfIDParts = pipe([getPartsOfIDAsArray, size]);
-export const getIDPrefix = pipe([getPartsOfIDAsArray, first]);
-export const getIDPrefixes = map(getIDPrefix);
-export const getIDSuffix = pipe([getPartsOfIDAsArray, last]);
-export const getLastEntityIDNumber = pipe([last, getIDSuffix]);
-export const getLastIDNumberOutOfIDNameTuple = pipe([last, first, getIDSuffix]);
-
-export const getFirstNPartsOfID = curry((parts: number, id: string) => {
-  return pipe([getPartsOfIDAsArray, take(parts)])(id);
-});
-
-export const getFirstTwoPartsOfID = getFirstNPartsOfID(2);
-export const getFirstThreePartsOfID = getFirstNPartsOfID(3);
-export const getFirstFourPartsOfID = getFirstNPartsOfID(4);
-
-export const countByIDPrefix = countBy(getIDPrefix);
-export const countByFirstTwoIDParts = countBy(getFirstTwoPartsOfID);
-export const countByFirstThreeIDParts = countBy(getFirstThreePartsOfID);
-export const countByFirstFourIDParts = countBy(getFirstFourPartsOfID);
-
-export const getCountsForASetOfIDPrefixes = (
-  idPrefixes: Array<string>,
-  ids: Array<string>,
-): Record<string, number> => {
-  return pipe([countByIDPrefix, pick(idPrefixes)])(ids);
-};
 
 export const getCountOfItemsFromArrayForPredicateWithTransformation = curry(
   <T, V>(
@@ -231,17 +202,34 @@ export const sortPlayersByRatings = pipe([
   Object.fromEntries,
 ]);
 
-export const getCountriesCountFromBaseCountries = pipe([map(first), size]);
+export const getBaseCountryName = property([BaseCountriesIndices.COUNTRYINDEX]);
+export const getBaseCountryDomesticLeagues = property([
+  BaseCountriesIndices.DOMESTICLEAGUESINDEX,
+]);
+export const getBaseCountryClubs = property([BaseCountriesIndices.CLUBSINDEX]);
+
+export const getCountriesCountFromBaseCountries = pipe([
+  map(getBaseCountryName),
+  size,
+]);
+
+export const getDomesticLeaguesCountFromBaseCountries = pipe([
+  getCountriesCountFromBaseCountries,
+  multiply(DEFAULTDOMESTICLEAGUESPERCOUNTRY),
+]);
 
 export const getDomesticLeaguesPerCountryCountFromBaseCountries = pipe([
-  map(property([1])),
+  map(getBaseCountryDomesticLeagues),
   getFirstLevelArrayLengths,
   flattenDepth(COMPETITIONSDEPTH),
+  first,
 ]);
+
 export const getClubsPerDomesticLeaguesCountFromBaseCountries = pipe([
-  map(last),
+  map(getBaseCountryClubs),
   getSecondLevelArrayLengths,
   flattenDepth(CLUBSDEPTH),
+  first,
 ]);
 
 export const getCountriesDomesticLeaguesAndClubsCounts = over([
@@ -252,10 +240,10 @@ export const getCountriesDomesticLeaguesAndClubsCounts = over([
 
 export const getDomesticLeaguesOfCountryFromBaseCountries = curry(
   (
-    countryIndex: string,
+    countryIndex: number,
     countriesLeaguesClubs: BaseCountries,
   ): Array<string> => {
-    return property([countryIndex, BASECOUNTRIESDOMESTICLEAGUESINDEX])(
+    return property([countryIndex, BaseCountriesIndices.DOMESTICLEAGUESINDEX])(
       countriesLeaguesClubs,
     );
   },
@@ -263,20 +251,20 @@ export const getDomesticLeaguesOfCountryFromBaseCountries = curry(
 
 export const getClubsOfDomesticLeagueFromBaseCountries = curry(
   (
-    [countryIndex, domesticLeagueIndex]: [string, string],
+    [countryIndex, domesticLeagueIndex]: [number, number],
     countriesLeaguesClubs: BaseCountries,
   ): Array<string> => {
     return property([
       countryIndex,
-      BASECOUNTRIESCLUBSINDEX,
+      BaseCountriesIndices.CLUBSINDEX,
       domesticLeagueIndex,
     ])(countriesLeaguesClubs);
   },
 );
 
 export const getCountryNameFromBaseCountries = curry(
-  (countryIndex: string, countriesLeaguesClubs: BaseCountries): string => {
-    return property([countryIndex, BASECOUNTRIESCOUNTRIESINDEX])(
+  (countryIndex: number, countriesLeaguesClubs: BaseCountries): string => {
+    return property([countryIndex, BaseCountriesIndices.COUNTRYINDEX])(
       countriesLeaguesClubs,
     );
   },
@@ -284,7 +272,7 @@ export const getCountryNameFromBaseCountries = curry(
 
 export const getDomesticLeagueNameFromBaseCountries = curry(
   (
-    [countryIndex, domesticLeagueIndex]: [string, string],
+    [countryIndex, domesticLeagueIndex]: [number, number],
     countriesLeaguesClubs: BaseCountries,
   ): string => {
     return pipe([
@@ -296,7 +284,7 @@ export const getDomesticLeagueNameFromBaseCountries = curry(
 
 export const getClubNameFromBaseCountries = curry(
   (
-    [countryIndex, domesticLeagueIndex, clubIndex]: [string, string, string],
+    [countryIndex, domesticLeagueIndex, clubIndex]: [number, number, number],
     countriesLeaguesClubs: BaseCountries,
   ): string => {
     return pipe([

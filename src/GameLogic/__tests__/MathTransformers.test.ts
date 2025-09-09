@@ -2,7 +2,6 @@ import { test, fc } from "@fast-check/vitest";
 import { describe, expect, assert } from "vitest";
 import {
   map,
-  sum,
   last,
   pipe,
   first,
@@ -11,7 +10,7 @@ import {
   head,
   subtract,
   partialRight,
-  sum
+  sum,
 } from "lodash/fp";
 import {
   fastCheckTestLinearRangeGenerator,
@@ -400,28 +399,36 @@ describe("MathTransformers test suite", () => {
         );
       },
     );
-    
-    describe("pentagonal numbers", () => {
-    test.prop([fc.integer({ min: 1, max: 7 }), fc.integer({ min: 7, max: 7 })])(
-      "percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange",
-      (testNatNumber, testRangeMax) => {
-        const actualPercentage: number =
-          percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange(
-            testNatNumber,
-            testRangeMax,
-          );
-	
-        assertBetweenZeroAndOneHundred(actualPercentage);
-      },
-    );
 
-      test.prop([fc.constantFrom(7,4)])(
-      "do percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange",
-	(testRangeSize) => {
-          const actualPercentages: Array<number> = unfold(partialRight(percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange, [testRangeSize]))(testRangeSize)
-	  expect(sum(actualPercentages)).toEqual(1)
-      },
-    );
+    describe("pentagonal numbers", () => {
+      test.prop([
+        fc.integer({ min: 1, max: 7 }),
+        fc.integer({ min: 7, max: 7 }),
+      ])(
+        "percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange",
+        (testNatNumber, testRangeMax) => {
+          const actualPercentage: number =
+            percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange(
+              testNatNumber,
+              testRangeMax,
+            );
+
+          assertBetweenZeroAndOneHundred(actualPercentage);
+        },
+      );
+
+      test.prop([fc.constantFrom(7, 4)])(
+        "do percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange",
+        (testRangeSize) => {
+          const actualPercentages: Array<number> = unfold(
+            partialRight(
+              percentageOfGeneralizedPentagonalNumbersFromFiveForGivenRange,
+              [testRangeSize],
+            ),
+          )(testRangeSize);
+          expect(sum(actualPercentages)).toEqual(1);
+        },
+      );
     });
   });
 });

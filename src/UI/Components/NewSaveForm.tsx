@@ -5,12 +5,12 @@ import {
   getClubsOfDomesticLeagueFromBaseCountries,
   getDomesticLeaguesOfCountryFromBaseCountries,
   getEventTargetValue,
-} from "../../Common/Getters";
+} from "../../GameLogic/Getters";
 import {
   zipAllAndGetFirstArray,
   joinOnUnderscores,
 } from "../../Common/Transformers";
-import { BaseCountries } from "../../Common/Types";
+import { BaseCountries } from "../../GameLogic/Types";
 
 export const CreateEntityOptions = ({
   strings,
@@ -79,15 +79,13 @@ export const NewSaveForm = ({
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const playerID: string = joinOnUnderscores([
+
+    const saveArguments: Record<string, string> = {
+      name: playerName,
       countryValue,
       domesticLeagueValue,
       clubValue,
-      "2025",
-    ]);
-    const saveArguments: Record<string, string> = {
-      name: playerName,
-      playerID,
+      season: "2025",
     };
   };
 

@@ -1,9 +1,11 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import { pipe, over, identity, property, round } from "lodash/fp";
-import { DEFAULTCLUBDATARANGES } from "../Constants";
+import { pipe, over, identity, property, round, add } from "lodash/fp";
+import { DEFAULTCLUBDATARANGES, DEFAULTSQUADSIZE } from "../Constants";
+import { Club } from "../Types";
 import {
   assertIntegerInRangeInclusive,
+  assertIsClubObject,
 } from "../Asserters";
 import {
   fastCheckRandomLeagueLevel,
@@ -11,6 +13,10 @@ import {
   fastCheckTestLinearRangeWithMinimumGenerator,
   fastCheckRandomItemFromArrayWithIndex,
 } from "../TestDataGenerators";
+import {
+  getCountOfUniqueIntegersFromArray,
+  getMinAndMaxOfArray,
+} from "../Getters";
 import {
   adjustRangeForDivision,
   generateAttendanceForClubNumber,
@@ -22,12 +28,15 @@ import {
   generateHealthCostsForClubNumber,
   generatePlayerDevelopmentCostsForClubNumber,
   generateWageBillToRevenueRatioForClubNumber,
-  domesticLeagueLevelRepeaterForClubIDs,
+  domesticLeagueLevelRepeaterForClubs,
   calculatePreviousSeasonRevenueForClubNumber,
   calculatePreviousSeasonWageBillForClubNumber,
+  mod,
+  generateClubStartingPlayerNumbers,
+  createClub,
 } from "../Transformers";
 
-describe("DataGenerators test suite", () => {
+describe("ClubDataGenerators test suite", () => {
   test.prop([fc.gen(), fc.integer({ min: 1000 })])(
     "adjustRangeForDivision",
     (fcGen, testRangeSize) => {
@@ -70,7 +79,7 @@ describe("DataGenerators test suite", () => {
 
     const [testClubNumber, expectedLeagueLevel] = pipe([
       fastCheckRandomClubNumberGenerator,
-      over([identity, domesticLeagueLevelRepeaterForClubIDs]),
+      over([identity, domesticLeagueLevelRepeaterForClubs]),
     ])(fcGen);
 
     const actualResult: number = testGenerator(testClubNumber);
@@ -105,4 +114,27 @@ describe("DataGenerators test suite", () => {
       assertIntegerInRangeInclusive([1000, expectedRangeMax], actualResult);
     },
   );
+
+  test.prop([fc.gen()])("generateClubStartingPlayerNumbers", (fcGen) => {
+    const testClubNumber: number = fastCheckRandomClubNumberGenerator(fcGen);
+    const actualPlayerNumbers: Array<number> =
+      generateClubStartingPlayerNumbers(testClubNumber);
+
+    const [actualMin, actualMax] = getMinAndMaxOfArray(actualPlayerNumbers);
+    expect(mod(DEFAULTSQUADSIZE, actualMax + 1)).toEqual(0);
+    expect(add(actualMin - 1, DEFAULTSQUADSIZE)).toEqual(actualMax);
+    expect(getCountOfUniqueIntegersFromArray(actualPlayerNumbers)).toEqual(
+      DEFAULTSQUADSIZE,
+    );
+  });
+
+  test.prop([fc.gen()])("createClub", (fcGen) => {
+    const testClubNumber: number = fastCheckRandomClubNumberGenerator(fcGen);
+
+    const [actualClubNumber, actualClubObject]: [number, Club] =
+      createClub(testClubNumber);
+
+    expect(actualClubNumber).toBe(testClubNumber);
+    assertIsClubObject(actualClubObject);
+  });
 });

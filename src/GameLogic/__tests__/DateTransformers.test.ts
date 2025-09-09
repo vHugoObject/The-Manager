@@ -13,6 +13,7 @@ import {
   sample,
   chunk,
   zip,
+  divide,
 } from "lodash/fp";
 import {
   addDays,
@@ -28,7 +29,10 @@ import {
   format,
 } from "date-fns/fp";
 import { AUGUST, JANUARY, FEBRUARY, JUNE } from "../Constants";
-import { fastCheckRandomRoundRobinClubsCount } from "../TestDataGenerators";
+import {
+  fastCheckRandomRoundRobinClubsCount,
+  fastCheckRandomIntegerBetweenOneAnd,
+} from "../TestDataGenerators";
 import {
   roundRobinScheduler,
   totalRoundRobinMatches,
@@ -53,6 +57,7 @@ import {
   subOneDay,
   defaultIsTransferWindowOpen,
   convertToSet,
+  createScheduleForRoundOfDoubleRobinRound,
 } from "../Transformers";
 
 describe("DateTransformers test suite", () => {
@@ -373,5 +378,24 @@ describe("DateTransformers test suite", () => {
       convertToSet,
     ])(actualSchedule);
     expect(actualMatchesSet.size).toEqual(expectedMatchesCount);
+  });
+
+  test.prop([fc.gen()])("createScheduleForRoundOfDoubleRobinRound", (fcGen) => {
+    const testClubsCount: number = fastCheckRandomRoundRobinClubsCount(fcGen);
+    const expectedRounds: number = totalDoubleRoundRobinRounds(testClubsCount);
+    const expectedTotalMatchesCount: number =
+      totalDoubleRoundRobinMatches(testClubsCount);
+    const expectedMatchesCount: number = divide(
+      expectedTotalMatchesCount,
+      expectedRounds,
+    );
+    const testRound: number = fastCheckRandomIntegerBetweenOneAnd(
+      fcGen,
+      expectedRounds,
+    );
+    const actualSchedule: Array<[number, number]> =
+      createScheduleForRoundOfDoubleRobinRound(testRound, testClubsCount);
+
+    expect(actualSchedule.length).toEqual(expectedMatchesCount);
   });
 });

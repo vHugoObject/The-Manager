@@ -10,6 +10,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      fp-ts:
+        specifier: ^2.16.11
+        version: 2.16.11
       futil-js:
         specifier: ^1.76.2
         version: 1.76.2
@@ -1743,6 +1746,12 @@ packages:
         integrity: sha512-ETEklSGi5t0QMZuiXoA/Q6vcnxcLQP5vdugSpuAyi6SVGi2clPPp+xgEhuMaHC+zGgn31Kd235W35f7Hykkaww==,
       }
     engines: { node: ">= 6" }
+
+  fp-ts@2.16.11:
+    resolution:
+      {
+        integrity: sha512-LaI+KaX2NFkfn1ZGHoKCmcfv7yrZsC3b8NtWsTVQeHkq4F27vI5igUuO53sxqDEa2gNQMHFPmpojDw/1zmUK7w==,
+      }
 
   fraction.js@4.3.7:
     resolution:
@@ -4073,6 +4082,8 @@ snapshots:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
+
+  fp-ts@2.16.11: {}
 
   fraction.js@4.3.7: {}
 

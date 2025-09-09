@@ -1,16 +1,17 @@
 import { COUNTRYNAMES, FIRSTNAMES, LASTNAMES } from "./Names";
 
-export enum PLAYERIDINDICES {
-  CountryNumber = "0",
-  DomesticLeagueID = "1",
-  DomesticLeagueLevel = "2",
-  ClubID = "3",
-  SquadNumber = "4",
-  PositionGroup = "5",
-  Position = "6",
-  PlayerNumber = "7",
-  Season = "8",
-}
+export const PLAYERFIELDKEYS: Array<string> = [
+  "FirstName",
+  "LastName",
+  "PlayerCountry",
+  "Age",
+  "Wage",
+  "PositionGroup",
+  "PlayerLeagueCountry",
+  "DomesticLeagueLevel",
+  "DomesticLeagueNumber",
+  "ClubNumber",
+];
 
 export const COUNTRYNAMESRANGE: [number, number] = [0, COUNTRYNAMES.length];
 export const FIRSTNAMESRANGE: [number, number] = [0, FIRSTNAMES.length];
@@ -51,7 +52,7 @@ export enum ALLPOSITIONS {
 // LW, RW, ST, CF
 export const FORWARDPOSITIONGROUPRANGES: [number, number] = [0, 4];
 // LM. RM, CM, CDM
-export const MIDFIELDERPOSITIONGROUPRANGES: [number, number] = [4, 8];
+export const MNumberFIELDERPOSITIONGROUPRANGES: [number, number] = [4, 8];
 // LB, RB, LCB, RCB
 export const DEFENDERPOSITIONGROUPRANGES: [number, number] = [8, 12];
 // LK, SK, BPK

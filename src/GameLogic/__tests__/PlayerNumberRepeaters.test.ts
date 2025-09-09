@@ -1,13 +1,7 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
 import { mapIndexed } from "futil-js";
-import {
-  pipe,
-  flatten,
-  map,
-  sum,
-  head,
-} from "lodash/fp";
+import { pipe, flatten, map, sum, head } from "lodash/fp";
 import {
   DEFAULTDOMESTICLEAGUESPERCOUNTRY,
   DEFAULTPLAYERSPERCOUNTRY,
@@ -18,106 +12,103 @@ import {
   fastCheckGenerateTestPlayersCount,
   fastCheckGenerateTestCountriesLeaguesClubsPlayersCount,
   fastCheckGetRandomArrayChunk,
-  fastCheckGenerateAllPlayerNumbersOfRandomClub
+  fastCheckGenerateAllPlayerNumbersOfRandomClub,
 } from "../TestDataGenerators";
 import { convertArraysToSetsAndAssertStrictEqual } from "../Asserters";
 import {
-  countryIDRepeaterForPlayerIDs,
-  domesticLeagueIDRepeaterForPlayerIDs,
-  domesticLeagueLevelRepeaterForPlayerIDs,
+  countryNumberRepeaterForPlayers,
+  domesticLeagueNumberRepeaterForPlayers,
+  domesticLeagueLevelRepeaterForPlayers,
   positionGroupRankRepeaterForPlayerNumber,
   unfold,
   addOne,
   convertArrayChunksIntoSets,
-  clubIDRepeaterForPlayerIDs,
-  positionGroupIDRepeaterForPlayerIDs,
+  clubNumberRepeaterForPlayers,
+  positionGroupNumberRepeaterForPlayers,
   squadNumberRepeaterForPlayerNumber,
-  convertArrayToSetThenGetSize
+  convertArrayToSetThenGetSize,
 } from "../Transformers";
 
-describe("PlayerIDRepeaters test suite", () => {
-  test.prop([fc.gen()])("countryIDRepeaterForPlayerIDs", (fcGen) => {
+describe("PlayerNumberRepeaters test suite", () => {
+  test.prop([fc.gen()])("countryNumberRepeaterForPlayers", (fcGen) => {
     const [testPlayersCount, testCountriesCount] =
       fastCheckGenerateTestPlayersCount(fcGen);
-    const expectedIDCountsSets: Array<Set<number>> = unfold(
+    const expectedNumberCountsSets: Array<Set<number>> = unfold(
       (countryIndex: number) => new Set([countryIndex]),
       testCountriesCount,
     );
 
-    const actualIDs: Array<number> = unfold(
-      countryIDRepeaterForPlayerIDs,
+    const actualNumbers: Array<number> = unfold(
+      countryNumberRepeaterForPlayers,
       testPlayersCount,
     );
-    const actualIDCountsSets: Array<Array<number>> = convertArrayChunksIntoSets(
-      DEFAULTPLAYERSPERCOUNTRY,
-      actualIDs,
-    );
-    expect(actualIDCountsSets).toStrictEqual(expectedIDCountsSets);
+    const actualNumberCountsSets: Array<Array<number>> =
+      convertArrayChunksIntoSets(DEFAULTPLAYERSPERCOUNTRY, actualNumbers);
+    expect(actualNumberCountsSets).toStrictEqual(expectedNumberCountsSets);
   });
 
-  test.prop([fc.gen()])("domesticLeagueIDRepeaterForPlayerIDs", (fcGen) => {
+  test.prop([fc.gen()])("domesticLeagueNumberRepeaterForPlayers", (fcGen) => {
     const [, testDomesticLeaguesCount, , testPlayersCount] =
       fastCheckGenerateTestCountriesLeaguesClubsPlayersCount(fcGen);
-    const expectedIDCountsSets: Array<Set<number>> = unfold(
+    const expectedNumberCountsSets: Array<Set<number>> = unfold(
       (leagueIndex: number) => new Set([leagueIndex]),
       testDomesticLeaguesCount,
     );
 
-    const actualIDs: Array<number> = unfold(
-      domesticLeagueIDRepeaterForPlayerIDs,
+    const actualNumbers: Array<number> = unfold(
+      domesticLeagueNumberRepeaterForPlayers,
       testPlayersCount,
     );
-    const actualIDCountsSets: Array<Array<number>> = convertArrayChunksIntoSets(
-      DEFAULTPLAYERSPERDOMESTICLEAGUE,
-      actualIDs,
-    );
-    expect(actualIDCountsSets).toStrictEqual(expectedIDCountsSets);
+    const actualNumberCountsSets: Array<Array<number>> =
+      convertArrayChunksIntoSets(
+        DEFAULTPLAYERSPERDOMESTICLEAGUE,
+        actualNumbers,
+      );
+    expect(actualNumberCountsSets).toStrictEqual(expectedNumberCountsSets);
   });
 
-  test.prop([fc.gen()])("domesticLeagueLevelRepeaterForPlayerIDs", (fcGen) => {
+  test.prop([fc.gen()])("domesticLeagueLevelRepeaterForPlayers", (fcGen) => {
     const [testPlayersCount, testCountriesCount] =
       fastCheckGenerateTestPlayersCount(fcGen);
     const testDomesticLeagueLevelsSets: Array<Set<number>> = unfold(
       (domesticLeagueLevelIndex: number) => new Set([domesticLeagueLevelIndex]),
       DEFAULTDOMESTICLEAGUESPERCOUNTRY,
     );
-    const expectedIDCountsSets: Array<Set<number>> = pipe([
+    const expectedNumberCountsSets: Array<Set<number>> = pipe([
       unfold((_: number) => testDomesticLeagueLevelsSets),
       flatten,
     ])(testCountriesCount);
 
-    const actualIDs: Array<number> = unfold(
-      domesticLeagueLevelRepeaterForPlayerIDs,
+    const actualNumbers: Array<number> = unfold(
+      domesticLeagueLevelRepeaterForPlayers,
       testPlayersCount,
     );
-    const actualIDCountsSets: Array<Array<number>> = convertArrayChunksIntoSets(
-      DEFAULTPLAYERSPERDOMESTICLEAGUE,
-      actualIDs,
-    );
-    expect(actualIDCountsSets).toStrictEqual(expectedIDCountsSets);
+    const actualNumberCountsSets: Array<Array<number>> =
+      convertArrayChunksIntoSets(
+        DEFAULTPLAYERSPERDOMESTICLEAGUE,
+        actualNumbers,
+      );
+    expect(actualNumberCountsSets).toStrictEqual(expectedNumberCountsSets);
   });
 
-  test.prop([fc.gen()])("clubIDRepeaterForPlayerIDs", (fcGen) => {
+  test.prop([fc.gen()])("clubNumberRepeaterForPlayers", (fcGen) => {
+    const actualClubNumbers: Array<number> =
+      fastCheckGenerateAllPlayerNumbersOfRandomClub(
+        clubNumberRepeaterForPlayers,
+        fcGen,
+      );
 
-    const actualClubIDs: Array<number> =
-          fastCheckGenerateAllPlayerNumbersOfRandomClub(
-            clubIDRepeaterForPlayerIDs,
-            fcGen,
-          );
-    
-
-    const actualClubIDsCount: number = convertArrayToSetThenGetSize(actualClubIDs)
-    expect(actualClubIDsCount).toEqual(1)
-    
-
+    const actualClubNumbersCount: number =
+      convertArrayToSetThenGetSize(actualClubNumbers);
+    expect(actualClubNumbersCount).toEqual(1);
   });
 
-  test.prop([fc.gen()])("positionGroupIDRepeaterForPlayerIDs", (fcGen) => {
+  test.prop([fc.gen()])("positionGroupNumberRepeaterForPlayers", (fcGen) => {
     const [testPlayersCount]: [number, number] =
       fastCheckGenerateTestPlayersCount(fcGen);
 
-    const actualPositionGroupIDs: Array<number> = unfold(
-      positionGroupIDRepeaterForPlayerIDs,
+    const actualPositionGroupNumbers: Array<number> = unfold(
+      positionGroupNumberRepeaterForPlayers,
       testPlayersCount,
     );
 
@@ -131,7 +122,7 @@ describe("PlayerIDRepeaters test suite", () => {
     ])(DEFAULTPLAYERSPERPOSITIONGROUP);
     const [actualRandomChunk]: Array<number> = fastCheckGetRandomArrayChunk(
       fcGen,
-      [actualPositionGroupIDs, 25],
+      [actualPositionGroupNumbers, 25],
     );
 
     convertArraysToSetsAndAssertStrictEqual([
@@ -144,7 +135,7 @@ describe("PlayerIDRepeaters test suite", () => {
     const [testPlayersCount]: [number, number] =
       fastCheckGenerateTestPlayersCount(fcGen);
 
-    const actualPositionGroupIDs: Array<number> = unfold(
+    const actualPositionGroupNumbers: Array<number> = unfold(
       positionGroupRankRepeaterForPlayerNumber,
       testPlayersCount,
     );
@@ -158,7 +149,7 @@ describe("PlayerIDRepeaters test suite", () => {
     );
     const [actualRandomChunk]: Array<number> = fastCheckGetRandomArrayChunk(
       fcGen,
-      [actualPositionGroupIDs, 25],
+      [actualPositionGroupNumbers, 25],
     );
 
     convertArraysToSetsAndAssertStrictEqual([

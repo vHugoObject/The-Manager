@@ -14,17 +14,16 @@ import {
   identity,
   spread,
   multiply,
-  add,
 } from "lodash/fp";
 import {
   getCountOfStringsFromArray,
   getCountOfIntegersFromArray,
-  getCountOfUniqueIntegersFromArray,
   getFirstLevelArrayLengths,
   getCountOfItemsFromArrayForPredicate,
   getSizeMinAndMaxOfArray,
   getCountOfNumbersFromArray,
   getCountOfFloatsBetweenZeroAndOne,
+  getCountOfUniqueIntegersFromArray,
 } from "../Getters";
 import {
   convertFlattenedArrayIntoSet,
@@ -39,6 +38,7 @@ import {
   assertIntegerInRangeInclusive,
   assertIntegerInRangeExclusive,
   assertAllArrayValuesAreUnique,
+  assertArrayOfIntegersInRangeExclusive,
 } from "../Asserters";
 import {
   fastCheckRandomCharacterGenerator,
@@ -64,9 +64,11 @@ import {
   fastCheckGetRandomArrayChunk,
   fastCheckRandomItemFromArrayWithIndex,
   fastCheckRandomArrayChunkSize,
-  fastCheckNRandomArrayIndices,
+  fastCheckNRandomArrayIndicesAsStrings,
   fastCheckUnfoldRandomRangeChunk,
   fastCheckUnfoldRandomNaturalNumberRangeChunk,
+  fastCheckRandomIntegerBetweenOneAnd,
+  fastCheckNRandomArrayIndicesAsIntegers,
 } from "../TestDataGenerators";
 
 describe("TestPrimitiveDataGenerators test suite", () => {
@@ -154,6 +156,24 @@ describe("TestPrimitiveDataGenerators test suite", () => {
         testArray,
       );
       expect(property([actualIndex], testArray)).toBe(actualItem);
+    },
+  );
+
+  test.prop([fc.integer({ min: 5, max: 100 }), fc.gen()])(
+    "fastCheckNRandomArrayIndicesAsIntegers",
+    (testArraySize, fcGen) => {
+      const testArray: Array<string> =
+        fastCheckNLengthUniqueStringArrayGenerator(fcGen, testArraySize);
+      const testCount: number = fastCheckRandomIntegerBetweenOneAnd(
+        fcGen,
+        testArraySize,
+      );
+      const actualIndices: Array<number> =
+        fastCheckNRandomArrayIndicesAsIntegers(testCount, fcGen, testArray);
+      expect(getCountOfUniqueIntegersFromArray(actualIndices)).toEqual(
+        testCount,
+      );
+      assertArrayOfIntegersInRangeExclusive([0, testArraySize], actualIndices);
     },
   );
 
@@ -484,7 +504,7 @@ describe("TestPrimitiveDataGenerators test suite", () => {
   );
 
   test.prop([fc.gen(), fc.integer({ min: 2, max: 100 })])(
-    "fastCheckNRandomArrayIndices",
+    "fastCheckNRandomArrayIndicesAsStrings",
     (fcGen, testArraySize) => {
       const testArray: Array<number> =
         fastCheckNLengthUniqueIntegerArrayGenerator(fcGen, testArraySize);
@@ -494,11 +514,12 @@ describe("TestPrimitiveDataGenerators test suite", () => {
         testArray,
       );
 
-      const actualIndices: Array<string> = fastCheckNRandomArrayIndices(
-        fcGen,
-        testIndicesCount,
-        testArray,
-      );
+      const actualIndices: Array<string> =
+        fastCheckNRandomArrayIndicesAsStrings(
+          fcGen,
+          testIndicesCount,
+          testArray,
+        );
       assert.lengthOf(actualIndices, testIndicesCount);
       assertAllArrayValuesAreUnique(actualIndices);
     },
@@ -518,8 +539,8 @@ describe("TestPrimitiveDataGenerators test suite", () => {
         ])(testMultiple);
 
         const actualChunk: Array<number> = fastCheckUnfoldRandomRangeChunk(
-          testChunkSize,
           testRange,
+          testChunkSize,
           addOne,
           fcGen,
         );
@@ -545,8 +566,8 @@ describe("TestPrimitiveDataGenerators test suite", () => {
         const testMax: number = multiply(testChunkSize, testMultiple);
         const actualChunk: Array<number> =
           fastCheckUnfoldRandomNaturalNumberRangeChunk(
-            testChunkSize,
             testMax,
+            testChunkSize,
             addOne,
             fcGen,
           );

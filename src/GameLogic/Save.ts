@@ -1,41 +1,9 @@
 import { openDB, IDBPDatabase } from "idb";
-import { property, curry, pick } from "lodash/fp";
-import { flowAsync } from "futil-js";
-import { SaveID, Save } from "./SaveTypes";
-import { Entity } from "../Common/CommonTypes";
-import { DBNAME, SAVESTORE, DBVERSION, KEYPATH } from "./SaveConstants";
+import { property, curry } from "lodash/fp";
+import { DBNAME, SAVESTORE, DBVERSION, KEYPATH } from "./Constants";
+import { Save } from "./Types";
 
-export const getUserName = property(["Name"]);
-export const getUserMainCompetitionID = property(["UserMainCompetitionID"]);
-export const getUserClubID = property(["UserClubID"]);
-export const getCurrentSeason = property(["CurrentSeason"]);
-export const getSaveEntities = property(["Entities"]);
-export const getSavePlayerSkills = property(["PlayerSkillsAndPhysicalData"]);
-export const getAllEntitiesKeysFromSave = flowAsync(
-  getSaveEntities,
-  Object.keys,
-);
-
-export const getEntityFromSavePath = curry(
-  (savePath: string, [save, entityID]: [Save, string]): Entity => {
-    return property([savePath, entityID])(save);
-  },
-);
-
-export const getEntityFromSaveEntities = getEntityFromSavePath("Entities");
-
-export const getEntitiesFromSavePath = curry(
-  (
-    savePath: string,
-    [save, entityIDs]: [Save, Array<string>],
-  ): Record<string, Entity> => {
-    return flowAsync(property([savePath]), pick(entityIDs))(save);
-  },
-);
-
-export const getGroupOfPlayerSkillsFromSave = getEntitiesFromSavePath(
-  "PlayerSkillsAndPhysicalData",
-);
+export const getCountriesFromSave = property(["Countries"]);
 
 export const openSaveDB = async (): Promise<IDBPDatabase> => {
   const db = await openDB(DBNAME, DBVERSION, {
