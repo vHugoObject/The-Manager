@@ -1,6 +1,7 @@
 import { COUNTRYNAMES, FIRSTNAMES, LASTNAMES } from "./Names";
 
 export const PLAYERFIELDKEYS: Array<string> = [
+  "PlayerNumber",
   "FirstName",
   "LastName",
   "PlayerCountry",

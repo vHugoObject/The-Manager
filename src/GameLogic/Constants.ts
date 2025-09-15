@@ -22,6 +22,8 @@ export const DEFAULTDOMESTICLEAGUESPERCOUNTRYNUMBERRANGE: [number, number] = [
   0, 4,
 ];
 export const DEFAULTCLUBSPERDOMESTICLEAGUE = 20;
+export const DEFAULTMATCHPERWEEKPERDOMESTICLEAGUE =
+  DEFAULTCLUBSPERDOMESTICLEAGUE / 2 - 1;
 export const DEFAULTSQUADSIZE: number = 25;
 
 export const DEFAULTOTALCOUNTRIES: number = 5;
@@ -74,10 +76,14 @@ export const THETA: number = 0.562;
 export const SHAPE: number = 1.864;
 export const POSSIBLEGOALS: Array<number> = [0, 1, 2, 3, 4, 5];
 
-export const DBNAME: string = "the-manager";
-export const SAVESTORE: string = "save-games";
 export const DBVERSION: number = 1;
-export const KEYPATH: string = "SaveNumber";
+export const OBJECTSTORENAMES: Array<string> = [
+  "SaveArguments",
+  "Clubs",
+  "Players",
+  "Matches",
+];
+
 export const COMPETITIONSDEPTH: number = 1;
 export const CLUBSDEPTH: number = 2;
 export const PLAYERSDEPTH: number = 3;
@@ -131,6 +137,7 @@ export const DEFAULTSTEPS: number = multiply(
 export const BASECOUNTRIES: BaseCountries = [ENGLAND];
 
 export const CLUBKEYS: Array<string> = [
+  "ClubNumber",
   "Country",
   "DomesticLeagueLevel",
   "DomesticLeagueNumber",

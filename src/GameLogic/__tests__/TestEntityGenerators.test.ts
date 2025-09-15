@@ -4,10 +4,16 @@ import {
   MatchResult,
   MatchResultsTuple,
   PlayerMatchLogs,
-  MatchLog
+  MatchLog,
+  Player,
+  Club,
 } from "../Types";
 import { ReadonlyNonEmptyArray } from "fp-ts/ReadonlyNonEmptyArray";
-import { DEFAULTSQUADSIZE, DEFAULTTOTALCLUBS, DEFAULTTOTALPLAYERS } from "../Constants";
+import {
+  DEFAULTSQUADSIZE,
+  DEFAULTTOTALCLUBS,
+  DEFAULTTOTALPLAYERS,
+} from "../Constants";
 import {
   pipe,
   multiply,
@@ -20,18 +26,24 @@ import {
   inRange,
   zipAll,
   flatten,
-  last
+  last,
+  keyBy,
 } from "lodash/fp";
 import { addOne } from "../Transformers";
-import { getCountOfUniqueItemsFromArrayForPredicate } from "../Getters"
+import { getCountOfUniqueItemsFromArrayForPredicate } from "../Getters";
+import { joinOnUnderscores, minusOne } from "../Transformers";
 import {
   assertIntegerInRangeInclusive,
   assertIntegerInRangeExclusive,
   pairIntegersAndAssertEqual,
   assertIsArrayOfPlayerMatchLogs,
-  assertIsArrayOfClubMatchLogs
+  assertIsArrayOfClubMatchLogs,
+  assertIsClubObject,
+  assertIsPlayerObject,
 } from "../Asserters";
 import {
+  fastCheckCreateNTestPlayers,
+  fastCheckCreateNTestClubs,
   fastCheckTestPlayerNumberAndSeason,
   fastCheckGenerateTestCountriesCount,
   fastCheckTestSeasonAndClubNumber,
@@ -46,14 +58,13 @@ import {
   fastCheckCreateTestPlayerMatchLogs,
   fastCheckGetNRandomClubNumbers,
   fastCheckGetAllPlayersOfNRandomClubs,
-  fastCheckRandomItemFromArray,  
-  fastCheckCreateTestMatchLog,  
+  fastCheckRandomItemFromArray,
+  fastCheckCreateTestMatchLog,
   fastCheckGetAllPlayersOfTwoRandomClubs,
+  fastCheckRandomSeasonDomesticLeagueNumberAndMatchNumber,
   fastCheckCreateTestMatchLogsObject,
-  fastCheckRandomSeason,
-  fastCheckRandomDomesticLeagueNumber,
   fastCheckRandomNaturalNumberWithMax,
-  fastCheckRandomObjectValue
+  fastCheckRandomStringGenerator,
 } from "../TestDataGenerators";
 
 describe("TestEntityGenerators", () => {
@@ -93,42 +104,89 @@ describe("TestEntityGenerators", () => {
     );
 
     test.prop([fc.gen()])(
-    "fastCheckGenerateAllPlayerNumbersOfRandomClub",
-    (fcGen) => {
-      const actualPlayerNumbers: Array<number> =
-        fastCheckGenerateAllPlayerNumbersOfRandomClub(identity, fcGen);
-      assert.lengthOf(actualPlayerNumbers, DEFAULTSQUADSIZE);
-    },
+      "fastCheckGenerateAllPlayerNumbersOfRandomClub",
+      (fcGen) => {
+        const actualPlayerNumbers: Array<number> =
+          fastCheckGenerateAllPlayerNumbersOfRandomClub(identity, fcGen);
+        assert.lengthOf(actualPlayerNumbers, DEFAULTSQUADSIZE);
+      },
     );
 
-    test.prop([fc.gen(), fc.integer({min: 1, max: 20})])(
-    "fastCheckGetNRandomClubNumbers",
+    test.prop([fc.gen(), fc.integer({ min: 1, max: 20 })])(
+      "fastCheckGetNRandomClubNumbers",
       (fcGen, testCount) => {
-	const actualClubNumbers: Array<number> =
-              fastCheckGetNRandomClubNumbers(testCount, fcGen)
-	const predicate = inRange(0, DEFAULTTOTALCLUBS)
-	expect(getCountOfUniqueItemsFromArrayForPredicate(predicate)(actualClubNumbers)).toEqual(testCount)	
-    },
+        const actualClubNumbers: Array<number> = fastCheckGetNRandomClubNumbers(
+          testCount,
+          fcGen,
+        );
+        const predicate = inRange(0, DEFAULTTOTALCLUBS);
+        expect(
+          getCountOfUniqueItemsFromArrayForPredicate(predicate)(
+            actualClubNumbers,
+          ),
+        ).toEqual(testCount);
+      },
     );
 
-    test.prop([fc.gen(), fc.integer({min: 1, max: 10})])(
-    "fastCheckGetAllPlayersOfNRandomClubs",
+    test.prop([fc.gen(), fc.integer({ min: 1, max: 10 })])(
+      "fastCheckGetAllPlayersOfNRandomClubs",
       (fcGen, testCount) => {
-	
-	const actualClubPlayerNumberTuples: Array<[number, Array<number>]> =
-              fastCheckGetAllPlayersOfNRandomClubs(testCount, fcGen)
-	const [actualClubNumbers, actualPlayerNumbers]: [Array<number>, Array<Array<number>>] = zipAll(actualClubPlayerNumberTuples) as [Array<number>, Array<Array<number>>]
-	assert.lengthOf(actualClubNumbers, testCount)
-	const expectedPlayersCount: number = multiply(DEFAULTSQUADSIZE, testCount)
-	const predicate = inRange(0, DEFAULTTOTALPLAYERS)
-	
-	const actualUniquePlayersCount = pipe([flatten, getCountOfUniqueItemsFromArrayForPredicate(predicate)])(actualPlayerNumbers)	
-	expect(actualUniquePlayersCount).toEqual(expectedPlayersCount)
-	
-    },
+        const actualClubPlayerNumberTuples: Array<[number, Array<number>]> =
+          fastCheckGetAllPlayersOfNRandomClubs(testCount, fcGen);
+        const [actualClubNumbers, actualPlayerNumbers]: [
+          Array<number>,
+          Array<Array<number>>,
+        ] = zipAll(actualClubPlayerNumberTuples) as [
+          Array<number>,
+          Array<Array<number>>,
+        ];
+        assert.lengthOf(actualClubNumbers, testCount);
+        const expectedPlayersCount: number = multiply(
+          DEFAULTSQUADSIZE,
+          testCount,
+        );
+        const predicate = inRange(0, DEFAULTTOTALPLAYERS);
+
+        const actualUniquePlayersCount = pipe([
+          flatten,
+          getCountOfUniqueItemsFromArrayForPredicate(predicate),
+        ])(actualPlayerNumbers);
+        expect(actualUniquePlayersCount).toEqual(expectedPlayersCount);
+      },
     );
   });
 
+  describe("Players and Clubs", () => {
+    test.prop([fc.integer({ min: 2, max: 10 }), fc.gen()])(
+      "fastCheckCreateNTestPlayers",
+      (testPlayersCount, fcGen) => {
+        const actualPlayers: Array<Player> = fastCheckCreateNTestPlayers(
+          testPlayersCount,
+          fcGen,
+        );
+        const actualRandomPlayer: Player = fastCheckRandomItemFromArray(
+          fcGen,
+          actualPlayers,
+        );
+        assertIsPlayerObject(actualRandomPlayer);
+      },
+    );
+
+    test.prop([fc.integer({ min: 2, max: 10 }), fc.gen()])(
+      "fastCheckCreateNTestClubs",
+      (testClubsCount, fcGen) => {
+        const actualClubs: Array<Club> = fastCheckCreateNTestClubs(
+          testClubsCount,
+          fcGen,
+        );
+        const actualRandomClub: Club = fastCheckRandomItemFromArray(
+          fcGen,
+          actualClubs,
+        );
+        assertIsClubObject(actualRandomClub);
+      },
+    );
+  });
 
   describe("Matches", () => {
     describe("fastCheckCreateTestMatchResult", () => {
@@ -279,152 +337,184 @@ describe("TestEntityGenerators", () => {
     });
 
     describe("MatchLogs", () => {
-      test.prop([fc.gen()])(
-        "fastCheckCreateTestPlayerMatchLog",
-        (fcGen) => {
+      test.prop([fc.gen()])("fastCheckCreateTestPlayerMatchLog", (fcGen) => {
+        const [testHomePlayers, testAwayPlayers] =
+          fastCheckGetAllPlayersOfTwoRandomClubs(fcGen);
+        const [testHomeClubResult, testAwayClubResult]: [
+          MatchResult,
+          MatchResult,
+        ] = fastCheckCreateRandomMatchResult(fcGen);
 
-	  const [testHomePlayers, testAwayPlayers] = fastCheckGetAllPlayersOfTwoRandomClubs(fcGen)
-	  const [testHomeClubResult, testAwayClubResult]: [
-            MatchResult,
-            MatchResult,
-          ] = fastCheckCreateRandomMatchResult(fcGen);
+        const [
+          [testRandomHomePlayerNumber, testRandomHomePlayerIndex],
+          [testRandomAwayPlayerNumber, testRandomAwayPlayerIndex],
+        ]: [[number, number], [number, number]] = map(
+          fastCheckRandomItemFromArrayWithIndex(fcGen),
+        )([testHomePlayers, testAwayPlayers]) as [
+          [number, number],
+          [number, number],
+        ];
 
-          const [
-            [testRandomHomePlayerNumber, testRandomHomePlayerIndex],
-            [testRandomAwayPlayerNumber, testRandomAwayPlayerIndex]
-          ]: [[number,number], [number, number]] = map(
-            fastCheckRandomItemFromArrayWithIndex(fcGen),
-          )([
-            testHomePlayers,
-            testAwayPlayers,
-          ]) as [[number,number], [number, number]];
+        const [[, actualHomeClubPlayerStats], actualHomeClubMatchResult] =
+          fastCheckCreateTestPlayerMatchLog(
+            testRandomHomePlayerIndex,
+            testRandomHomePlayerNumber,
+          )(testHomeClubResult);
+        const [[, actualAwayClubPlayerStats], actualAwayClubMatchResult] =
+          fastCheckCreateTestPlayerMatchLog(
+            testRandomAwayPlayerIndex,
+            testRandomAwayPlayerNumber,
+          )(testAwayClubResult);
 
-          const [[, actualHomeClubPlayerStats], actualHomeClubMatchResult] =
-		fastCheckCreateTestPlayerMatchLog(
-		  testRandomHomePlayerIndex,
-              testRandomHomePlayerNumber,
-              testHomeClubResult,
-            );
-          const [[, actualAwayClubPlayerStats], actualAwayClubMatchResult] =
-		fastCheckCreateTestPlayerMatchLog(
-		  testRandomAwayPlayerIndex,
-		  testRandomAwayPlayerNumber,
-		  testAwayClubResult,
-		);
-
-          assertIsArrayOfPlayerMatchLogs([
-            actualHomeClubPlayerStats,
-            actualAwayClubPlayerStats,
-          ]);
-
-          pairIntegersAndAssertEqual([
-            actualHomeClubPlayerStats.Wins,
-            testHomeClubResult.Wins,
-            actualHomeClubPlayerStats.Draws,
-            testHomeClubResult.Draws,
-            actualHomeClubPlayerStats.Losses,
-            testHomeClubResult.Losses,
-          ]);
-
-          pairIntegersAndAssertEqual([
-            actualAwayClubPlayerStats.Wins,
-            testAwayClubResult.Wins,
-            actualAwayClubPlayerStats.Draws,
-            testAwayClubResult.Draws,
-            actualAwayClubPlayerStats.Losses,
-            testAwayClubResult.Losses,
-          ]);
-
-          assertIntegerInRangeExclusive(
-            [0, addOne(testHomeClubResult.GoalsFor)],
-            actualHomeClubPlayerStats.Goals,
-          );
-          assertIntegerInRangeExclusive(
-            [0, addOne(testAwayClubResult.GoalsFor)],
-            actualAwayClubPlayerStats.Goals,
-          );
-        },
-      );
-      
-      test.prop([fc.gen()])(
-        "fastCheckCreateTestPlayerMatchLogs",
-        (fcGen) => {
-
-          const [[,testHomePlayers], [,testAwayPlayers]]  =
-            fastCheckGetAllPlayersOfTwoRandomClubs(fcGen);
-
-          const testMatchResult: MatchResultsTuple =
-		fastCheckCreateRandomMatchResult(fcGen);
-	  
-          const [
-            actualHomeClubPlayerStats,
-            actualAwayClubPlayerStats,
-          ]: [PlayerMatchLogs, PlayerMatchLogs] = fastCheckCreateTestPlayerMatchLogs(
-            [testHomePlayers, testAwayPlayers],
-            testMatchResult,
-          );
-
-
-          const [expectedHomeGoals, expectedAwayGoals] = map(
-            property(["GoalsFor"]),
-          )(testMatchResult);
-          const getActualGoals = pipe([
-            Object.values,
-            map(property(["Goals"])),
-            sum,
-          ]);
-          const actualHomeGoals: number = getActualGoals(
-            actualHomeClubPlayerStats,
-          );
-          const actualAwayGoals: number = getActualGoals(
-            actualAwayClubPlayerStats,
-          );
-
-          pairIntegersAndAssertEqual([
-            actualHomeGoals,
-            expectedHomeGoals,
-            actualAwayGoals,
-            expectedAwayGoals,
-          ]);
-        },
-      );
-    });
-
-    test.prop([fc.gen()])(
-      "fastCheckCreateTestMatchLog",
-      (fcGen) => {
-
-	const testMatchPairing: [[number, ReadonlyNonEmptyArray<number>], [number, ReadonlyNonEmptyArray<number>]] =
-              fastCheckGetAllPlayersOfTwoRandomClubs(fcGen) as [[number, ReadonlyNonEmptyArray<number>], [number, ReadonlyNonEmptyArray<number>]];
-	
-        const actualMatchLog: MatchLog = fastCheckCreateTestMatchLog(
-	  testMatchPairing,
-          fcGen,	  
-        );
-
-
-	const [
-	  testRandomHomePlayerNumber, testRandomAwayPlayerNumber
-        ] = map<[number, ReadonlyNonEmptyArray<number>], number>(
-            pipe([last, fastCheckRandomItemFromArray(fcGen)])
-          )(testMatchPairing)
-
-	const [[expectedHomeClubNumber], [expectedAwayClubNumber]] = testMatchPairing
-
-
-	assertIsArrayOfClubMatchLogs([
-	  property([expectedHomeClubNumber], actualMatchLog),
-	  property([expectedAwayClubNumber], actualMatchLog)
+        assertIsArrayOfPlayerMatchLogs([
+          actualHomeClubPlayerStats,
+          actualAwayClubPlayerStats,
         ]);
 
-	
-	assertIsArrayOfPlayerMatchLogs([
-	  property([expectedHomeClubNumber, "PlayerStatistics", testRandomHomePlayerNumber])(actualMatchLog),
-	  property([expectedAwayClubNumber, "PlayerStatistics", testRandomAwayPlayerNumber])(actualMatchLog),
-        ]);	
-	
-        
+        pairIntegersAndAssertEqual([
+          actualHomeClubPlayerStats.Wins,
+          testHomeClubResult.Wins,
+          actualHomeClubPlayerStats.Draws,
+          testHomeClubResult.Draws,
+          actualHomeClubPlayerStats.Losses,
+          testHomeClubResult.Losses,
+        ]);
+
+        pairIntegersAndAssertEqual([
+          actualAwayClubPlayerStats.Wins,
+          testAwayClubResult.Wins,
+          actualAwayClubPlayerStats.Draws,
+          testAwayClubResult.Draws,
+          actualAwayClubPlayerStats.Losses,
+          testAwayClubResult.Losses,
+        ]);
+
+        assertIntegerInRangeExclusive(
+          [0, addOne(testHomeClubResult.GoalsFor)],
+          actualHomeClubPlayerStats.Goals,
+        );
+        assertIntegerInRangeExclusive(
+          [0, addOne(testAwayClubResult.GoalsFor)],
+          actualAwayClubPlayerStats.Goals,
+        );
+      });
+
+      test.prop([fc.gen()])("fastCheckCreateTestPlayerMatchLogs", (fcGen) => {
+        const [[, testHomePlayers], [, testAwayPlayers]] =
+          fastCheckGetAllPlayersOfTwoRandomClubs(fcGen);
+
+        const testMatchResult: MatchResultsTuple =
+          fastCheckCreateRandomMatchResult(fcGen);
+
+        const [actualHomeClubPlayerStats, actualAwayClubPlayerStats]: [
+          PlayerMatchLogs,
+          PlayerMatchLogs,
+        ] = fastCheckCreateTestPlayerMatchLogs(
+          [testHomePlayers, testAwayPlayers],
+          testMatchResult,
+        );
+
+        const [expectedHomeGoals, expectedAwayGoals] = map(
+          property(["GoalsFor"]),
+        )(testMatchResult);
+        const getActualGoals = pipe([
+          Object.values,
+          map(property(["Goals"])),
+          sum,
+        ]);
+        const actualHomeGoals: number = getActualGoals(
+          actualHomeClubPlayerStats,
+        );
+        const actualAwayGoals: number = getActualGoals(
+          actualAwayClubPlayerStats,
+        );
+
+        pairIntegersAndAssertEqual([
+          actualHomeGoals,
+          expectedHomeGoals,
+          actualAwayGoals,
+          expectedAwayGoals,
+        ]);
+      });
+    });
+
+    test.prop([fc.gen()])("fastCheckCreateTestMatchLog", (fcGen) => {
+      const testMatchPairing: [
+        [number, ReadonlyNonEmptyArray<number>],
+        [number, ReadonlyNonEmptyArray<number>],
+      ] = fastCheckGetAllPlayersOfTwoRandomClubs(fcGen) as [
+        [number, ReadonlyNonEmptyArray<number>],
+        [number, ReadonlyNonEmptyArray<number>],
+      ];
+
+      const testMatchID: string = fastCheckRandomStringGenerator(fcGen);
+      const actualMatchLog: MatchLog = fastCheckCreateTestMatchLog(
+        testMatchID,
+        testMatchPairing,
+        fcGen,
+      );
+
+      const [testRandomHomePlayerNumber, testRandomAwayPlayerNumber] = map<
+        [number, ReadonlyNonEmptyArray<number>],
+        number
+      >(pipe([last, fastCheckRandomItemFromArray(fcGen)]))(testMatchPairing);
+
+      const [[expectedHomeClubNumber], [expectedAwayClubNumber]] =
+        testMatchPairing;
+
+      assertIsArrayOfClubMatchLogs([
+        property([expectedHomeClubNumber], actualMatchLog),
+        property([expectedAwayClubNumber], actualMatchLog),
+      ]);
+
+      assertIsArrayOfPlayerMatchLogs([
+        property([
+          expectedHomeClubNumber,
+          "PlayerStatistics",
+          testRandomHomePlayerNumber,
+        ])(actualMatchLog),
+        property([
+          expectedAwayClubNumber,
+          "PlayerStatistics",
+          testRandomAwayPlayerNumber,
+        ])(actualMatchLog),
+      ]);
+    });
+
+    test.prop([fc.gen(), fc.integer({ min: 1, max: 1 })], { numRuns: 1 })(
+      "fastCheckCreateTestMatchLogsObject",
+      (fcGen, testMatchWeeksCount) => {
+        const [
+          testSeason,
+          testDomesticLeagueNumber,
+          testMatchNumber,
+        ]: Array<number> =
+          fastCheckRandomSeasonDomesticLeagueNumberAndMatchNumber(fcGen);
+        const testMatchWeek: number = fastCheckRandomNaturalNumberWithMax(
+          minusOne(testMatchWeeksCount),
+          fcGen,
+        );
+
+        // season_domesticLeague_matchweek_matchnumber
+        const testAddress: string = joinOnUnderscores([
+          testSeason,
+          testDomesticLeagueNumber,
+          testMatchWeek,
+          testMatchNumber,
+        ]);
+        const actualMatchLogsObject: Array<MatchLog> =
+          fastCheckCreateTestMatchLogsObject(
+            [testMatchWeeksCount, testSeason],
+            fcGen,
+          );
+
+        const actualMatchLogsAsObject = pipe([
+          keyBy("MatchID"),
+          property(testAddress),
+        ])(actualMatchLogsObject);
+        console.log(actualMatchLogsAsObject);
+        //expect(actualMatchLogsAsObject).toBeTruthy();
       },
     );
-  })
-})
+  });
+});

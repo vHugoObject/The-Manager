@@ -1,15 +1,8 @@
 import { ReadonlyNonEmptyArray } from "fp-ts/ReadonlyNonEmptyArray";
+import { DBSchema } from "idb";
+
 export type BaseCountry = [string, Array<string>, Array<Array<string>>];
 export type BaseCountries = Array<BaseCountry>;
-
-export interface SaveArguments {
-  Name: string;
-  CountryIndex: number;
-  DomesticLeagueIndex: number;
-  ClubIndex: number;
-  Season: number;
-  Countries: BaseCountries;
-}
 
 export interface MatchArguments {
   HomeClubID: string;
@@ -45,18 +38,20 @@ export interface PlayerMatchLog {
 
 export type PlayerMatchLogs = Record<string, PlayerMatchLog>;
 
-
 export type SaveID = string | IDBValidKey;
-
 
 export interface ClubMatchLog {
   MatchResult: MatchResult;
   PlayerStatistics: PlayerMatchLogs;
 }
-export type MatchLog = Record<string, ClubMatchLog>
 
+export type ClubMatchLogs = Record<string, ClubMatchLog>;
+export interface MatchLog extends ClubMatchLog {
+  MatchID: string;
+}
 
 export interface Club {
+  ClubNumber: number;
   Country: number;
   DomesticLeagueLevel: number;
   DomesticLeagueID: number;
@@ -73,6 +68,7 @@ export interface Club {
 }
 
 export interface Player {
+  PlayerNumber: number;
   FirstName: number;
   LastName: number;
   PlayerCountry: number;
@@ -85,15 +81,36 @@ export interface Player {
   PositionGroup: number;
 }
 
-export interface Save {
-  Name: string;
-  UserMainDomesticLeagueID: string;
-  UserClubID: string;
-  SeasonsPlayed: number;
-  CurrentSeason: number;
-  CurrentDate: Date;
-  Entities: Record<string, Array<number | string>>;
-  EntitiesStatistics: Record<string, number>;
-  PlayerSkillsAndPhysicalData: Record<string, Record<string, number>>;
-  SaveID: SaveID;
+export interface SaveOptions {
+  SaveName: string;
+  CountryIndex: number;
+  DomesticLeagueIndex: number;
+  ClubIndex: number;
+  Season: number;
+  Countries: BaseCountries;
+}
+
+export interface SaveArguments {
+  SaveOptions: SaveOptions;
+  Clubs: Array<Club>;
+  Players: Array<Player>;
+}
+
+export interface SaveSchema extends DBSchema {
+  SaveOptions: {
+    key: string;
+    value: SaveOptions;
+  };
+  Clubs: {
+    key: string;
+    value: Club;
+  };
+  Players: {
+    key: string;
+    value: Player;
+  };
+  Matches: {
+    key: string;
+    value: MatchLog;
+  };
 }

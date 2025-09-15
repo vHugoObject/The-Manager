@@ -810,12 +810,14 @@ export const doubleRoundRobinScheduler = memoize(
   ]),
 );
 
-export const createScheduleForRoundOfDoubleRobinRound = curry((
-  round: number,
-  clubsCount: number,
-): Array<[number, number]> => {
-  return pipe([doubleRoundRobinScheduler, property(round)])(clubsCount);
-  })
+export const createScheduleForRoundOfDoubleRobinRound = curry(
+  (
+    round: number,
+    clubsCount: number,
+  ): ReadonlyNonEmptyArray<[number, number]> => {
+    return pipe([doubleRoundRobinScheduler, property(round)])(clubsCount);
+  },
+);
 
 export const createMatchPairingsForWeek = (
   round: number,
@@ -1163,21 +1165,24 @@ export const [
   COUNTRYNAMES,
 ]);
 
-export const createPlayer = curry((playerNumber: number): [number, Player] => {
-  const playerFieldValues = over([
-    firstNameIndexForPlayerNumber,
-    lastNameIndexForPlayerNumber,
-    countryNameIndexForPlayerNumber,
-    ageRepeaterForPlayerNumber,
-    assignWageToPlayerNumber,
-    positionGroupNumberRepeaterForPlayers,
-    countryNumberRepeaterForPlayers,
-    domesticLeagueNumberRepeaterForPlayers,
-    domesticLeagueLevelRepeaterForPlayers,
-    clubNumberRepeaterForPlayers,
+export const createPlayer = (playerNumber: number): Player => {
+  return pipe([
+    over([
+      identity,
+      firstNameIndexForPlayerNumber,
+      lastNameIndexForPlayerNumber,
+      countryNameIndexForPlayerNumber,
+      ageRepeaterForPlayerNumber,
+      assignWageToPlayerNumber,
+      positionGroupNumberRepeaterForPlayers,
+      countryNumberRepeaterForPlayers,
+      domesticLeagueNumberRepeaterForPlayers,
+      domesticLeagueLevelRepeaterForPlayers,
+      clubNumberRepeaterForPlayers,
+    ]),
+    zipObject(PLAYERFIELDKEYS),
   ])(playerNumber);
-  return [playerNumber, zipObject(PLAYERFIELDKEYS, playerFieldValues)];
-});
+};
 
 export const generateClubFirstSeasonPlayersWithTransform = curry(
   <T>(
@@ -1193,26 +1198,29 @@ export const generateClubFirstSeasonPlayersWithTransform = curry(
 );
 
 export const generateClubStartingPlayerNumbers =
-	     memoize(generateClubFirstSeasonPlayersWithTransform(identity))
+  generateClubFirstSeasonPlayersWithTransform(identity);
 
-export const createClub = curry((clubNumber: number): [number, Club] => {
-  const clubFieldValues = over([
-    countryNumberRepeaterForClubs,
-    domesticLeagueNumberRepeaterForClubs,
-    domesticLeagueLevelRepeaterForClubs,
-    clubScheduleNumberRepeater,
-    generateAttendanceForClubNumber,
-    generateFacilitiesCostsForClubNumber,
-    generateSponsorPaymentForClubNumber,
-    generateTicketPriceForClubNumber,
-    generateManagerPayForClubNumber,
-    generateScoutingCostsForClubNumber,
-    generateHealthCostsForClubNumber,
-    generatePlayerDevelopmentCostsForClubNumber,
-    generateClubStartingPlayerNumbers,
+export const createClub = (clubNumber: number): Club => {
+  return pipe([
+    over([
+      identity,
+      countryNumberRepeaterForClubs,
+      domesticLeagueNumberRepeaterForClubs,
+      domesticLeagueLevelRepeaterForClubs,
+      clubScheduleNumberRepeater,
+      generateAttendanceForClubNumber,
+      generateFacilitiesCostsForClubNumber,
+      generateSponsorPaymentForClubNumber,
+      generateTicketPriceForClubNumber,
+      generateManagerPayForClubNumber,
+      generateScoutingCostsForClubNumber,
+      generateHealthCostsForClubNumber,
+      generatePlayerDevelopmentCostsForClubNumber,
+      generateClubStartingPlayerNumbers,
+    ]),
+    zipObject(CLUBKEYS),
   ])(clubNumber);
-  return [clubNumber, zipObject(CLUBKEYS, clubFieldValues)];
-});
+};
 
 export const createMatchAddress = curry(
   (

@@ -1,31 +1,25 @@
 import { describe, expect } from "vitest";
 import { test, fc } from "@fast-check/vitest";
-import { BaseCountries, SaveArguments } from "../Types";
+import { SaveOptions } from "../Types";
 import { BASECOUNTRIES } from "../Constants";
-import { convertArraysToSetsAndAssertStrictEqual } from "../Asserters";
 import {
-  fastCheckCreateTestSaveArgumentsWithRandomCountries,
-  fastCheckCreateTestSaveArgumentsWithDefaultCountries,
+  convertArraysToSetsAndAssertStrictEqual,
+  assertIsSaveOptions,
+} from "../Asserters";
+import {
+  fastCheckCreateTestSaveOptionsWithRandomCountries,
+  fastCheckCreateTestSaveOptionsWithDefaultCountries,
 } from "../TestDataGenerators";
-import { getCountriesFromSave } from "../Save";
 
 describe("SaveTestingUtilities test suite", () => {
-  describe("createSaveArguments", () => {
+  describe("createSaveOptions", () => {
     test("with randomly generated countries", () => {
       fc.assert(
         fc.property(fc.gen(), (fcGen) => {
-          const actualSaveArguments: SaveArguments =
-            fastCheckCreateTestSaveArgumentsWithRandomCountries(fcGen);
+          const actualSaveOptions: SaveOptions =
+            fastCheckCreateTestSaveOptionsWithRandomCountries(fcGen);
 
-          const expectedSaveArguments = {
-            Name: expect.any(String),
-            CountryIndex: expect.any(Number),
-            DomesticLeagueIndex: expect.any(Number),
-            ClubIndex: expect.any(Number),
-            Season: expect.any(Number),
-          };
-
-          expect(actualSaveArguments).toMatchObject(expectedSaveArguments);
+          assertIsSaveOptions(actualSaveOptions);
         }),
       );
     });
@@ -33,12 +27,11 @@ describe("SaveTestingUtilities test suite", () => {
     test("with base countries", () => {
       fc.assert(
         fc.property(fc.gen(), (fcGen) => {
-          const actualSaveArguments: SaveArguments =
-            fastCheckCreateTestSaveArgumentsWithDefaultCountries(fcGen);
-          const actualBaseCountries: BaseCountries =
-            getCountriesFromSave(actualSaveArguments);
+          const actualSaveOptions: SaveOptions =
+            fastCheckCreateTestSaveOptionsWithDefaultCountries(fcGen);
+          assertIsSaveOptions(actualSaveOptions);
           convertArraysToSetsAndAssertStrictEqual([
-            actualBaseCountries,
+            actualSaveOptions.Countries,
             BASECOUNTRIES,
           ]);
         }),

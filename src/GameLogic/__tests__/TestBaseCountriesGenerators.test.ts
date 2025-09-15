@@ -358,32 +358,35 @@ describe("TestBaseCountriesGenerators", () => {
     expect(expectedClubNamesSet.has(actualClubName)).toBeTruthy();
   });
 
-  test.prop([fc.gen()])("fastCheckGetTwoRandomBaseClubNamesFromRandomLeague", (fcGen) => {
-    const testCountriesDomesticLeaguesClubs: BaseCountries =
-      fastCheckGenerateRandomBaseCountries(fcGen);
-    const [
-      [actualCountryIndex, actualDomesticLeagueIndex],
-      [actualClubOneName, actualClubTwoName],
-    ] = fastCheckGetTwoRandomBaseClubNamesFromRandomLeague(
-      fcGen,
-      testCountriesDomesticLeaguesClubs,
-    );
-    const actualClubNamesSet = convertToSet([
-      actualClubOneName,
-      actualClubTwoName,
-    ]);
+  test.prop([fc.gen()])(
+    "fastCheckGetTwoRandomBaseClubNamesFromRandomLeague",
+    (fcGen) => {
+      const testCountriesDomesticLeaguesClubs: BaseCountries =
+        fastCheckGenerateRandomBaseCountries(fcGen);
+      const [
+        [actualCountryIndex, actualDomesticLeagueIndex],
+        [actualClubOneName, actualClubTwoName],
+      ] = fastCheckGetTwoRandomBaseClubNamesFromRandomLeague(
+        fcGen,
+        testCountriesDomesticLeaguesClubs,
+      );
+      const actualClubNamesSet = convertToSet([
+        actualClubOneName,
+        actualClubTwoName,
+      ]);
 
-    const expectedClubNamesSet = pipe([
-      getClubsOfDomesticLeagueFromBaseCountries([
-        actualCountryIndex,
-        actualDomesticLeagueIndex,
-      ]),
-      convertToSet,
-    ])(testCountriesDomesticLeaguesClubs);
+      const expectedClubNamesSet = pipe([
+        getClubsOfDomesticLeagueFromBaseCountries([
+          actualCountryIndex,
+          actualDomesticLeagueIndex,
+        ]),
+        convertToSet,
+      ])(testCountriesDomesticLeaguesClubs);
 
-    expect(actualClubOneName).not.toBe(actualClubTwoName);
-    assertSubset([actualClubNamesSet, expectedClubNamesSet]);
-  });
+      expect(actualClubOneName).not.toBe(actualClubTwoName);
+      assertSubset([actualClubNamesSet, expectedClubNamesSet]);
+    },
+  );
 
   test.prop([fc.gen()])(
     "fastCheckGetTwoRandomBaseRelativeClubNumbersFromRandomLeague",
@@ -404,17 +407,20 @@ describe("TestBaseCountriesGenerators", () => {
     },
   );
 
-  test.prop([fc.gen()])("fastCheckGetTwoRandomBaseClubNumbersFromRandomLeague", (fcGen) => {
-    const testCountriesDomesticLeaguesClubs: BaseCountries =
-      fastCheckGenerateRandomBaseCountries(fcGen);
-    const [[actualClubNumberOne, actualClubNumberTwo]] =
-      fastCheckGetTwoRandomBaseClubNumbersFromRandomLeague(
-        fcGen,
-        testCountriesDomesticLeaguesClubs,
-      );
+  test.prop([fc.gen()])(
+    "fastCheckGetTwoRandomBaseClubNumbersFromRandomLeague",
+    (fcGen) => {
+      const testCountriesDomesticLeaguesClubs: BaseCountries =
+        fastCheckGenerateRandomBaseCountries(fcGen);
+      const [[actualClubNumberOne, actualClubNumberTwo]] =
+        fastCheckGetTwoRandomBaseClubNumbersFromRandomLeague(
+          fcGen,
+          testCountriesDomesticLeaguesClubs,
+        );
 
-    expect(actualClubNumberOne).not.toBe(actualClubNumberTwo);
-  });
+      expect(actualClubNumberOne).not.toBe(actualClubNumberTwo);
+    },
+  );
 
   describe("Counts", () => {
     test.prop([fc.gen()])(

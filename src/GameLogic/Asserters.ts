@@ -137,9 +137,7 @@ export const assertIsMatchArgumentsObject = (received: any): void => {
 };
 
 export const assertIsBasicClubMatchResultObject = curry(
-  (
-    received: any,
-  ): void => {
+  (received: any): void => {
     expect(received).toMatchObject({
       Home: expect.any(Boolean),
       Wins: expect.any(Number),
@@ -196,29 +194,26 @@ const expectedPlayerMatchLog = {
   Tackles: expect.any(Number),
 };
 
-
 export const assertIsPlayerMatchLog = (received: any): void => {
   expect(received).toMatchObject(expectedPlayerMatchLog);
 };
 
-export const assertIsArrayOfPlayerMatchLogs = map(
-  assertIsPlayerMatchLog,
-);
+export const assertIsArrayOfPlayerMatchLogs = map(assertIsPlayerMatchLog);
 
-export const assertIsClubMatchLog = (received: any): void => {  
+export const assertIsClubMatchLog = (received: any): void => {
   expect(received).toMatchObject({
     MatchResult: expect.any(Object),
-    PlayerStatistics: expect.any(Object),    
+    PlayerStatistics: expect.any(Object),
   });
 
-  assertIsBasicClubMatchResultObject(received.MatchResult)
-  
+  assertIsBasicClubMatchResultObject(received.MatchResult);
 };
 
-export const assertIsArrayOfClubMatchLogs = map(assertIsClubMatchLog)
+export const assertIsArrayOfClubMatchLogs = map(assertIsClubMatchLog);
 
 export const assertIsClubObject = (received: any): void => {
   expect(received).toMatchObject({
+    ClubNumber: expect.any(Number),
     Country: expect.any(Number),
     DomesticLeagueLevel: expect.any(Number),
     DomesticLeagueNumber: expect.any(Number),
@@ -237,6 +232,7 @@ export const assertIsClubObject = (received: any): void => {
 
 export const assertIsPlayerObject = (received: any): void => {
   expect(received).toMatchObject({
+    PlayerNumber: expect.any(Number),
     FirstName: expect.any(Number),
     LastName: expect.any(Number),
     PlayerCountry: expect.any(Number),
@@ -247,5 +243,16 @@ export const assertIsPlayerObject = (received: any): void => {
     DomesticLeagueLevel: expect.any(Number),
     DomesticLeagueNumber: expect.any(Number),
     ClubNumber: expect.any(Number),
+  });
+};
+
+export const assertIsSaveOptions = (received: any): void => {
+  expect(received).toMatchObject({
+    SaveName: expect.any(String),
+    CountryIndex: expect.any(Number),
+    DomesticLeagueIndex: expect.any(Number),
+    ClubIndex: expect.any(Number),
+    Season: expect.any(Number),
+    Countries: expect.any(Array),
   });
 };

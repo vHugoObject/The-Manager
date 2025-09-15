@@ -26,18 +26,25 @@ import {
   concat,
   subtract,
   update,
-  zipWith
+  zipWith,
 } from "lodash/fp";
 import { ReadonlyNonEmptyArray } from "fp-ts/ReadonlyNonEmptyArray";
-import { State, traverseReadonlyNonEmptyArrayWithIndex, evaluate } from "fp-ts/State";
+import {
+  State,
+  traverseReadonlyNonEmptyArrayWithIndex as StateTraverseReadonlyNonEmptyArrayWithIndex,
+  evaluate as evaluateState,
+  traverseArray as StateTraverseReadonlyNonEmptyArray,
+} from "fp-ts/State";
 import {
   BaseCountries,
-  SaveArguments,
+  SaveOptions,
   MatchResult,
   PlayerMatchLog,
   MatchResultsTuple,
   PlayerMatchLogs,
-  MatchLog
+  MatchLog,
+  Player,
+  Club,
 } from "./Types";
 import { POSITIONGROUPSRANGE, PLAYERBIODATA } from "./PlayerDataConstants";
 import {
@@ -57,6 +64,7 @@ import {
   DEFAULTTOTALDOMESTICLEAGUES,
   DEFAULTMATCHESPERDOMESTICLEAGUE,
   DEFAULTMATCHLENGTH,
+  DEFAULTMATCHPERWEEKPERDOMESTICLEAGUE,
 } from "./Constants";
 import {
   getFirstLevelArrayLengths,
@@ -87,7 +95,11 @@ import {
   floorDivision,
   convertClubRelativeNumberIntoAbsoluteNumber,
   createScheduleForRoundOfDoubleRobinRound,
-  generateClubStartingPlayerNumbers
+  generateClubStartingPlayerNumbers,
+  domesticLeagueNumberRepeaterForClubs,
+  modularAddition,
+  createPlayer,
+  createClub,
 } from "./Transformers";
 
 export const fastCheckNRandomItemsFromArray = curry(
@@ -157,6 +169,11 @@ export const fastCheckRandomIntegerInRange = curry(
     return fcGen(fc.integer, { min: rangeMin, max: minusOne(rangeMax) });
   },
 );
+export const fastCheckRandomIntegerBetweenZeroAnd = curry(
+  (fcGen: fc.GeneratorValue, rangeMax: number): number => {
+    return pipe([concat([0]), fastCheckRandomIntegerInRange(fcGen)])(rangeMax);
+  },
+);
 
 export const fastCheckRandomIntegerBetweenOneAnd = curry(
   (fcGen: fc.GeneratorValue, rangeMax: number): number => {
@@ -164,9 +181,9 @@ export const fastCheckRandomIntegerBetweenOneAnd = curry(
   },
 );
 
-export const fastCheckRandomIntegerBetweenZeroAnd = curry(
+export const fastCheckRandomIntegerBetweenTwoAnd = curry(
   (fcGen: fc.GeneratorValue, rangeMax: number): number => {
-    return pipe([concat([0]), fastCheckRandomIntegerInRange(fcGen)])(rangeMax);
+    return pipe([concat([2]), fastCheckRandomIntegerInRange(fcGen)])(rangeMax);
   },
 );
 
@@ -179,10 +196,7 @@ export const fastCheckOneRandomArrayIndexAsInteger = curry(
 );
 
 export const fastCheckRandomItemFromArrayWithIndex = curry(
-  <T>(
-    fcGen: fc.GeneratorValue,
-    testArray: Array<T>,
-  ): [T, number] => {
+  <T>(fcGen: fc.GeneratorValue, testArray: Array<T>): [T, number] => {
     return pipe([
       fastCheckOneRandomArrayIndexAsInteger(fcGen),
       over([partialRight(property, [testArray]), identity]),
@@ -244,16 +258,36 @@ export const fastCheckUnfoldRandomNaturalNumberRangeChunk = curry(
   },
 );
 
-export const fastCheckGetNRandomClubNumbers = curry((testCount: number, fcGen: fc.GeneratorValue): ReadonlyNonEmptyArray<number> => {
-  return fastCheckUnfoldRandomNaturalNumberRangeChunk(DEFAULTTOTALCLUBS, testCount, addOne, fcGen)
-})
+export const fastCheckGetNRandomClubNumbers = curry(
+  (
+    testCount: number,
+    fcGen: fc.GeneratorValue,
+  ): ReadonlyNonEmptyArray<number> => {
+    return fastCheckUnfoldRandomNaturalNumberRangeChunk(
+      DEFAULTTOTALCLUBS,
+      testCount,
+      addOne,
+      fcGen,
+    );
+  },
+);
 
-export const fastCheckGetAllPlayersOfNRandomClubs = curry((testCount: number, fcGen: fc.GeneratorValue): ReadonlyNonEmptyArray<[number, ReadonlyNonEmptyArray<number>]> => {
-  return pipe([fastCheckGetNRandomClubNumbers(testCount), map(over([identity, generateClubFirstSeasonPlayersWithTransform(identity)]))])(fcGen)
-})
+export const fastCheckGetAllPlayersOfNRandomClubs = curry(
+  (
+    testCount: number,
+    fcGen: fc.GeneratorValue,
+  ): ReadonlyNonEmptyArray<[number, ReadonlyNonEmptyArray<number>]> => {
+    return pipe([
+      fastCheckGetNRandomClubNumbers(testCount),
+      map(
+        over([identity, generateClubFirstSeasonPlayersWithTransform(identity)]),
+      ),
+    ])(fcGen);
+  },
+);
 
-export const fastCheckGetAllPlayersOfTwoRandomClubs = fastCheckGetAllPlayersOfNRandomClubs(2)
-
+export const fastCheckGetAllPlayersOfTwoRandomClubs =
+  fastCheckGetAllPlayersOfNRandomClubs(2);
 
 export const fastCheckGenerateAllPlayerNumbersOfRandomClub = curry(
   <T>(
@@ -370,6 +404,10 @@ export const fastCheckPlayerNumberGenerator =
 export const fastCheckRandomSquadNumber =
   fastCheckRandomNaturalNumberWithMax(DEFAULTSQUADSIZE);
 
+export const fastCheckRandomMatchNumber = fastCheckRandomNaturalNumberWithMax(
+  DEFAULTMATCHPERWEEKPERDOMESTICLEAGUE,
+);
+
 export const fastCheckTestPlayerNumberAndSeason = over<number>([
   fastCheckPlayerNumberGenerator,
   fastCheckRandomSeason,
@@ -385,11 +423,44 @@ export const fastCheckRandomMatchWeekNumber =
     minusOne(DEFAULTMATCHESPERDOMESTICLEAGUE),
   );
 
-export const fastCheckRandomSeasonDomesticLeagueNumberAndMatchWeek = over([
+export const fastCheckRandomSeasonDomesticLeagueNumberAndMatchWeekNumber = over(
+  [
+    fastCheckRandomSeason,
+    fastCheckRandomDomesticLeagueNumber,
+    fastCheckRandomMatchWeekNumber,
+  ],
+);
+
+export const fastCheckRandomSeasonDomesticLeagueNumberAndMatchNumber = over([
   fastCheckRandomSeason,
-  fastCheckRandomClubNumberGenerator,
-  fastCheckRandomMatchWeekNumber,
+  fastCheckRandomDomesticLeagueNumber,
+  fastCheckRandomMatchNumber,
 ]);
+
+export const fastCheckRandomSeasonDomesticLeagueNumberMatchWeekAndMatchNumber =
+  over([
+    fastCheckRandomSeason,
+    fastCheckRandomDomesticLeagueNumber,
+    fastCheckRandomMatchWeekNumber,
+    fastCheckRandomMatchNumber,
+  ]);
+
+export const fastCheckCreateNTestPlayers = curry(
+  (testPlayersCount: number, fcGen: fc.GeneratorValue): Array<Player> => {
+    const firstPlayerNumber: number = fastCheckPlayerNumberGenerator(fcGen);
+    return unfold(
+      pipe([add(firstPlayerNumber), createPlayer]),
+      testPlayersCount,
+    );
+  },
+);
+
+export const fastCheckCreateNTestClubs = curry(
+  (testClubsCount: number, fcGen: fc.GeneratorValue): Array<Club> => {
+    const firstClubNumber: number = fastCheckRandomClubNumberGenerator(fcGen);
+    return unfold(pipe([add(firstClubNumber), createClub]), testClubsCount);
+  },
+);
 
 export const fastCheckRandomClubAndPlayerNumberGenerator = (
   fcGen: fc.GeneratorValue,
@@ -531,6 +602,16 @@ export const fastCheckNLengthStringGenerator = (
     fastCheckNLengthUniqueStringArrayGenerator,
     over([join(""), identity]),
   ])(fcGen, stringLength);
+};
+
+export const fastCheckRandomStringGenerator = (
+  fcGen: fc.GeneratorValue,
+): string => {
+  return pipe([
+    fastCheckRandomIntegerBetweenTwoAnd(fcGen),
+    fastCheckNLengthUniqueStringArrayGenerator(fcGen),
+    join(""),
+  ])(8);
 };
 
 export const fastCheckNUniqueIntegersFromRangeAsArrayGenerator = curry(
@@ -965,17 +1046,21 @@ export const fastCheckGetNRandomBaseClubsFromRandomLeague = curry(
 );
 
 export const fastCheckGetNRandomBaseRelativeClubNumbersFromRandomLeague =
-  fastCheckGetNRandomBaseClubsFromRandomLeague(fastCheckNRandomArrayIndicesAsIntegers);
+  fastCheckGetNRandomBaseClubsFromRandomLeague(
+    fastCheckNRandomArrayIndicesAsIntegers,
+  );
 
 export const fastCheckGetTwoRandomBaseRelativeClubNumbersFromRandomLeague =
-  fastCheckGetNRandomBaseClubsFromRandomLeague(fastCheckNRandomArrayIndicesAsIntegers, 2);
+  fastCheckGetNRandomBaseClubsFromRandomLeague(
+    fastCheckNRandomArrayIndicesAsIntegers,
+    2,
+  );
 
-
-export const fastCheckGetTwoRandomBaseClubNamesFromRandomLeague = fastCheckGetNRandomBaseClubsFromRandomLeague(
-  fastCheckNRandomItemsFromArray,
-  2,
-);
-
+export const fastCheckGetTwoRandomBaseClubNamesFromRandomLeague =
+  fastCheckGetNRandomBaseClubsFromRandomLeague(
+    fastCheckNRandomItemsFromArray,
+    2,
+  );
 
 export const fastCheckGetNRandomBaseClubNumbersFromRandomLeague = curry(
   (
@@ -1003,10 +1088,8 @@ export const fastCheckGetNRandomBaseClubNumbersFromRandomLeague = curry(
   },
 );
 
-
 export const fastCheckGetTwoRandomBaseClubNumbersFromRandomLeague =
   fastCheckGetNRandomBaseClubNumbersFromRandomLeague(2);
-
 
 export const fastCheckGenerateTestCountriesCount = partialRight(
   fastCheckRandomIntegerInRange,
@@ -1044,13 +1127,13 @@ export const fastCheckGenerateTestPlayersCount = pipe([
   over([multiplyByDEFAULTPLAYERSPERCOUNTRY, identity]),
 ]);
 
-export const fastCheckBaseCreateTestSaveArguments = curry(
-  (Countries: BaseCountries, fcGen: fc.GeneratorValue): SaveArguments => {
+export const fastCheckCreateTestSaveOptions = curry(
+  (Countries: BaseCountries, fcGen: fc.GeneratorValue): SaveOptions => {
     const [[CountryIndex, DomesticLeagueIndex, ClubIndex]] =
       fastCheckTestCompletelyRandomBaseClub(fcGen, Countries);
 
     return {
-      Name: fastCheckNonSpaceRandomCharacterGenerator(fcGen),
+      SaveName: fastCheckNonSpaceRandomCharacterGenerator(fcGen),
       CountryIndex,
       DomesticLeagueIndex,
       ClubIndex,
@@ -1074,15 +1157,15 @@ export const fastCheckGenerateRandomBaseCountries = (
   );
 };
 
-export const fastCheckCreateTestSaveArgumentsWithRandomCountries = (
+export const fastCheckCreateTestSaveOptionsWithRandomCountries = (
   fcGen: fc.GeneratorValue,
-): SaveArguments => {
+): SaveOptions => {
   const countries = fastCheckGenerateRandomBaseCountries(fcGen);
-  return fastCheckBaseCreateTestSaveArguments(countries)(fcGen);
+  return fastCheckCreateTestSaveOptions(countries)(fcGen);
 };
 
-export const fastCheckCreateTestSaveArgumentsWithDefaultCountries =
-  fastCheckBaseCreateTestSaveArguments(BASECOUNTRIES);
+export const fastCheckCreateTestSaveOptionsWithDefaultCountries =
+  fastCheckCreateTestSaveOptions(BASECOUNTRIES);
 
 export const fastCheckCreateTestMatchResult = curry(
   (
@@ -1146,12 +1229,9 @@ export const fastCheckCreateRandomMatchResult = fastCheckCallRandomFCGen([
 ]);
 
 type Statistics<A> = State<MatchResult, A>;
-export const fastCheckCreateTestPlayerMatchLog = curry(
-  (
-    index: number,
-    playerNumber: number,
-    matchResult: MatchResult,
-  ): Statistics<[string, PlayerMatchLog]> => {
+export const fastCheckCreateTestPlayerMatchLog =
+  (index: number, playerNumber: number) =>
+  (matchResult: MatchResult): Statistics<[string, PlayerMatchLog]> => {
     const { Wins, Losses, Draws, GoalsFor } = matchResult;
     const Starts: number = floorDivision(DEFAULTPLAYERSONBENCH, index);
     const Minutes: number = multiply(Starts, DEFAULTMATCHLENGTH);
@@ -1175,47 +1255,122 @@ export const fastCheckCreateTestPlayerMatchLog = curry(
     return [[playerNumber, matchLog], updatedResult] as unknown as Statistics<
       [string, PlayerMatchLog]
     >;
-  },
-);
+  };
 
 export const fastCheckCreateTestPlayerMatchLogs = curry(
   (
-    [testHomePlayers, testAwayPlayers]: [ReadonlyNonEmptyArray<number>, ReadonlyNonEmptyArray<number>],
+    [testHomePlayers, testAwayPlayers]: [
+      ReadonlyNonEmptyArray<number>,
+      ReadonlyNonEmptyArray<number>,
+    ],
     [testHomeResult, testAwayResult]: MatchResultsTuple,
   ): [PlayerMatchLogs, PlayerMatchLogs] => {
-
     // evaluate
-    const homePlayersStats = traverseReadonlyNonEmptyArrayWithIndex(
+    const homePlayersStats = StateTraverseReadonlyNonEmptyArrayWithIndex(
       fastCheckCreateTestPlayerMatchLog,
-    )(testHomePlayers)
-    const awayPlayersStats = traverseReadonlyNonEmptyArrayWithIndex(
+    )(testHomePlayers);
+    const awayPlayersStats = StateTraverseReadonlyNonEmptyArrayWithIndex(
       fastCheckCreateTestPlayerMatchLog,
-    )(testAwayPlayers)
-    
+    )(testAwayPlayers);
+
     return pipe([
-      zipWith((a: MatchResult, b: Statistics<[string, PlayerMatchLog]>) => evaluate(a)(b), [testHomeResult, testAwayResult]),
+      zipWith(
+        (
+          matchResult: MatchResult,
+          playerStats: Statistics<[string, PlayerMatchLog]>,
+        ) => evaluateState(matchResult)(playerStats),
+        [testHomeResult, testAwayResult],
+      ),
       map(
-      (
-        clubStats: ReadonlyNonEmptyArray<[string, PlayerMatchLog]>,
-      ): Record<string, PlayerMatchLog> => Object.fromEntries(clubStats),
-      )
-    ])([homePlayersStats, awayPlayersStats])
+        (
+          clubStats: ReadonlyNonEmptyArray<[string, PlayerMatchLog]>,
+        ): Record<string, PlayerMatchLog> => Object.fromEntries(clubStats),
+      ),
+    ])([homePlayersStats, awayPlayersStats]);
   },
 );
-
 
 export const fastCheckCreateTestMatchLog = curry(
   (
-    [[homeClubNumber, homePlayers], [awayClubNumber, awayPlayers]]: [[number, ReadonlyNonEmptyArray<number>], [number, ReadonlyNonEmptyArray<number>]],
-    fcGen: fc.GeneratorValue
+    MatchID: string,
+    [[homeClubNumber, homePlayers], [awayClubNumber, awayPlayers]]: [
+      [number, ReadonlyNonEmptyArray<number>],
+      [number, ReadonlyNonEmptyArray<number>],
+    ],
+    fcGen: fc.GeneratorValue,
   ): MatchLog => {
-    const [homeMatchResult, awayMatchResult]: MatchResultsTuple = fastCheckCreateRandomMatchResult(fcGen)
-    const [homePlayerStatistics, awayPlayerStatistics] = fastCheckCreateTestPlayerMatchLogs([homePlayers, awayPlayers], [homeMatchResult, awayMatchResult])
+    const [homeMatchResult, awayMatchResult]: MatchResultsTuple =
+      fastCheckCreateRandomMatchResult(fcGen);
+    const [homePlayerStatistics, awayPlayerStatistics] =
+      fastCheckCreateTestPlayerMatchLogs(
+        [homePlayers, awayPlayers],
+        [homeMatchResult, awayMatchResult],
+      );
     return {
-      [homeClubNumber]: {MatchResult: homeMatchResult, PlayerStatistics: homePlayerStatistics},
-      [awayClubNumber]: {MatchResult: awayMatchResult, PlayerStatistics: awayPlayerStatistics},
-    }
-    
+      MatchID,
+      [homeClubNumber.toString()]: {
+        MatchResult: homeMatchResult,
+        PlayerStatistics: homePlayerStatistics,
+      },
+      [awayClubNumber.toString()]: {
+        MatchResult: awayMatchResult,
+        PlayerStatistics: awayPlayerStatistics,
+      },
+    };
   },
 );
 
+export const fastCheckCreateTestMatchLogsObject = (
+  [testMatchWeeksCount, testSeason]: [number, number],
+  fcGen: fc.GeneratorValue,
+): Array<MatchLog> => {
+  const traversal =
+    ([testHomeClubNumber, testAwayClubNumber]: [number, number]) =>
+    ([testMatchWeek, testMatchNumber]: [number, number]): State<
+      [number, number],
+      MatchLog
+    > => {
+      const [testHomePlayers, testAwayPlayers] = map<
+        number,
+        ReadonlyNonEmptyArray<number>
+      >(generateClubStartingPlayerNumbers)([
+        testHomeClubNumber,
+        testAwayClubNumber,
+      ]);
+      const clubs: [
+        [number, ReadonlyNonEmptyArray<number>],
+        [number, ReadonlyNonEmptyArray<number>],
+      ] = [
+        [testHomeClubNumber, testHomePlayers],
+        [testAwayClubNumber, testAwayPlayers],
+      ];
+      const testDomesticLeagueNumber: number =
+        domesticLeagueNumberRepeaterForClubs(testHomeClubNumber);
+      const testMatchNumberForLeague: number = modularAddition(
+        DEFAULTMATCHPERWEEKPERDOMESTICLEAGUE,
+        testMatchNumber,
+      );
+      // season_domesticLeague_matchweek_matchnumber
+      const id: string = joinOnUnderscores([
+        testSeason,
+        testDomesticLeagueNumber,
+        testMatchWeek,
+        testMatchNumberForLeague,
+      ]);
+      return [
+        fastCheckCreateTestMatchLog(id, clubs, fcGen),
+        [testMatchWeek, testMatchNumberForLeague],
+      ];
+    };
+  const matchWeeks = unfold((testMatchWeek: number) => {
+    const schedule: ReadonlyNonEmptyArray<[number, number]> =
+      createScheduleForRoundOfDoubleRobinRound(
+        testMatchWeek,
+        DEFAULTTOTALCLUBS,
+      );
+    const monad = StateTraverseReadonlyNonEmptyArray(traversal)(schedule);
+    return evaluateState([testMatchWeek, 0])(monad);
+  }, testMatchWeeksCount);
+
+  return flatten(matchWeeks);
+};

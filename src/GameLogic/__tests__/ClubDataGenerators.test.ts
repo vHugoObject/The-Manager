@@ -131,10 +131,8 @@ describe("ClubDataGenerators test suite", () => {
   test.prop([fc.gen()])("createClub", (fcGen) => {
     const testClubNumber: number = fastCheckRandomClubNumberGenerator(fcGen);
 
-    const [actualClubNumber, actualClubObject]: [number, Club] =
-      createClub(testClubNumber);
+    const actualClubObject: Club = createClub(testClubNumber);
 
-    expect(actualClubNumber).toBe(testClubNumber);
     assertIsClubObject(actualClubObject);
   });
 });

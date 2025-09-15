@@ -106,10 +106,8 @@ describe("PlayerDataGenerators test suite", () => {
     fc.assert(
       fc.property(fc.gen(), (fcGen) => {
         const testPlayerNumber: number = fastCheckPlayerNumberGenerator(fcGen);
-        const [actualPlayerNumber, actualPlayerObject]: [number, Player] =
-          createPlayer(testPlayerNumber);
+        const actualPlayerObject: Player = createPlayer(testPlayerNumber);
 
-        expect(actualPlayerNumber).toBe(testPlayerNumber);
         assertIsPlayerObject(actualPlayerObject);
       }),
     );
