@@ -13,7 +13,6 @@ import {
   flatMapDepth,
   size,
   over,
-  split,
   first,
   isEqual,
   isString,
@@ -43,19 +42,22 @@ import {
   multiply,
   divide,
 } from "lodash/fp";
-import { Save, BaseCountries } from "./Types";
+import { BaseCountries, Player } from "./Types";
+import { FIRSTNAMES, LASTNAMES, COUNTRYNAMES } from "./Names";
 import {
   DEFAULTPLAYERSPERPOSITIONGROUP,
   CLUBSDEPTH,
   COMPETITIONSDEPTH,
   BaseCountriesIndices,
   DEFAULTDOMESTICLEAGUESPERCOUNTRY,
+  DEFAULTCLUBSPERDOMESTICLEAGUE,
+  DEFAULTSQUADSIZE,
 } from "./Constants";
 import {
   PositionGroup,
   PLAYERBIODATARANGESBYPOSITION,
   PLAYERBIODATA,
-  PREMIERLEAGUEPAYROLLPERPOSITIONGROUP,
+  PREMIERLEAGUEPAYROLLPERPOSITIONGROUP, 
 } from "./PlayerDataConstants";
 
 export const isTrue = isEqual(true);
@@ -65,6 +67,11 @@ export const countByIdentity = countBy(identity);
 export const countByStartsWith = countBy(startsWith);
 
 export const getEventTargetValue = property(["target", "value"]);
+
+export const getEventTargetValueAsNumber = pipe([
+  property(["target", "value"]),
+  parseInt,
+]);
 
 export const getFirstAndTailOfArray = over([first, tail]);
 export const getSizeMinAndMaxOfArray = over<number>([
@@ -218,6 +225,16 @@ export const getDomesticLeaguesCountFromBaseCountries = pipe([
   multiply(DEFAULTDOMESTICLEAGUESPERCOUNTRY),
 ]);
 
+export const getClubsCountFromBaseCountries = pipe([
+  getDomesticLeaguesCountFromBaseCountries,
+  multiply(DEFAULTCLUBSPERDOMESTICLEAGUE),
+]);
+
+export const getPlayersCountForBaseCountries = pipe([
+  getClubsCountFromBaseCountries,
+  multiply(DEFAULTSQUADSIZE),
+]);
+
 export const getDomesticLeaguesPerCountryCountFromBaseCountries = pipe([
   map(getBaseCountryDomesticLeagues),
   getFirstLevelArrayLengths,
@@ -297,6 +314,20 @@ export const getClubNameFromBaseCountries = curry(
   },
 );
 
+export const playerNameGetter = curry(([key, nameList]: [string, Array<string>], player: Player) => pipe([property(key), partialRight(property, [nameList])])(player))
+export const [
+  getPlayerFirstName,
+  getPlayerLastName,
+  getPlayerCountryName,
+  getPlayerPositionGroupName
+] = map<[string, Array<string>], (player: Player) => string>(playerNameGetter)([
+  ["FirstName", FIRSTNAMES],
+  ["LastName", LASTNAMES],
+  ["PlayerCountry", COUNTRYNAMES],
+  ["PositionGroup", Object.keys(PositionGroup)],
+]);
+
+
 export const getPlayerBioDataRange = curry(
   (
     dataIndex: PLAYERBIODATA,
@@ -310,7 +341,7 @@ export const [
   getPositionGroupAgeRange,
   getPositionGroupYearsLeftOnContractRange,
   getPositionGroupWagesRange,
-  getPositionGroupHeightRange,
+  getPositionGroupHeightRapppnge,
   getPositionGroupWeightRange,
   getPositionGroupManagerEffectRange,
   getPositionGroupTacklingRange,
@@ -357,3 +388,5 @@ export const getPositionGroupPlayerCountAndWageBillPercentage = over<number>([
   getPositionGroupPlayerCountPerSquad,
   getPositionGroupBaseWageBillPercentage,
 ]);
+
+

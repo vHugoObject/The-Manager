@@ -28,6 +28,7 @@ import {
   update,
   zipWith,
 } from "lodash/fp";
+import { Option, fromNullable } from "fp-ts/Option";
 import { ReadonlyNonEmptyArray } from "fp-ts/ReadonlyNonEmptyArray";
 import {
   State,
@@ -45,6 +46,7 @@ import {
   MatchLog,
   Player,
   Club,
+  SaveArguments
 } from "./Types";
 import { POSITIONGROUPSRANGE, PLAYERBIODATA } from "./PlayerDataConstants";
 import {
@@ -117,7 +119,7 @@ export const fastCheckRandomItemFromArray = curry(
   },
 );
 
-export const fastCheckGet2RandomItemsFromArray =
+export const fastCheckGetTwoRandomItemsFromArray =
   fastCheckNRandomItemsFromArray(2);
 
 export const fastCheckRandomObjectKey = curry(
@@ -851,7 +853,7 @@ export const fastCheckGetNRandomBaseCountries = curry(
   },
 );
 
-export const fastCheckGet2RandomBaseCountries =
+export const fastCheckGetTwoRandomBaseCountries =
   fastCheckGetNRandomBaseCountries(2);
 
 export const fastCheckTestRandomBaseCountryWithIndex = curry(
@@ -928,15 +930,15 @@ export const fastCheckGetNRandomBaseDomesticLeagues = curry(
     count: number,
     fcGen: fc.GeneratorValue,
     testBaseCountries: BaseCountries,
-  ): [string, Array<string>] => {
+  ): [number, Array<string>] => {
     return pipe([
       fastCheckTestRandomBaseCountryIndex(fcGen),
       over([
         identity,
         pipe([
-          (countryIndex: string): [string, string] => [
+          (countryIndex: number): [number, number] => [
             countryIndex,
-            BaseCountriesIndices.DOMESTICLEAGUESINDEX.toString(),
+            BaseCountriesIndices.DOMESTICLEAGUESINDEX,
           ],
           partialRight(property, [testBaseCountries]),
           fastCheckNRandomItemsFromArray(count, fcGen),
@@ -946,7 +948,7 @@ export const fastCheckGetNRandomBaseDomesticLeagues = curry(
   },
 );
 
-export const fastCheckGet2RandomBaseDomesticLeagues =
+export const fastCheckGetTwoRandomBaseDomesticLeagues =
   fastCheckGetNRandomBaseDomesticLeagues(2);
 
 export const fastCheckTestRandomBaseClubIndexFromCountryAndDomesticLeague =
@@ -1127,21 +1129,6 @@ export const fastCheckGenerateTestPlayersCount = pipe([
   over([multiplyByDEFAULTPLAYERSPERCOUNTRY, identity]),
 ]);
 
-export const fastCheckCreateTestSaveOptions = curry(
-  (Countries: BaseCountries, fcGen: fc.GeneratorValue): SaveOptions => {
-    const [[CountryIndex, DomesticLeagueIndex, ClubIndex]] =
-      fastCheckTestCompletelyRandomBaseClub(fcGen, Countries);
-
-    return {
-      SaveName: fastCheckNonSpaceRandomCharacterGenerator(fcGen),
-      CountryIndex,
-      DomesticLeagueIndex,
-      ClubIndex,
-      Season: fastCheckRandomSeason(fcGen),
-      Countries,
-    };
-  },
-);
 
 export const fastCheckGenerateRandomBaseCountries = (
   fcGen: fc.GeneratorValue,
@@ -1157,6 +1144,27 @@ export const fastCheckGenerateRandomBaseCountries = (
   );
 };
 
+export const fastCheckCreateTestSaveOptions = curry(
+  (Countries: BaseCountries, fcGen: fc.GeneratorValue): SaveOptions => {
+    const [[CountryIndex, DomesticLeagueIndex, ClubIndex]] =
+	  fastCheckTestCompletelyRandomBaseClub(fcGen, Countries);
+    const StartSeason: number = fastCheckRandomSeason(fcGen)
+    return {
+      CountryIndex,
+      DomesticLeagueIndex,
+      ClubIndex,      
+      Countries,
+      StartSeason,
+      CurrentSeason: StartSeason,
+    };
+  },
+);
+
+
+export const fastCheckCreateTestSaveOptionsWithDefaultCountries =
+  fastCheckCreateTestSaveOptions(BASECOUNTRIES);
+
+
 export const fastCheckCreateTestSaveOptionsWithRandomCountries = (
   fcGen: fc.GeneratorValue,
 ): SaveOptions => {
@@ -1164,8 +1172,40 @@ export const fastCheckCreateTestSaveOptionsWithRandomCountries = (
   return fastCheckCreateTestSaveOptions(countries)(fcGen);
 };
 
-export const fastCheckCreateTestSaveOptionsWithDefaultCountries =
-  fastCheckCreateTestSaveOptions(BASECOUNTRIES);
+export const fastCheckCreateArrayOfTestSaveOptions = (fcGen: fc.GeneratorValue, count: number): Array<Option<[string, SaveOptions]>> => {
+  const countries = fastCheckGenerateRandomBaseCountries(fcGen);
+  return unfold((saveName: number): Option<[string, SaveOptions]> => {
+    const saveOptions: SaveOptions = fastCheckCreateTestSaveOptions(countries)(fcGen)
+    return fromNullable([saveName.toString(), saveOptions])
+  }, count)
+}
+
+export const fastCheckCreateTestSaveArguments = (fcGen: fc.GeneratorValue): [SaveArguments, [number, number]] => {
+
+  
+  const [testPlayersCount, testClubsCount]: [number, number] =  unfold((_: number): number => fastCheckRandomIntegerInRange(fcGen,[2,10]), 2)
+  
+  const testSaveOptions: SaveOptions =
+        fastCheckCreateTestSaveOptionsWithRandomCountries(fcGen);
+  
+  const testPlayers: Array<Player> = fastCheckCreateNTestPlayers(
+    testPlayersCount,
+    fcGen,
+  );
+  const testClubs: Array<Club> = fastCheckCreateNTestClubs(
+    testClubsCount,
+    fcGen,
+  );
+
+  const testSaveArguments: SaveArguments = {
+    SaveOptions: testSaveOptions,
+    Clubs: testClubs,
+    Players: testPlayers,
+  };
+  return [testSaveArguments, [testPlayersCount, testClubsCount]]
+  
+}
+
 
 export const fastCheckCreateTestMatchResult = curry(
   (
@@ -1374,3 +1414,4 @@ export const fastCheckCreateTestMatchLogsObject = (
 
   return flatten(matchWeeks);
 };
+

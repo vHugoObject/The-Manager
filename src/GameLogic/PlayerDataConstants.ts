@@ -18,6 +18,7 @@ export const COUNTRYNAMESRANGE: [number, number] = [0, COUNTRYNAMES.length];
 export const FIRSTNAMESRANGE: [number, number] = [0, FIRSTNAMES.length];
 export const LASTNAMESRANGE: [number, number] = [0, LASTNAMES.length];
 
+
 export enum PositionGroup {
   Forward = "0",
   Midfielder = "1",

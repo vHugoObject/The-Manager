@@ -1,3 +1,5 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { mapIndexed } from "futil-js";
 import { pipe } from "lodash/fp";
 import { useState } from "react";
@@ -5,11 +7,10 @@ import {
   getClubsOfDomesticLeagueFromBaseCountries,
   getDomesticLeaguesOfCountryFromBaseCountries,
   getEventTargetValue,
+  getEventTargetValueAsNumber,
 } from "../../GameLogic/Getters";
-import {
-  zipAllAndGetFirstArray,
-  joinOnUnderscores,
-} from "../../Common/Transformers";
+import { createSave } from "../../GameLogic/Save";
+import { zipAllAndGetFirstArray } from "../../GameLogic/Transformers";
 import { BaseCountries } from "../../GameLogic/Types";
 
 export const CreateEntityOptions = ({
@@ -19,7 +20,7 @@ export const CreateEntityOptions = ({
 }): Array<JSX.Element> => {
   return mapIndexed((name: string, index: number): JSX.Element => {
     return (
-      <option key={index} value={index}>
+      <option data-testid={index} key={index} value={index}>
         {name}
       </option>
     );
@@ -40,7 +41,7 @@ export const CreateDomesticLeagueOptions = ({
   countryIndex,
 }: {
   countriesLeaguesClubs: BaseCountries;
-  countryIndex: string;
+  countryIndex: number;
 }): JSX.Element => {
   const domesticLeagueNames = getDomesticLeaguesOfCountryFromBaseCountries(
     countryIndex,
@@ -56,8 +57,8 @@ export const CreateClubOptions = ({
   domesticLeagueIndex,
 }: {
   countriesLeaguesClubs: BaseCountries;
-  countryIndex: string;
-  domesticLeagueIndex: string;
+  countryIndex: number;
+  domesticLeagueIndex: number;
 }): JSX.Element => {
   const clubNames = getClubsOfDomesticLeagueFromBaseCountries(
     [countryIndex, domesticLeagueIndex],
@@ -72,21 +73,26 @@ export const NewSaveForm = ({
 }: {
   countriesLeaguesClubs: BaseCountries;
 }) => {
+  const navigate = useNavigate()
   const [playerName, setPlayerName] = useState("");
-  const [countryValue, setCountryValue] = useState("0");
-  const [domesticLeagueValue, setDomesticLeagueValue] = useState("0");
-  const [clubValue, setClubValue] = useState("0");
+  const [countryIndex, setCountryIndex] = useState(0);
+  const [domesticLeagueIndex, setDomesticLeagueIndex] = useState(0);
+  const [clubIndex, setClubIndex] = useState(0);
 
-  const handleSubmit = (event) => {
+  
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
-    const saveArguments: Record<string, string> = {
-      name: playerName,
-      countryValue,
-      domesticLeagueValue,
-      clubValue,
-      season: "2025",
-    };
+    const db = await createSave({
+      CountryIndex: countryIndex,
+      DomesticLeagueIndex: domesticLeagueIndex,
+      ClubIndex: clubIndex,
+      Season: 1,
+      Countries: countriesLeaguesClubs,
+    });
+    
+    const goto: string = `save/${db.name}`
+    navigate(goto)
+    
   };
 
   return (
@@ -108,9 +114,7 @@ export const NewSaveForm = ({
           <select
             required={true}
             name="country"
-            onChange={(event): void => {
-              setCountryValue(event.target.value);
-            }}
+            onChange={pipe([getEventTargetValueAsNumber, setCountryIndex])}
           >
             <CreateCountryOptions
               countriesLeaguesClubs={countriesLeaguesClubs}
@@ -122,14 +126,15 @@ export const NewSaveForm = ({
           <select
             required={true}
             name="league"
-            value={domesticLeagueValue}
-            onChange={(event): void => {
-              setDomesticLeagueValue(event.target.value);
-            }}
+            value={domesticLeagueIndex}
+            onChange={pipe([
+              getEventTargetValueAsNumber,
+              setDomesticLeagueIndex,
+            ])}
           >
             <CreateDomesticLeagueOptions
               countriesLeaguesClubs={countriesLeaguesClubs}
-              countryIndex={countryValue}
+              countryIndex={countryIndex}
             />
           </select>
         </label>
@@ -139,15 +144,13 @@ export const NewSaveForm = ({
           <select
             required={true}
             name="club"
-            value={"0"}
-            onChange={(event): void => {
-              setClubValue(event.target.value);
-            }}
+            value={0}
+            onChange={pipe([getEventTargetValueAsNumber, setClubIndex])}
           >
             <CreateClubOptions
               countriesLeaguesClubs={countriesLeaguesClubs}
-              countryIndex={countryValue}
-              domesticLeagueIndex={domesticLeagueValue}
+              countryIndex={countryIndex}
+              domesticLeagueIndex={domesticLeagueIndex}
             />
           </select>
         </label>

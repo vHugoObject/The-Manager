@@ -1,3 +1,4 @@
+import "vitest-browser-react";
 import { expect as baseExpect } from "vitest";
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { fc } from "@fast-check/vitest";

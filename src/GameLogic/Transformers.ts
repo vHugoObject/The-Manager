@@ -109,6 +109,7 @@ import {
   getRangeStep,
   getPositionGroupPlayerCountAndWageBillPercentage,
   getDomesticLeaguesCountFromBaseCountries,
+  getCountryNameFromBaseCountries
 } from "./Getters";
 
 export const mapSum = map(sum);
@@ -1097,6 +1098,7 @@ export const convertClubRelativeNumberIntoAbsoluteNumber = memoize(
   },
 );
 
+
 export const positionGroupRankRepeaterForPlayerNumber = pipe([
   mod(DEFAULTSQUADSIZE),
   mod(DEFAULTPLAYERSPEROUTFIELDPOSITIONGROUP),
@@ -1159,7 +1161,7 @@ export const [
   firstNameIndexForPlayerNumber,
   lastNameIndexForPlayerNumber,
   countryNameIndexForPlayerNumber,
-] = map<Array<string>, (num: number) => string>(pipe([size, mod]))([
+] = map<Array<string>, (num: number) => number>(pipe([size, mod]))([
   FIRSTNAMES,
   LASTNAMES,
   COUNTRYNAMES,

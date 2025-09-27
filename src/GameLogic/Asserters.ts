@@ -248,11 +248,12 @@ export const assertIsPlayerObject = (received: any): void => {
 
 export const assertIsSaveOptions = (received: any): void => {
   expect(received).toMatchObject({
-    SaveName: expect.any(String),
     CountryIndex: expect.any(Number),
     DomesticLeagueIndex: expect.any(Number),
-    ClubIndex: expect.any(Number),
-    Season: expect.any(Number),
+    ClubIndex: expect.any(Number),    
     Countries: expect.any(Array),
+    CurrentSeason: expect.any(Number),
+    StartSeason: expect.any(Number),
   });
 };
+

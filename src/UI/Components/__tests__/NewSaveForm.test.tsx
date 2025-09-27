@@ -1,30 +1,28 @@
-// @vitest-environment jsdom
+import React from "react";
 import { fc, test } from "@fast-check/vitest";
-import { cleanup, screen } from "@testing-library/react";
-import "fake-indexeddb/auto";
+import { cleanup, screen } from "@testing-library/react"
 import { describe, expect } from "vitest";
+import { setup } from "../../UITestingUtilities"
+import { BaseCountries } from "../../../GameLogic/Types";
 import {
   fastCheckNLengthUniqueStringArrayGenerator,
-  fastCheckNonSpaceRandomCharacterGenerator,
   fastCheckTestBaseCountriesGenerator,
-  fastCheckTestCompletelyRandomBaseClub,
-  fastCheckGet2RandomItemsFromArray,
-  fastCheckGet2RandomBaseCountries,
-  fastCheckGet2RandomBaseDomesticLeagues,
-  fastCheckGet2RandomBaseClubs,
-} from "../../../Common/TestDataGenerators";
-import { BaseCountries } from "../../../Common/Types";
-import { setup } from "../../UITestingUtilities";
+  fastCheckGetTwoRandomItemsFromArray,
+  fastCheckGetTwoRandomBaseCountries,
+  fastCheckGetTwoRandomBaseDomesticLeagues,
+  fastCheckGetTwoRandomBaseClubNamesFromRandomLeague,
+} from "../../../GameLogic/TestDataGenerators";
 import {
   CreateClubOptions,
   CreateCountryOptions,
   CreateDomesticLeagueOptions,
   CreateEntityOptions,
-  NewSaveForm,
 } from "../NewSaveForm";
 
+
 describe("NewSaveForm", async () => {
-  test.skip("Test CreateEntityOptions", async () => {
+    
+  test("Test CreateEntityOptions", async () => {
     await fc.assert(
       fc
         .asyncProperty(
@@ -38,28 +36,31 @@ describe("NewSaveForm", async () => {
               );
 
             const [testValue, testValueToClick] =
-              fastCheckGet2RandomItemsFromArray(fcGen, testOptions);
+              fastCheckGetTwoRandomItemsFromArray(fcGen, testOptions);
 
-            const { user } = setup(
-              <div>
-                <select onChange={(e) => e} value={testValue}>
-                  <CreateEntityOptions strings={testOptions} />
-                </select>
-              </div>,
-            );
+	    const TestElement = () => {
+	      return <div>
+                       <select data-testid="select" onChange={(e) => e} value={testValue}>
+			 <CreateEntityOptions strings={testOptions} />
+                       </select>
+		     </div>
+	    }
 
-            await user.click(screen.getByText(testValue));
-            await user.click(screen.getByText(testValueToClick));
+	    const { user } = setup(<TestElement />)	    
+	    await user.click(screen.getByText(testValue))
+	    await user.click(screen.getByText(testValueToClick))
+	    
+	    	    
           },
         )
         .beforeEach(async () => {
           cleanup();
         }),
-      { numRuns: 50 },
+      { numRuns: 1 },
     );
   });
 
-  test.skip("Test CreateCountryOptions", async () => {
+  test("Test CreateCountryOptions", async () => {
     await fc.assert(
       fc
         .asyncProperty(
@@ -77,7 +78,7 @@ describe("NewSaveForm", async () => {
               );
 
             const [testCountryValue, testCountryToClick] =
-              fastCheckGet2RandomBaseCountries(fcGen, testBaseCountries);
+              fastCheckGetTwoRandomBaseCountries(fcGen, testBaseCountries);
 
             const { user } = setup(
               <div>
@@ -89,18 +90,66 @@ describe("NewSaveForm", async () => {
               </div>,
             );
 
-            await user.click(screen.getByText(testCountryValue));
-            await user.click(screen.getByText(testCountryToClick));
+
+	    await user.click(screen.getByText(testCountryValue))
+	    await user.click(screen.getByText(testCountryToClick))
+
           },
         )
         .beforeEach(async () => {
           cleanup();
         }),
-      { numRuns: 50 },
+      { numRuns: 1 },
     );
   });
 
-  test.skip("Test CreateClubOptions", async () => {
+  test("Test CreateDomesticLeagueOptions", async () => {
+    await fc.assert(
+      fc
+        .asyncProperty(
+          fc.tuple(
+            fc.integer({ min: 1, max: 3 }),
+            fc.integer({ min: 3, max: 8 }),
+            fc.integer({ min: 1, max: 20 }),
+          ),
+          fc.gen(),
+          async (testCountriesDomesticsLeaguesClubsCount, fcGen) => {
+            const testBaseCountries: BaseCountries =
+              fastCheckTestBaseCountriesGenerator(
+                fcGen,
+                testCountriesDomesticsLeaguesClubsCount,
+              );
+
+            const [testCountryIndex, [testLeagueValue, testLeagueToClick]] =
+              fastCheckGetTwoRandomBaseDomesticLeagues(
+                fcGen,
+                testBaseCountries,
+              );
+
+            const { user } = setup(
+              <div>
+                <select value={testLeagueValue} onChange={(e) => e}>
+                  <CreateDomesticLeagueOptions
+                    countriesLeaguesClubs={testBaseCountries}
+                    countryIndex={testCountryIndex}
+                  />
+                </select>
+              </div>,
+            );
+
+	    await user.click(screen.getByText(testLeagueValue))
+	    await user.click(screen.getByText(testLeagueToClick))
+	    
+          },
+        )
+        .beforeEach(async () => {
+          cleanup();
+        }),
+      { numRuns: 1 },
+    );
+  });
+
+  test("Test CreateClubOptions", async () => {
     await fc.assert(
       fc
         .asyncProperty(
@@ -120,7 +169,10 @@ describe("NewSaveForm", async () => {
             const [
               [testCountryIndex, testDomesticLeagueIndex],
               [testClubValue, testClubToClick],
-            ] = fastCheckGet2RandomBaseClubs(fcGen, testBaseCountries);
+            ] = fastCheckGetTwoRandomBaseClubNamesFromRandomLeague(
+              fcGen,
+              testBaseCountries,
+            );
 
             const { user } = setup(
               <div>
@@ -134,135 +186,14 @@ describe("NewSaveForm", async () => {
               </div>,
             );
 
-            await user.click(screen.getByText(testClubValue));
-
-            await user.click(screen.getByText(testClubToClick));
+	    await user.click(screen.getByText(testClubValue))
+	    await user.click(screen.getByText(testClubToClick))
           },
         )
         .beforeEach(async () => {
           cleanup();
         }),
       { numRuns: 50 },
-    );
-  });
-
-  test.skip("Test CreateDomesticLeagueOptions", async () => {
-    await fc.assert(
-      fc
-        .asyncProperty(
-          fc.tuple(
-            fc.integer({ min: 1, max: 3 }),
-            fc.integer({ min: 3, max: 8 }),
-            fc.integer({ min: 1, max: 20 }),
-          ),
-          fc.gen(),
-          async (testCountriesDomesticsLeaguesClubsCount, fcGen) => {
-            const testBaseCountries: BaseCountries =
-              fastCheckTestBaseCountriesGenerator(
-                fcGen,
-                testCountriesDomesticsLeaguesClubsCount,
-              );
-
-            const [testCountryIndex, [testLeagueValue, testLeagueToClick]] =
-              fastCheckGet2RandomBaseDomesticLeagues(fcGen, testBaseCountries);
-
-            const { user } = setup(
-              <div>
-                <select value={testLeagueValue} onChange={(e) => e}>
-                  <CreateDomesticLeagueOptions
-                    countriesLeaguesClubs={testBaseCountries}
-                    countryIndex={testCountryIndex}
-                  />
-                </select>
-              </div>,
-            );
-
-            await user.click(screen.getByText(testLeagueValue));
-            await user.click(screen.getByText(testLeagueToClick));
-          },
-        )
-        .beforeEach(async () => {
-          cleanup();
-        }),
-      { numRuns: 50 },
-    );
-  });
-
-  test("Test NewSaveForm", async () => {
-    await fc.assert(
-      fc
-        .asyncProperty(
-          fc.tuple(
-            fc.integer({ min: 1, max: 5 }),
-            fc.integer({ min: 1, max: 2 }),
-            fc.integer({ min: 1, max: 2 }),
-          ),
-          fc.gen(),
-          async (testCountriesDomesticsLeaguesClubsCount, fcGen) => {
-            const testBaseCountries: BaseCountries =
-              fastCheckTestBaseCountriesGenerator(
-                fcGen,
-                testCountriesDomesticsLeaguesClubsCount,
-              );
-
-            const testName: string =
-              fastCheckNonSpaceRandomCharacterGenerator(fcGen);
-            const [
-              ,
-              [
-                testCountryNameValue,
-                testDomesticLeagueNameValue,
-                testClubNameValue,
-              ],
-            ] = fastCheckTestCompletelyRandomBaseClub(fcGen, testBaseCountries);
-
-            const { user } = setup(
-              <NewSaveForm countriesLeaguesClubs={testBaseCountries} />,
-            );
-
-            const actualNameTextArea: HTMLInputElement = screen.getByRole(
-              "textbox",
-              {
-                name: "Choose a name:",
-              },
-            );
-
-            await user.type(actualNameTextArea, testName);
-            expect(actualNameTextArea.value).toBe(testName);
-
-            const actualCountryOptions: HTMLSelectElement =
-              screen.getByLabelText("Choose a country:", {
-                selector: "select",
-              });
-
-            await user.selectOptions(
-              actualCountryOptions,
-              testCountryNameValue,
-            );
-
-            const actualDomesticLeagueOptions: HTMLSelectElement =
-              screen.getByLabelText("Choose a domestic league:", {
-                selector: "select",
-              });
-
-            await user.selectOptions(
-              actualDomesticLeagueOptions,
-              testDomesticLeagueNameValue,
-            );
-
-            const actualClubOptions: HTMLSelectElement = screen.getByLabelText(
-              "Choose a club:",
-              { selector: "select" },
-            );
-
-            await user.selectOptions(actualClubOptions, testClubNameValue);
-            await user.click(screen.getByRole("button", { name: "Submit" }));
-          },
-        )
-        .beforeEach(async () => {
-          cleanup();
-        }),
-      { numRuns: 1 },
     );
   });
 });

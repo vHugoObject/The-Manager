@@ -1,7 +1,8 @@
-import { render } from "@testing-library/react";
+import { render, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 import { map, get } from "lodash/fp";
+import { indexedDBCleanup } from "../GameLogic/Save"
 
 export const setup = (jsx: JSX.Element) => {
   return {
@@ -18,6 +19,12 @@ export const renderWithRouter = (ui: React.ReactNode, { route = "/" } = {}) => {
     ...render(ui, { wrapper: BrowserRouter }),
   };
 };
+
+
+export const reactCleanup = async(): Promise<void> => {
+  cleanup()
+  await indexedDBCleanup()
+}
 
 export const getElementID = get("id");
 export const getElementValue = get("value");

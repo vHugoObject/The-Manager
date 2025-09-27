@@ -82,12 +82,12 @@ export interface Player {
 }
 
 export interface SaveOptions {
-  SaveName: string;
   CountryIndex: number;
   DomesticLeagueIndex: number;
   ClubIndex: number;
-  Season: number;
   Countries: BaseCountries;
+  StartSeason: number;
+  CurrentSeason: number;  
 }
 
 export interface SaveArguments {

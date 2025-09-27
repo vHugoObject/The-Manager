@@ -1,11 +1,19 @@
 import React from "react";
-import { useState, useEffect, useContext, useReducer } from "react";
-import { useNavigate } from "react-router-dom";
+import Card from "react-bootstrap/Card"
+import { useNavigate } from "react-router";
+import { OldSavesCards } from "./Components/OldSaves"
+import { getAllSaveOptionsHook } from "./Hooks/SaveHooks"
 
 export const StartScreen = () => {
+  let navigate = useNavigate();
+  const saves = getAllSaveOptionsHook();
+  console.log(saves)
   return (
-    <div data-test>
-      <button type="submit">Start New Save</button>
+    <div>
+      <OldSavesCards saveOptionTuples={saves}/>
+      <Card onClick={() => navigate("newsave")}>
+	<Card.Header>Start New Game</Card.Header>  	
+      </Card>
     </div>
   );
 };
