@@ -1,8 +1,8 @@
 import React from "react";
 import { fc, test } from "@fast-check/vitest";
-import { cleanup, screen } from "@testing-library/react"
+import { cleanup, screen } from "@testing-library/react";
 import { describe, expect } from "vitest";
-import { setup } from "../../UITestingUtilities"
+import { setup } from "../../UITestingUtilities";
 import { BaseCountries } from "../../../GameLogic/Types";
 import {
   fastCheckNLengthUniqueStringArrayGenerator,
@@ -19,9 +19,7 @@ import {
   CreateEntityOptions,
 } from "../NewSaveForm";
 
-
 describe("NewSaveForm", async () => {
-    
   test("Test CreateEntityOptions", async () => {
     await fc.assert(
       fc
@@ -38,19 +36,23 @@ describe("NewSaveForm", async () => {
             const [testValue, testValueToClick] =
               fastCheckGetTwoRandomItemsFromArray(fcGen, testOptions);
 
-	    const TestElement = () => {
-	      return <div>
-                       <select data-testid="select" onChange={(e) => e} value={testValue}>
-			 <CreateEntityOptions strings={testOptions} />
-                       </select>
-		     </div>
-	    }
+            const TestElement = () => {
+              return (
+                <div>
+                  <select
+                    data-testid="select"
+                    onChange={(e) => e}
+                    value={testValue}
+                  >
+                    <CreateEntityOptions strings={testOptions} />
+                  </select>
+                </div>
+              );
+            };
 
-	    const { user } = setup(<TestElement />)	    
-	    await user.click(screen.getByText(testValue))
-	    await user.click(screen.getByText(testValueToClick))
-	    
-	    	    
+            const { user } = setup(<TestElement />);
+            await user.click(screen.getByText(testValue));
+            await user.click(screen.getByText(testValueToClick));
           },
         )
         .beforeEach(async () => {
@@ -90,10 +92,8 @@ describe("NewSaveForm", async () => {
               </div>,
             );
 
-
-	    await user.click(screen.getByText(testCountryValue))
-	    await user.click(screen.getByText(testCountryToClick))
-
+            await user.click(screen.getByText(testCountryValue));
+            await user.click(screen.getByText(testCountryToClick));
           },
         )
         .beforeEach(async () => {
@@ -137,9 +137,8 @@ describe("NewSaveForm", async () => {
               </div>,
             );
 
-	    await user.click(screen.getByText(testLeagueValue))
-	    await user.click(screen.getByText(testLeagueToClick))
-	    
+            await user.click(screen.getByText(testLeagueValue));
+            await user.click(screen.getByText(testLeagueToClick));
           },
         )
         .beforeEach(async () => {
@@ -186,8 +185,8 @@ describe("NewSaveForm", async () => {
               </div>,
             );
 
-	    await user.click(screen.getByText(testClubValue))
-	    await user.click(screen.getByText(testClubToClick))
+            await user.click(screen.getByText(testClubValue));
+            await user.click(screen.getByText(testClubToClick));
           },
         )
         .beforeEach(async () => {

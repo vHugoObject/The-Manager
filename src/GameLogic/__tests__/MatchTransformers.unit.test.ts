@@ -11,13 +11,13 @@ import {
 import { DEFAULTCLUBSPERDOMESTICLEAGUE } from "../Constants";
 import { getDomesticLeaguesCountFromBaseCountries } from "../Getters";
 import {
-  createMatchAddress,
+  createMatchID,
   matchesPerRoundOfRoundRobin,
   createMatchPairingsForWeek,
 } from "../Transformers";
 
 describe("MatchTranformers test suite", () => {
-  test.prop([fc.gen()])("createMatchAddress", (fcGen) => {
+  test.prop([fc.gen()])("createMatchID", (fcGen) => {
     const testBaseCountries: BaseCountries =
       fastCheckGenerateRandomBaseCountries(fcGen);
     const testSeason: number = fastCheckRandomSeason(fcGen);
@@ -29,7 +29,7 @@ describe("MatchTranformers test suite", () => {
       fcGen,
       testBaseCountries,
     ) as [[number, number], [number, number]];
-    const actualMatchAddress = createMatchAddress(
+    const actualMatchAddress: string = createMatchID(
       testCountryAndDomesticLeagueIndices,
       [testSeason, testMatchWeek],
       testClubIDs,
@@ -37,7 +37,6 @@ describe("MatchTranformers test suite", () => {
     const [testCountryIndex, testDomesticLeagueIndex] =
       testCountryAndDomesticLeagueIndices;
 
-    assert.lengthOf(actualMatchAddress, 5);
     expect(actualMatchAddress).toContain(testCountryIndex);
     expect(actualMatchAddress).toContain(testDomesticLeagueIndex);
     expect(actualMatchAddress).toContain(testSeason);

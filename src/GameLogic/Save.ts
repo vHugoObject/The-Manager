@@ -7,9 +7,14 @@ import {
   max,
   toString,
   curry,
-  forEach
+  forEach,
 } from "lodash/fp";
-import { fromNullable, Option, map as optionMap, getOrElse } from "fp-ts/Option";
+import {
+  fromNullable,
+  Option,
+  map as optionMap,
+  getOrElse,
+} from "fp-ts/Option";
 import { DBVERSION } from "./Constants";
 import { SaveSchema, SaveOptions, SaveArguments, Club, Player } from "./Types";
 import {
@@ -18,25 +23,25 @@ import {
 } from "./Getters";
 import { createClub, createPlayer, unfold, addOne } from "./Transformers";
 
-export const indexedDBCleanup = async(): Promise<void> => {
+export const indexedDBCleanup = async (): Promise<void> => {
   const databases = await indexedDB.databases();
-  const databaseNames = property("name", databases)
-  forEach(async(databaseName: string): Promise<void> => {
+  const databaseNames = property("name", databases);
+  forEach(async (databaseName: string): Promise<void> => {
     await deleteDB(databaseName);
-  })(databaseNames)
-}
-
+  })(databaseNames);
+};
 
 export const getAllSaveNames = async (): Promise<Option<Array<string>>> => {
   const allSaves = await indexedDB.databases();
-  return pipe([fromNullable, optionMap(map(property("name")))])(allSaves)
+  return pipe([fromNullable, optionMap(map(property("name")))])(allSaves);
 };
-
 
 export const getNextSaveName = async (): Promise<string> => {
   const saveNames: Option<Array<string>> = await getAllSaveNames();
-  return pipe([optionMap(pipe([map(parseInt), max, addOne, toString])), getOrElse(() => "1")])(saveNames);
-  
+  return pipe([
+    optionMap(pipe([map(parseInt), max, addOne, toString])),
+    getOrElse(() => "1"),
+  ])(saveNames);
 };
 
 export const createNewDBForSave = async ({
@@ -45,7 +50,7 @@ export const createNewDBForSave = async ({
   Players,
 }: SaveArguments): Promise<IDBPDatabase<SaveSchema>> => {
   const saveName: string = await getNextSaveName();
-  
+
   const db = await openDB<SaveSchema>(saveName, DBVERSION, {
     upgrade(db) {
       db.createObjectStore("SaveOptions");
@@ -104,7 +109,7 @@ export const createSave = async (
 export const getSaveOptionsForSave = curry(
   async ([saveName, dbVersion]: [string, number]): Promise<
     Option<SaveOptions>
-  > => {    
+  > => {
     const db = await openDB(saveName, dbVersion);
     const saveOptions = await db.get("SaveOptions", saveName);
 
@@ -113,15 +118,19 @@ export const getSaveOptionsForSave = curry(
 );
 
 export const getSaveOptionsOfAllSaves = async (): Promise<
-Array<Option<[string, SaveOptions]>>> => {
+  Array<Option<[string, SaveOptions]>>
+> => {
   const saves = await indexedDB.databases();
   const saveGetter = async ({
     name,
     version,
   }: IDBDatabaseInfo): Promise<Option<[string, SaveOptions]>> => {
-    const saveOptions = await getSaveOptionsForSave([name, version])
-    return optionMap((saveOptions: SaveOptions): [string, SaveOptions] => [name, saveOptions])(saveOptions)
-  }
+    const saveOptions = await getSaveOptionsForSave([name, version]);
+    return optionMap((saveOptions: SaveOptions): [string, SaveOptions] => [
+      name,
+      saveOptions,
+    ])(saveOptions);
+  };
 
   return await Promise.all(map(saveGetter)(saves));
 };

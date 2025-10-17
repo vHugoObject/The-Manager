@@ -38,7 +38,7 @@ import {
   fastCheckTestRandomBaseCountryIndex,
   fastCheckTestRandomBaseDomesticLeagueIndexFromCountry,
   fastCheckTestRandomBaseClubIndexFromCountryAndDomesticLeague,
-  fastCheckTestCompletelyRandomBaseDomesticLeagueIndex,
+  fastCheckTestCompletelyRandomBaseDomesticLeaguePath,
   fastCheckTestCompletelyRandomBaseClubIndex,
   fastCheckTestCompletelyRandomBaseClub,
   fastCheckGenerateTestDomesticLeaguesCount,
@@ -46,7 +46,7 @@ import {
   fastCheckGenerateTestPlayersCount,
   fastCheckGenerateTestCountriesLeaguesClubsPlayersCount,
   fastCheckGenerateRandomBaseCountries,
-  fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithIndex,
+  fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithPath,
   fastCheckGetTwoRandomBaseClubNamesFromRandomLeague,
   fastCheckGetTwoRandomBaseRelativeClubNumbersFromRandomLeague,
   fastCheckGetTwoRandomBaseClubNumbersFromRandomLeague,
@@ -245,7 +245,7 @@ describe("TestBaseCountriesGenerators", () => {
         );
 
       const testRandomFullBaseDomesticLeagueIndex: [number, number] =
-        fastCheckTestCompletelyRandomBaseDomesticLeagueIndex(
+        fastCheckTestCompletelyRandomBaseDomesticLeaguePath(
           fcGen,
           testCountriesDomesticLeaguesClubs,
         );
@@ -268,12 +268,12 @@ describe("TestBaseCountriesGenerators", () => {
   );
 
   test.prop([fc.gen()])(
-    "fastCheckTestCompletelyRandomBaseDomesticLeagueIndex",
+    "fastCheckTestCompletelyRandomBaseDomesticLeaguePath",
     (fcGen) => {
       const testCountriesDomesticLeaguesClubs: BaseCountries =
         fastCheckGenerateRandomBaseCountries(fcGen);
       const actualDomesticLeagueIndex: [number, number] =
-        fastCheckTestCompletelyRandomBaseDomesticLeagueIndex(
+        fastCheckTestCompletelyRandomBaseDomesticLeaguePath(
           fcGen,
           testCountriesDomesticLeaguesClubs,
         );
@@ -288,7 +288,7 @@ describe("TestBaseCountriesGenerators", () => {
   );
 
   test.prop([fc.gen()])(
-    "fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithIndex",
+    "fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithPath",
     (fcGen) => {
       const testCountriesDomesticLeaguesClubs: BaseCountries =
         fastCheckGenerateRandomBaseCountries(fcGen);
@@ -296,7 +296,7 @@ describe("TestBaseCountriesGenerators", () => {
         actualCountryAndDomesticLeagueName,
         actualCountryAndDomesticLeagueIndices,
       ]: [[string, string], [number, number]] =
-        fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithIndex(
+        fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithPath(
           fcGen,
           testCountriesDomesticLeaguesClubs,
         );

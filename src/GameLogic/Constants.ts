@@ -22,7 +22,7 @@ export const DEFAULTDOMESTICLEAGUESPERCOUNTRYNUMBERRANGE: [number, number] = [
   0, 4,
 ];
 export const DEFAULTCLUBSPERDOMESTICLEAGUE = 20;
-export const DEFAULTMATCHPERWEEKPERDOMESTICLEAGUE =
+export const DEFAULTMATCHESPERWEEKPERDOMESTICLEAGUE =
   DEFAULTCLUBSPERDOMESTICLEAGUE / 2 - 1;
 export const DEFAULTSQUADSIZE: number = 25;
 
@@ -151,4 +151,18 @@ export const CLUBKEYS: Array<string> = [
   "HealthCosts",
   "PlayerDevelopmentCosts",
   "Players",
+];
+
+export const LEAGUEKEYS: Array<string> = [
+  "LeagueNumber",
+  "Country",
+  "Level",
+  "Clubs",
+];
+
+export const LEAGUETABLEHEADERS: Array<string> = [
+  "",
+  "Country",
+  "Level",
+  "Clubs",
 ];

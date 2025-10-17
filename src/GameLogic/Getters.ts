@@ -57,7 +57,7 @@ import {
   PositionGroup,
   PLAYERBIODATARANGESBYPOSITION,
   PLAYERBIODATA,
-  PREMIERLEAGUEPAYROLLPERPOSITIONGROUP, 
+  PREMIERLEAGUEPAYROLLPERPOSITIONGROUP,
 } from "./PlayerDataConstants";
 
 export const isTrue = isEqual(true);
@@ -314,19 +314,21 @@ export const getClubNameFromBaseCountries = curry(
   },
 );
 
-export const playerNameGetter = curry(([key, nameList]: [string, Array<string>], player: Player) => pipe([property(key), partialRight(property, [nameList])])(player))
+export const playerNameGetter = curry(
+  ([key, nameList]: [string, Array<string>], player: Player) =>
+    pipe([property(key), partialRight(property, [nameList])])(player),
+);
 export const [
   getPlayerFirstName,
   getPlayerLastName,
   getPlayerCountryName,
-  getPlayerPositionGroupName
+  getPlayerPositionGroupName,
 ] = map<[string, Array<string>], (player: Player) => string>(playerNameGetter)([
   ["FirstName", FIRSTNAMES],
   ["LastName", LASTNAMES],
   ["PlayerCountry", COUNTRYNAMES],
   ["PositionGroup", Object.keys(PositionGroup)],
 ]);
-
 
 export const getPlayerBioDataRange = curry(
   (
@@ -388,5 +390,3 @@ export const getPositionGroupPlayerCountAndWageBillPercentage = over<number>([
   getPositionGroupPlayerCountPerSquad,
   getPositionGroupBaseWageBillPercentage,
 ]);
-
-

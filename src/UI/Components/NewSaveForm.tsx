@@ -73,13 +73,12 @@ export const NewSaveForm = ({
 }: {
   countriesLeaguesClubs: BaseCountries;
 }) => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [playerName, setPlayerName] = useState("");
   const [countryIndex, setCountryIndex] = useState(0);
   const [domesticLeagueIndex, setDomesticLeagueIndex] = useState(0);
   const [clubIndex, setClubIndex] = useState(0);
 
-  
   const handleSubmit = async (event) => {
     event.preventDefault();
     const db = await createSave({
@@ -89,10 +88,9 @@ export const NewSaveForm = ({
       Season: 1,
       Countries: countriesLeaguesClubs,
     });
-    
-    const goto: string = `save/${db.name}`
-    navigate(goto)
-    
+
+    const goto: string = `save/${db.name}`;
+    navigate(goto);
   };
 
   return (

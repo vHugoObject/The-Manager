@@ -3,7 +3,7 @@ import { describe, assert, expect } from "vitest";
 import { deleteDB, IDBPDatabase } from "idb";
 import { property, pipe, map, over } from "lodash/fp";
 import { toUndefined, Option } from "fp-ts/Option";
-import { compact } from "fp-ts/ReadonlyArray"
+import { compact } from "fp-ts/ReadonlyArray";
 import { SaveSchema, SaveOptions } from "../Types";
 import {
   assertIsClubObject,
@@ -14,7 +14,7 @@ import {
 import {
   fastCheckCreateTestSaveOptionsWithRandomCountries,
   fastCheckRandomItemFromArray,
-  fastCheckCreateTestSaveArguments
+  fastCheckCreateTestSaveArguments,
 } from "../TestDataGenerators";
 import { zipApply, unfold } from "../Transformers";
 import {
@@ -22,46 +22,38 @@ import {
   createSave,
   getSaveOptionsOfAllSaves,
   getSaveOptionsForSave,
-  indexedDBCleanup
+  indexedDBCleanup,
 } from "../Save";
 
-
 describe("SaveUtilities tests", async () => {
-
   test("createNewDBForSave", async () => {
     await fc.assert(
-      fc.asyncProperty(
-        fc.gen(),
-        async (fcGen) => {
-	  
-	  const [testSaveArguments] = fastCheckCreateTestSaveArguments(fcGen)
-	  const {Clubs: testClubs, Players: testPlayers} = testSaveArguments
-          const [expectedRandomClubKey, expectedRandomPlayerKey] = pipe([
-            map(fastCheckRandomItemFromArray(fcGen)),
-            zipApply([property(["ClubNumber"]), property(["PlayerNumber"])]),
-          ])([testClubs, testPlayers]);
+      fc.asyncProperty(fc.gen(), async (fcGen) => {
+        const [testSaveArguments] = fastCheckCreateTestSaveArguments(fcGen);
+        const { Clubs: testClubs, Players: testPlayers } = testSaveArguments;
+        const [expectedRandomClubKey, expectedRandomPlayerKey] = pipe([
+          map(fastCheckRandomItemFromArray(fcGen)),
+          zipApply([property(["ClubNumber"]), property(["PlayerNumber"])]),
+        ])([testClubs, testPlayers]);
 
-	  
-          const actualDB = await createNewDBForSave(testSaveArguments);          
-	  
-          const actualRandomClub = await actualDB.get(
-            "Clubs",
-            expectedRandomClubKey,
-          );
-          assertIsClubObject(actualRandomClub);
-          const actualRandomPlayer = await actualDB.get(
-            "Players",
-            expectedRandomPlayerKey,
-          );
-          assertIsPlayerObject(actualRandomPlayer);
+        const actualDB = await createNewDBForSave(testSaveArguments);
 
-          actualDB.close();
+        const actualRandomClub = await actualDB.get(
+          "Clubs",
+          expectedRandomClubKey,
+        );
+        assertIsClubObject(actualRandomClub);
+        const actualRandomPlayer = await actualDB.get(
+          "Players",
+          expectedRandomPlayerKey,
+        );
+        assertIsPlayerObject(actualRandomPlayer);
 
+        actualDB.close();
 
-	  await indexedDBCleanup()
-        },
-      ),
-      	{numRuns: 1}
+        await indexedDBCleanup();
+      }),
+      { numRuns: 1 },
     );
   });
 
@@ -87,8 +79,7 @@ describe("SaveUtilities tests", async () => {
         ]);
 
         actualSave.close();
-	await indexedDBCleanup()
-
+        await indexedDBCleanup();
       }),
       { numRuns: 1 },
     );
@@ -96,51 +87,49 @@ describe("SaveUtilities tests", async () => {
 
   test("getSaveOptionsForSave", async () => {
     await fc.assert(
-      fc
-        .asyncProperty(
-          fc.gen(),
-          async (fcGen) => {
+      fc.asyncProperty(fc.gen(), async (fcGen) => {
+        const [testSaveArguments] = fastCheckCreateTestSaveArguments(fcGen);
+        const testDB = await createNewDBForSave(testSaveArguments);
+        const [expectedDBName, expectedVersion] = over([
+          property("name"),
+          property("version"),
+        ])(testDB);
 
-	    const [testSaveArguments] = fastCheckCreateTestSaveArguments(fcGen)
-            const testDB = await createNewDBForSave(testSaveArguments);
-	    const [expectedDBName, expectedVersion] = over([property("name"), property("version")])(testDB)
+        const actualSaveOptions = await getSaveOptionsForSave([
+          expectedDBName,
+          expectedVersion,
+        ]);
+        assertIsSaveOptions(toUndefined(actualSaveOptions));
 
-
-	    const actualSaveOptions = await getSaveOptionsForSave([expectedDBName, expectedVersion])
-	    assertIsSaveOptions(toUndefined(actualSaveOptions))
-	    
-	    await indexedDBCleanup()
-          },
-        ),
+        await indexedDBCleanup();
+      }),
       { numRuns: 1 },
     );
   });
 
   test("getSaveOptionsOfAllSaves", async () => {
     await fc.assert(
-      fc.asyncProperty(
-        fc.gen(),
-        async (fcGen) => {
+      fc.asyncProperty(fc.gen(), async (fcGen) => {
+        const initialDBs = await indexedDB.databases();
 
-	  const initialDBs = await indexedDB.databases()
-	  
-          const [testSaveArguments] = fastCheckCreateTestSaveArguments(fcGen)
-	  await createNewDBForSave(testSaveArguments)
+        const [testSaveArguments] = fastCheckCreateTestSaveArguments(fcGen);
+        await createNewDBForSave(testSaveArguments);
 
-          const actualSaveOptions = await getSaveOptionsOfAllSaves();
+        const actualSaveOptions = await getSaveOptionsOfAllSaves();
 
-	  expect(actualSaveOptions.length-initialDBs.length).toEqual(1)
-          const [actualRandomSaveName, actualRandomSaveOption]: [
-            string,
-            Option<SaveOptions>,
-          ] = pipe([fastCheckRandomItemFromArray(fcGen), toUndefined])(actualSaveOptions);
+        expect(actualSaveOptions.length - initialDBs.length).toEqual(1);
+        const [actualRandomSaveName, actualRandomSaveOption]: [
+          string,
+          Option<SaveOptions>,
+        ] = pipe([fastCheckRandomItemFromArray(fcGen), toUndefined])(
+          actualSaveOptions,
+        );
 
-          assert.isNumber(parseInt(actualRandomSaveName));
-          assertIsSaveOptions(actualRandomSaveOption);
+        assert.isNumber(parseInt(actualRandomSaveName));
+        assertIsSaveOptions(actualRandomSaveOption);
 
-          await indexedDBCleanup()
-        },
-      ),
+        await indexedDBCleanup();
+      }),
       { numRuns: 1 },
     );
   });

@@ -538,12 +538,15 @@ describe("TestPrimitiveDataGenerators test suite", () => {
           fastCheckTestLinearRangeGenerator(fcGen),
         ])(testMultiple);
 
-        const actualChunk: Array<number> = fastCheckUnfoldRandomRangeChunk(
-          testRange,
-          testChunkSize,
-          addOne,
-          fcGen,
-        );
+        const [actualChunk, actualChunkNumber] =
+          fastCheckUnfoldRandomRangeChunk(
+            testRange,
+            testChunkSize,
+            addOne,
+            fcGen,
+          );
+
+        expect(actualChunkNumber).toBeGreaterThanOrEqual(0);
         const [actualChunkSize, actualMin, actualMax] =
           getSizeMinAndMaxOfArray(actualChunk);
         const [expectedMin, expectedMax] = testRange;
@@ -564,13 +567,13 @@ describe("TestPrimitiveDataGenerators test suite", () => {
       "fastCheckUnfoldRandomNaturalNumberRangeChunk",
       (fcGen, testChunkSize, testMultiple) => {
         const testMax: number = multiply(testChunkSize, testMultiple);
-        const actualChunk: Array<number> =
-          fastCheckUnfoldRandomNaturalNumberRangeChunk(
-            testMax,
-            testChunkSize,
-            addOne,
-            fcGen,
-          );
+        const [actualChunk] = fastCheckUnfoldRandomNaturalNumberRangeChunk(
+          testMax,
+          testChunkSize,
+          addOne,
+          fcGen,
+        );
+
         const [actualChunkSize, actualMin] =
           getSizeMinAndMaxOfArray(actualChunk);
 

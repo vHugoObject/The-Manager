@@ -393,8 +393,10 @@ describe("DateTransformers test suite", () => {
       fcGen,
       expectedRounds,
     );
-    const actualSchedule: Array<[number, number]> =
-      createScheduleForRoundOfDoubleRobinRound(testRound, testClubsCount);
+    const actualSchedule = createScheduleForRoundOfDoubleRobinRound(
+      testClubsCount,
+      testRound,
+    );
 
     expect(actualSchedule.length).toEqual(expectedMatchesCount);
   });
