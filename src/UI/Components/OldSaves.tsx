@@ -1,9 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import Card from "react-bootstrap/Card";
-import { over, map } from "lodash/fp";
-import { Option, isSome } from "fp-ts/Option";
-import { compact } from "fp-ts/ReadonlyArray";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Button from "react-bootstrap/Button";
+import ListGroup from "react-bootstrap/ListGroup";
+import { over } from "lodash/fp";
+import { mapIndexed } from "futil-js";
 import {
   getClubNameFromBaseCountries,
   getCountryNameFromBaseCountries,
@@ -13,9 +16,11 @@ import { SaveOptions } from "../../GameLogic/Types";
 export const SaveCard = ({
   saveName,
   saveOptions,
+  colKey,
 }: {
   saveName: string;
   saveOptions: SaveOptions;
+  colKey: number;
 }) => {
   const {
     CurrentSeason,
@@ -37,36 +42,41 @@ export const SaveCard = ({
   ])(Countries);
   const saveAddress: string = `saves/${saveName}`;
   return (
-    <Card onClick={() => navigate(saveAddress)}>
-      <Card.Header>{saveName}</Card.Header>
-      <Card.Text>
-        Country: {saveCountryName}
-        Club: {saveClubName}
-        Current Season: {CurrentSeason}
-        Seasons Played: {CurrentSeason - StartSeason}
-      </Card.Text>
-    </Card>
+    <Col key={colKey}>
+      <Card style={{ width: "18rem" }}>
+        <Card.Header onClick={() => navigate(saveAddress)}> Continue {saveName}</Card.Header>
+        <ListGroup variant="flush">
+          <ListGroup.Item>Country: {saveCountryName}</ListGroup.Item>
+          <ListGroup.Item>Club: {saveClubName}</ListGroup.Item>
+          <ListGroup.Item>Current Season: {CurrentSeason}</ListGroup.Item>
+          <ListGroup.Item>
+            Seasons Played: {CurrentSeason - StartSeason}
+          </ListGroup.Item>
+        </ListGroup>
+      </Card>
+    </Col>
   );
 };
 
 export const OldSavesCards = ({
   saveOptionTuples,
 }: {
-  saveOptionTuples: Array<Option<[string, SaveOptions]>>;
+  saveOptionTuples: Array<[string, SaveOptions]>;
 }) => {
-  // map(optionMap)?
-  const validOptionTuples = compact(saveOptionTuples);
   return (
-    <div>
-      {map(([saveName, saveOptions]: [string, SaveOptions]) => {
-        return (
-          <SaveCard
-            key={saveName}
-            saveName={saveName}
-            saveOptions={saveOptions}
-          />
-        );
-      })(validOptionTuples)}
-    </div>
+    <Row xs={1} md={2} className="g-4">
+      {mapIndexed(
+        ([saveName, saveOptions]: [string, SaveOptions], index: number) => {
+          return (
+            <SaveCard
+              key={saveName}
+              saveName={saveName}
+              saveOptions={saveOptions}
+              colKey={index}
+            />
+          );
+        },
+      )(saveOptionTuples)}
+    </Row>
   );
 };

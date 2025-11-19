@@ -1,7 +1,7 @@
 import React from "react";
 import Table from "react-bootstrap/Table";
 import { property, curry } from "lodash/fp";
-import { mapIndexed } from "futil-js"
+import { mapIndexed } from "futil-js";
 import { LeagueTableRow } from "../../GameLogic/Types";
 
 const LEAGUETABLEHEADERS: Array<String> = [
@@ -13,28 +13,39 @@ const LEAGUETABLEHEADERS: Array<String> = [
   "Goals For",
   "Goals Against",
   "Matches Played",
-  "Goal Difference"
-]
+  "Goal Difference",
+];
 
 const getLeagueTableRowCellValue = curry(
   (leagueTableRow: LeagueTableRow, columnHeader: string): number => {
-    return property(columnHeader, leagueTableRow)
-  }
+    return property(columnHeader, leagueTableRow);
+  },
 );
 
-export const LeagueTableRowComponent = ({ leagueTableRow }: { leagueTableRow: LeagueTableRow }) => {
+export const LeagueTableRowComponent = ({
+  leagueTableRow,
+}: {
+  leagueTableRow: LeagueTableRow;
+}) => {
   return (
     <tr>
       {mapIndexed((columnHeader: string, index: number) => {
-        return <td key={index}>{getLeagueTableRowCellValue(leagueTableRow, columnHeader)}</td>;
+        return (
+          <td key={index}>
+            {getLeagueTableRowCellValue(leagueTableRow, columnHeader)}
+          </td>
+        );
       })(LEAGUETABLEHEADERS)}
     </tr>
   );
 };
 
-
-export const LeagueTable = ({ leagueTableRows }: { leagueTableRows: Array<LeagueTableRow> }) => {
-
+export const LeagueTable = ({
+  leagueTableRows,
+}: {
+  leagueTableRows: Array<LeagueTableRow>;
+}) => {
+  console.log(leagueTableRows)
   return (
     <Table striped bordered hover>
       <thead>
@@ -46,7 +57,12 @@ export const LeagueTable = ({ leagueTableRows }: { leagueTableRows: Array<League
       </thead>
       <tbody>
         {mapIndexed((leagueTableRow: LeagueTableRow, index: number) => {
-          return <LeagueTableRowComponent leagueTableRow={leagueTableRow} key={index} />;
+          return (
+            <LeagueTableRowComponent
+              leagueTableRow={leagueTableRow}
+              key={index}
+            />
+          );
         })(leagueTableRows)}
       </tbody>
     </Table>

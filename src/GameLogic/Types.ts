@@ -1,7 +1,6 @@
 import { ReadonlyNonEmptyArray } from "fp-ts/ReadonlyNonEmptyArray";
 import { DBSchema } from "idb";
 
-export type SaveID = string | IDBValidKey;
 export type BaseCountry = [string, Array<string>, Array<Array<string>>];
 export type BaseCountries = Array<BaseCountry>;
 
@@ -45,7 +44,6 @@ export interface LeagueTableRow extends ClubMatchResult {
   "Goal Difference": number;
 }
 
-
 export type MatchResult = [
   [number, ClubMatchResult],
   [number, ClubMatchResult],
@@ -53,48 +51,48 @@ export type MatchResult = [
 
 export interface MatchLog {
   MatchID: string;
-  LeagueNumber: number;
-  Season: number;
+  MatchLeagueNumber: number;
+  MatchSeason: number;
   MatchWeek: number;
   MatchResult: MatchResult;
   ClubMatchLogs: ClubMatchLogs;
 }
 
-export interface League {
+export interface DomesticLeague {
   LeagueNumber: number;
-  Country: number;
-  Level: number;
-  Clubs: ReadonlyNonEmptyArray<number>;
+  LeagueCountry: number;
+  LeagueLevel: number;
+  LeagueClubs: ReadonlyNonEmptyArray<number>;
 }
 
 export interface Club {
   ClubNumber: number;
-  Country: number;
-  DomesticLeagueLevel: number;
-  DomesticLeagueNumber: number;
-  ScheduleNumber: number;
-  Attendance: number;
-  FaciltiesCosts: number;
-  SponsorPayment: number;
-  TicketPrice: number;
+  ClubCountry: number;
+  ClubDomesticLeagueLevel: number;
+  ClubDomesticLeagueNumber: number;
+  ClubScheduleNumber: number;
+  ClubAttendance: number;
+  ClubFaciltiesCosts: number;
+  ClubSponsorPayment: number;
+  ClubTicketPrice: number;
   ManagerPay: number;
-  ScoutingCosts: number;
-  HealthCosts: number;
-  PlayerDevelopmentCosts: number;
-  Players: ReadonlyNonEmptyArray<number>;
+  ClubScoutingCosts: number;
+  ClubHealthCosts: number;
+  ClubPlayerDevelopmentCosts: number;
+  ClubPlayers: ReadonlyNonEmptyArray<number>;
 }
 
 export interface Player {
   PlayerNumber: number;
-  FirstName: number;
-  LastName: number;
+  PlayerFirstName: number;
+  PlayerLastName: number;
   PlayerCountry: number;
-  Age: number;
-  Wage: number;
+  PlayerAge: number;
+  PlayerWage: number;
   PlayerLeagueCountry: number;
-  DomesticLeagueLevel: number;
-  DomesticLeagueNumber: number;
-  ClubNumber: number;
+  PlayerDomesticLeagueLevel: number;
+  PlayerDomesticLeagueNumber: number;
+  PlayerClubNumber: number;
   PositionGroup: number;
 }
 
@@ -109,18 +107,21 @@ export interface SaveOptions {
 
 export interface SaveArguments {
   SaveOptions: SaveOptions;
+  DomesticLeagues: Array<DomesticLeague>;
   Clubs: Array<Club>;
   Players: Array<Player>;
 }
+
+
 
 export interface SaveSchema extends DBSchema {
   SaveOptions: {
     key: string;
     value: SaveOptions;
   };
-  Leagues: {
+  DomesticLeagues: {
     key: string;
-    value: League;
+    value: DomesticLeague;
   };
   Clubs: {
     key: string;

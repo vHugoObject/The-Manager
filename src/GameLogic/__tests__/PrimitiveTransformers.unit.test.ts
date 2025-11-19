@@ -8,8 +8,11 @@ import {
   pipe,
   first,
   min,
-  add,
   multiply,
+  sum,
+  add,
+  concat,
+  constant,
 } from "lodash/fp";
 import {
   pairSetsAndAssertStrictEqual,
@@ -49,9 +52,14 @@ import {
   unfoldItemCountTuplesIntoMixedArray,
   zipAllAndGetSumOfLastArray,
   subString,
-  addOne,
   unfoldAndTransformNaturalNumberRangeChunkX,
   unfoldAndTransformRangeChunkN,
+  foldr,
+  liftA2,
+  filterM,
+  arrayCombinations,
+  arraySubsets,
+  indexesCreator,
 } from "../Transformers";
 
 describe("PrimitiveTransformers test suite", () => {
@@ -348,4 +356,72 @@ describe("Range stuff", () => {
       expect(actualRanges.length).toEqual(testArrayOfArraysOfStrings.length);
     },
   );
+
+  test.prop([
+    fc.array(fc.integer(), {
+      minLength: 3,
+      maxLength: 10,
+    }),
+    fc.array(fc.integer(), {
+      minLength: 3,
+      maxLength: 10,
+    }),
+  ])("liftA2", (testArrayOne, testArrayTwo) => {
+    const actualArray = liftA2(concat)(testArrayOne)(testArrayTwo);
+    const expectedLength = testArrayOne.length * testArrayTwo.length;
+    assert.lengthOf(actualArray, expectedLength);
+  });
+
+  test.prop([
+    fc.array(fc.integer(), {
+      minLength: 3,
+      maxLength: 50,
+    }),
+  ])("foldr", (testArrayOfIntegers) => {
+    const actualSum: number = foldr(add)(0)(testArrayOfIntegers);
+    expect(actualSum).toEqual(sum(testArrayOfIntegers));
+  });
+
+  test.prop([
+    fc.array(fc.integer(), {
+      minLength: 3,
+      maxLength: 50,
+    }),
+  ])("filterM", (testArrayOfIntegers) => {
+    const actualResult = filterM(constant([true, false]))(testArrayOfIntegers);
+
+    const expectedLength = Math.pow(2, testArrayOfIntegers.length);
+    assert.lengthOf(actualResult, expectedLength);
+  });
+
+  test.prop([
+    fc.array(fc.integer(), {
+      minLength: 3,
+      maxLength: 50,
+    }),
+  ])("arrayCombinations", (testArrayOfIntegers) => {
+    const actualResult = arrayCombinations(testArrayOfIntegers);
+    const expectedLength =
+      Math.pow(2, testArrayOfIntegers.length) -
+      (testArrayOfIntegers.length + 1);
+    assert.lengthOf(actualResult, expectedLength);
+  });
+
+  test.prop([
+    fc.array(fc.integer(), {
+      minLength: 3,
+      maxLength: 5,
+    }),
+    fc.gen(),
+  ])("indexesCreator", (testArrayOfIntegers, fcGen) => {
+    const actualResult = indexesCreator(testArrayOfIntegers);
+    const expectedLength = Math.pow(2, testArrayOfIntegers.length) - 1;
+    const expectedValue = fastCheckRandomItemFromArray(
+      fcGen,
+      testArrayOfIntegers,
+    );
+    assert.lengthOf(actualResult, expectedLength);
+    expect(actualResult.includes([])).toBeFalsy();
+    expect(actualResult.includes(expectedValue)).toBeTruthy();
+  });
 });

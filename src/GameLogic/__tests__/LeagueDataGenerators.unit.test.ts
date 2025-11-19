@@ -1,43 +1,28 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, expect } from "vitest";
-import {
-  identity,
-  multiply,
-  pipe,
-  over,
-  add,
-  first,
-  last,
-  map,
-  property,
-} from "lodash/fp";
+import { identity, multiply, pipe, over, add } from "lodash/fp";
 import {
   DEFAULTDOMESTICLEAGUESPERCOUNTRY,
   DEFAULTTOTALDOMESTICLEAGUES,
   DEFAULTCLUBSPERDOMESTICLEAGUE,
 } from "../Constants";
-import { League, LeagueTable, BaseCountries } from "../Types";
+import { DomesticLeague } from "../Types";
 import {
-  assertIsLeagueObject,
+  assertIsDomesticLeagueObject,
   convertArraysToSetsAndAssertStrictEqual,
   assertIntegerInRangeExclusive,
 } from "../Asserters";
 import {
-  fastCheckRandomDomesticLeagueNumber,
-  fastCheckCreateTestListOfMatchLogsForLeague,
+  fastCheckRandomDomesticLeagueNumberGenerator,
   fastCheckUnfoldRandomNaturalNumberRangeChunk,
   fastCheckRandomItemFromArray,
-  fastCheckGenerateRandomBaseCountries,
-  fastCheckRandomSeason,
-  fastCheckTestCompletelyRandomBaseDomesticLeaguePath,
 } from "../TestDataGenerators";
 import { getCountOfUniqueIntegersFromArray } from "../Getters";
 import {
   countryNumberRepeaterForDomesticLeagues,
   levelNumberRepeaterForDomesticLeagues,
   generateDomesticLeagueStartingClubNumbers,
-  createLeague,
-  createLeagueTable,
+  createDomesticLeague,
   unfold,
 } from "../Transformers";
 
@@ -77,7 +62,7 @@ describe("LeagueDataGenerators test suite", () => {
     "generateDomesticLeagueStartingClubNumbers",
     (fcGen) => {
       const testDomesticLeagueNumber: number =
-        fastCheckRandomDomesticLeagueNumber(fcGen);
+        fastCheckRandomDomesticLeagueNumberGenerator(fcGen);
       const actualClubNumbers: Array<number> =
         generateDomesticLeagueStartingClubNumbers(testDomesticLeagueNumber);
 
@@ -97,12 +82,14 @@ describe("LeagueDataGenerators test suite", () => {
     },
   );
 
-  test.prop([fc.gen()])("createLeague", (fcGen) => {
+  test.prop([fc.gen()])("createDomesticLeague", (fcGen) => {
     const testDomesticLeagueNumber: number =
-      fastCheckRandomDomesticLeagueNumber(fcGen);
+      fastCheckRandomDomesticLeagueNumberGenerator(fcGen);
 
-    const actualLeagueObject: League = createLeague(testDomesticLeagueNumber);
+    const actualLeagueObject: DomesticLeague = createDomesticLeague(
+      testDomesticLeagueNumber,
+    );
 
-    assertIsLeagueObject(actualLeagueObject);
+    assertIsDomesticLeagueObject(actualLeagueObject);
   });
 });

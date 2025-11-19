@@ -2,16 +2,16 @@ import { COUNTRYNAMES, FIRSTNAMES, LASTNAMES } from "./Names";
 
 export const PLAYERFIELDKEYS: Array<string> = [
   "PlayerNumber",
-  "FirstName",
-  "LastName",
+  "PlayerFirstName",
+  "PlayerLastName",
   "PlayerCountry",
-  "Age",
-  "Wage",
+  "PlayerAge",
+  "PlayerWage",
   "PositionGroup",
   "PlayerLeagueCountry",
-  "DomesticLeagueLevel",
-  "DomesticLeagueNumber",
-  "ClubNumber",
+  "PlayerDomesticLeagueLevel",
+  "PlayerDomesticLeagueNumber",
+  "PlayerClubNumber",
 ];
 
 export const COUNTRYNAMESRANGE: [number, number] = [0, COUNTRYNAMES.length];
@@ -270,3 +270,13 @@ export enum PLAYERSTATISTICSINDICES {
   Tackles = "4",
   Passes = "5",
 }
+
+export const BASEPLAYERINDEXES: Array<string> = [
+  "PlayerCountry",
+  "PlayerAge",
+  "PositionGroup",
+  "PlayerLeagueCountry",
+  "PlayerDomesticLeagueLevel",
+  "PlayerDomesticLeagueNumber",
+  "PlayerClubNumber",
+];

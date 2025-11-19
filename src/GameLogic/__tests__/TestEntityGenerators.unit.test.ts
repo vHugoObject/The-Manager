@@ -1,14 +1,6 @@
 import { describe, expect, assert } from "vitest";
 import { test, fc } from "@fast-check/vitest";
-import {
-  MatchResult,
-  ClubMatchResult,
-  PlayerMatchLogs,
-  MatchLog,
-  Player,
-  Club,
-} from "../Types";
-import { ReadonlyNonEmptyArray } from "fp-ts/ReadonlyNonEmptyArray";
+import { Player, Club, DomesticLeague } from "../Types";
 import {
   DEFAULTSQUADSIZE,
   DEFAULTTOTALCLUBS,
@@ -21,59 +13,29 @@ import {
   over,
   identity,
   add,
-  map,
-  property,
-  sum,
   inRange,
   zipAll,
   flatten,
-  last,
 } from "lodash/fp";
-import { addOne, divideByTwo } from "../Transformers";
 import { getCountOfUniqueItemsFromArrayForPredicate } from "../Getters";
 import {
-  assertNumbers,
   assertIntegerInRangeInclusive,
-  assertIntegerInRangeExclusive,
-  pairIntegersAndAssertEqual,
-  assertIsArrayOfPlayerMatchLogs,
-  assertIsArrayOfClubMatchLogs,
   assertIsClubObject,
   assertIsPlayerObject,
-  assertIsMatchLog,
-  assertIsHomeClubMatchWinResultObject,
-  assertIsAwayClubMatchWinResultObject,
-  assertIsHomeClubMatchLossResultObject,
-  assertIsAwayClubMatchLossResultObject,
-  assertIsHomeClubMatchDrawResultObject,
-  assertIsAwayClubMatchDrawResultObject,
+  assertIsDomesticLeagueObject,
 } from "../Asserters";
 import {
   fastCheckCreateNTestPlayers,
   fastCheckCreateNTestClubs,
-  fastCheckGetTwoRandomClubNumbers,
   fastCheckTestPlayerNumberAndSeason,
   fastCheckGenerateTestCountriesCount,
   fastCheckTestClubNumberAndSeason,
   fastCheckRandomClubAndPlayerNumberGenerator,
   fastCheckGenerateAllPlayerNumbersOfRandomClub,
-  fastCheckCreateTestHomeWinResult,
-  fastCheckCreateTestAwayWinResult,
-  fastCheckCreateTestDrawResult,
-  fastCheckCreateRandomMatchResult,
-  fastCheckRandomItemFromArrayWithIndex,
-  fastCheckCreateTestPlayerMatchLog,
-  fastCheckCreateTestPlayerMatchLogs,
   fastCheckGetNRandomClubNumbers,
   fastCheckGetAllPlayersOfNRandomClubs,
   fastCheckRandomItemFromArray,
-  fastCheckCreateTestMatchLog,
-  fastCheckGetAllPlayersOfTwoRandomClubs,
-  fastCheckCreateTestListOfRandomMatchLogs,
-  fastCheckRandomSeason,
-  fastCheckGenerateRandomBaseCountries,
-  fastCheckTestCompletelyRandomBaseDomesticLeaguePath,
-  fastCheckCreateTestListOfMatchLogsForLeague,
+  fastCheckCreateNTestDomesticLeagues,
 } from "../TestDataGenerators";
 
 describe("TestEntityGenerators", () => {
@@ -165,7 +127,7 @@ describe("TestEntityGenerators", () => {
     );
   });
 
-  describe("Players and Clubs", () => {
+  describe("Players, Clubs and DomesticLeagues", () => {
     test.prop([fc.integer({ min: 2, max: 10 }), fc.gen()])(
       "fastCheckCreateNTestPlayers",
       (testPlayersCount, fcGen) => {
@@ -193,6 +155,16 @@ describe("TestEntityGenerators", () => {
           actualClubs,
         );
         assertIsClubObject(actualRandomClub);
+      },
+    );
+    test.prop([fc.integer({ min: 2, max: 10 }), fc.gen()])(
+      "fastCheckCreateNTestDomesticLeagues",
+      (testDomesticLeaguesCount, fcGen) => {
+        const actualDomesticLeagues: Array<DomesticLeague> =
+          fastCheckCreateNTestDomesticLeagues(testDomesticLeaguesCount, fcGen);
+        const actualRandomDomesticLeague: DomesticLeague =
+          fastCheckRandomItemFromArray(fcGen, actualDomesticLeagues);
+        assertIsDomesticLeagueObject(actualRandomDomesticLeague);
       },
     );
   });

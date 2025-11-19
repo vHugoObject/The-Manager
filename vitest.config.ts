@@ -11,7 +11,7 @@ export default defineConfig({
           include: ["**/*.unit.test.ts"],
           name: "unit",
           environment: "node",
-	  testTimeout: 9000,
+          testTimeout: 9000,
         },
       },
       {
@@ -28,7 +28,7 @@ export default defineConfig({
           browser: {
             enabled: true,
             provider: "playwright",
-            headless: true,
+            headless: false,
             instances: [{ browser: "chromium" }],
           },
         },

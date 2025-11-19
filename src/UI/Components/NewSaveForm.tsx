@@ -1,5 +1,7 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
 import { mapIndexed } from "futil-js";
 import { pipe } from "lodash/fp";
 import { useState } from "react";
@@ -85,45 +87,48 @@ export const NewSaveForm = ({
       CountryIndex: countryIndex,
       DomesticLeagueIndex: domesticLeagueIndex,
       ClubIndex: clubIndex,
-      Season: 1,
+      StartSeason: 1,
+      CurrentSeason: 1,
       Countries: countriesLeaguesClubs,
     });
 
-    const goto: string = `save/${db.name}`;
+    db.close();
+
+    const goto: string = `/saves/${db.name}`;
     navigate(goto);
   };
 
   return (
     <div>
-      <form method="post">
-        <label>
-          Choose a name:
-          <input
+      <Form method="post" onSubmit={handleSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label htmlFor="save-name"> Save Name </Form.Label>
+          <Form.Control
+            as="input"
             type="text"
-            name="name"
+            id="save-name"
+            placeholder="Choose a name"
             value={playerName}
             onChange={pipe([getEventTargetValue, setPlayerName])}
           />
-        </label>
-
-        <label>
-          {" "}
-          Choose a country:
-          <select
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label htmlFor="country"> Choose a country: </Form.Label>
+          <Form.Select
             required={true}
-            name="country"
+            id="country"
             onChange={pipe([getEventTargetValueAsNumber, setCountryIndex])}
           >
             <CreateCountryOptions
               countriesLeaguesClubs={countriesLeaguesClubs}
             />
-          </select>
-        </label>
-        <label>
-          Choose a domestic league:
-          <select
+          </Form.Select>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label htmlFor="league"> Choose a domestic league: </Form.Label>
+          <Form.Select
             required={true}
-            name="league"
+            id="league"
             value={domesticLeagueIndex}
             onChange={pipe([
               getEventTargetValueAsNumber,
@@ -134,15 +139,14 @@ export const NewSaveForm = ({
               countriesLeaguesClubs={countriesLeaguesClubs}
               countryIndex={countryIndex}
             />
-          </select>
-        </label>
-
-        <label>
-          Choose a club:
-          <select
+          </Form.Select>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label htmlFor="club"> Choose a club: </Form.Label>
+          <Form.Select
             required={true}
-            name="club"
-            value={0}
+            id="club"
+            value={clubIndex}
             onChange={pipe([getEventTargetValueAsNumber, setClubIndex])}
           >
             <CreateClubOptions
@@ -150,10 +154,12 @@ export const NewSaveForm = ({
               countryIndex={countryIndex}
               domesticLeagueIndex={domesticLeagueIndex}
             />
-          </select>
-        </label>
-        <input onSubmit={handleSubmit} type="submit" />
-      </form>
+          </Form.Select>
+        </Form.Group>
+        <Button variant="primary" type="submit">
+          Submit
+        </Button>
+      </Form>
     </div>
   );
 };

@@ -285,7 +285,7 @@ describe("TestBaseCountriesGenerators", () => {
         );
       assert.isString(actualDomesticLeagueName);
     },
-  );
+  );    
 
   test.prop([fc.gen()])(
     "fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithPath",

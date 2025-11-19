@@ -10,15 +10,15 @@ import {
   getPlayerPositionGroupName,
 } from "../../GameLogic/Getters";
 
-const SQUADTABLEHEADERSGETTERSMAPPING: Record<
+export const SQUADTABLEHEADERSGETTERSMAPPING: Record<
   string,
   (player: Player) => string
 > = {
   "First Name": getPlayerFirstName,
   "Last Name": getPlayerLastName,
-  "Country": getPlayerCountryName,
-  "Age": property("Age"),
-  "Wage": property("Wage"),
+  Country: getPlayerCountryName,
+  Age: property("PlayerAge"),
+  Wage: property("PlayerWage"),
   "Position Group": getPlayerPositionGroupName,
 };
 
@@ -27,7 +27,7 @@ const getPlayerCellValue = curry(
     property(columnHeader, SQUADTABLEHEADERSGETTERSMAPPING)(player),
 );
 
-const SQUADTABLEHEADERS: Array<string> = Object.keys(
+export const SQUADTABLEHEADERS: Array<string> = Object.keys(
   SQUADTABLEHEADERSGETTERSMAPPING,
 );
 
@@ -35,7 +35,11 @@ export const PlayerRow = ({ player }: { player: Player }) => {
   return (
     <tr>
       {mapIndexed((columnHeader: string, index: number) => {
-        return <td key={index}>{getPlayerCellValue(player, columnHeader)}</td>;
+        return (
+          <td key={index} data-testid={`player_${index}`}>
+            {getPlayerCellValue(player, columnHeader)}
+          </td>
+        );
       })(SQUADTABLEHEADERS)}
     </tr>
   );

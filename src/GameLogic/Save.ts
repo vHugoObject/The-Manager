@@ -8,26 +8,102 @@ import {
   toString,
   curry,
   forEach,
+  noop,
 } from "lodash/fp";
 import {
   fromNullable,
   Option,
   map as optionMap,
   getOrElse,
+  none as optionNone,
+  some as optionSome,
+  fromPredicate,
 } from "fp-ts/Option";
-import { DBVERSION } from "./Constants";
-import { SaveSchema, SaveOptions, SaveArguments, Club, Player } from "./Types";
+import { compact, isNonEmpty } from "fp-ts/ReadonlyArray";
+import { SaveSchema } from "./Types";
 import {
-  getClubsCountFromBaseCountries,
-  getPlayersCountForBaseCountries,
-} from "./Getters";
-import { createClub, createPlayer, unfold, addOne } from "./Transformers";
+  PLAYERINDEXES,
+  CLUBINDEXES,
+  DOMESTICLEAGUEINDEXES,
+  MATCHLOGINDEXES,
+  DBVERSION
+} from "./SaveConstants";
+import {
+  SaveOptions,
+  SaveArguments,
+  DomesticLeague,
+  Club,
+  Player,
+} from "./Types";
+import {
+  createSaveDomesticLeagues,
+  createSaveClubs,
+  createSavePlayers,
+  addOne,
+  convertClubRelativeIndexIntoAbsoluteNumber,
+  convertDomesticLeagueRelativeIndexIntoAbsoluteNumber,
+  convertToSet,
+} from "./Transformers";
+
+export const asyncTryCatchK = curry(
+  async <A, B>(
+    f: (args: Array<A>) => Promise<B>,
+    args: Array<A>,
+  ): Promise<Option<B>> => {
+    try {
+      const val = await f(...args);
+      return optionSome(val);
+    } catch (e) {
+      return optionNone;
+    }
+  },
+);
+
+export const getDBObjectStoreNames = pipe([
+  property("objectStoreNames"),
+  Object.values,
+]);
+
+export const getDBObjectStoreNamesAsSet = pipe([
+  property("objectStoreNames"),
+  Object.values,
+  convertToSet,
+]);
+
+export const validDB = (db: IDBPDatabase): boolean => {
+  const objectStoreNames = getDBObjectStoreNamesAsSet(db);
+  return objectStoreNames.has("SaveOptions");
+};
+
+export const getDBObjectStoreIndexNames = pipe([
+  property(["store", "indexNames"]),
+  Object.values
+]);
+
+export const getDBObjectStoreIndexNamesAsSet = pipe([
+  getDBObjectStoreIndexNames,
+  convertToSet,
+]);
+
+
+export const defaultOpenDB = async (
+  saveNumber: string,
+): Promise<IDBPDatabase> => await openDB(saveNumber, DBVERSION);
+
+export const getDBNames = async (): Promise<Array<string>> => {
+  const databases = await indexedDB.databases();
+  return map("name")(databases);
+};
 
 export const indexedDBCleanup = async (): Promise<void> => {
   const databases = await indexedDB.databases();
-  const databaseNames = property("name", databases);
+  const databaseNames = map("name")(databases);
   forEach(async (databaseName: string): Promise<void> => {
-    await deleteDB(databaseName);
+    await deleteDB(databaseName, {
+      blocked() {
+        setTimeout(noop, 3);
+      },
+    });
   })(databaseNames);
 };
 
@@ -36,7 +112,7 @@ export const getAllSaveNames = async (): Promise<Option<Array<string>>> => {
   return pipe([fromNullable, optionMap(map(property("name")))])(allSaves);
 };
 
-export const getNextSaveName = async (): Promise<string> => {
+export const getNextSaveNumber = async (): Promise<string> => {
   const saveNames: Option<Array<string>> = await getAllSaveNames();
   return pipe([
     optionMap(pipe([map(parseInt), max, addOne, toString])),
@@ -44,32 +120,69 @@ export const getNextSaveName = async (): Promise<string> => {
   ])(saveNames);
 };
 
+const indexCreator = curry((objectStore: IDBObjectStore, [indexName, keyPath]: [string, string|Array<string>]) => {
+  objectStore.createIndex(indexName, keyPath);
+});
+const createIndexes = curry(<T>(indexes: Array<string>, objectStore: IDBObjectStore): void => {
+  forEach(indexCreator(objectStore), indexes);
+});
+
+const createPlayerIndexes = createIndexes(PLAYERINDEXES);
+const createClubIndexes = createIndexes(CLUBINDEXES);
+const createDomesticLeagueIndexes = createIndexes(DOMESTICLEAGUEINDEXES);
+const createMatchLogIndexes = createIndexes(MATCHLOGINDEXES);
+
 export const createNewDBForSave = async ({
   SaveOptions,
+  DomesticLeagues,
   Clubs,
   Players,
 }: SaveArguments): Promise<IDBPDatabase<SaveSchema>> => {
-  const saveName: string = await getNextSaveName();
+  const saveNumber: string = await getNextSaveNumber();
 
-  const db = await openDB<SaveSchema>(saveName, DBVERSION, {
+  const db = await openDB<SaveSchema>(saveNumber, DBVERSION, {
     upgrade(db) {
       db.createObjectStore("SaveOptions");
-      db.createObjectStore("Clubs", {
+
+      const domesticLeaguesStore = db.createObjectStore("DomesticLeagues", {
+        keyPath: "LeagueNumber",
+      });
+
+      createDomesticLeagueIndexes(domesticLeaguesStore);
+      const clubsStore = db.createObjectStore("Clubs", {
         keyPath: "ClubNumber",
       });
-      db.createObjectStore("Players", {
+
+      createClubIndexes(clubsStore);
+
+      const playersStore = db.createObjectStore("Players", {
         keyPath: "PlayerNumber",
       });
-      db.createObjectStore("Matches", {
+
+      createPlayerIndexes(playersStore);
+
+      const matchLogsStore = db.createObjectStore("MatchLogs", {
         keyPath: "MatchNumber",
       });
+
+      createMatchLogIndexes(matchLogsStore);
     },
   });
 
-  await db.put("SaveOptions", SaveOptions, saveName);
+  const tx = db.transaction("SaveOptions", "readwrite");
+  await tx.objectStore("SaveOptions").put(SaveOptions, saveNumber);
+  await tx.done;
 
   await Promise.all(
-    map(async (club: Club) => {
+    forEach(async (domesticLeague: DomesticLeague) => {
+      const tx = db.transaction("DomesticLeagues", "readwrite");
+      await tx.objectStore("DomesticLeagues").put(domesticLeague);
+      await tx.done;
+    })(DomesticLeagues),
+  );
+
+  await Promise.all(
+    forEach(async (club: Club) => {
       const tx = db.transaction("Clubs", "readwrite");
       await tx.objectStore("Clubs").put(club);
       await tx.done;
@@ -77,7 +190,7 @@ export const createNewDBForSave = async ({
   );
 
   await Promise.all(
-    map(async (player: Player) => {
+    forEach(async (player: Player) => {
       const tx = db.transaction("Players", "readwrite");
       await tx.objectStore("Players").put(player);
       await tx.done;
@@ -90,35 +203,37 @@ export const createNewDBForSave = async ({
 export const createSave = async (
   SaveOptions: SaveOptions,
 ): Promise<IDBPDatabase<SaveSchema>> => {
-  const createSaveClubs = pipe([
-    getClubsCountFromBaseCountries,
-    unfold(createClub),
-  ]);
-  const createSavePlayers = pipe([
-    getPlayersCountForBaseCountries,
-    unfold(createPlayer),
-  ]);
-  const [Clubs, Players]: [Array<Club>, Array<Player>] = pipe([
+  const [DomesticLeagues, Clubs, Players]: [
+    Array<DomesticLeague>,
+    Array<Club>,
+    Array<Player>,
+  ] = pipe([
     property(["Countries"]),
-    over([createSaveClubs, createSavePlayers]),
+    over([createSaveDomesticLeagues, createSaveClubs, createSavePlayers]),
   ])(SaveOptions);
 
-  return await createNewDBForSave({ SaveOptions, Clubs, Players });
+  return await createNewDBForSave({
+    SaveOptions,
+    DomesticLeagues,
+    Clubs,
+    Players,
+  });
 };
 
-export const getSaveOptionsForSave = curry(
-  async ([saveName, dbVersion]: [string, number]): Promise<
-    Option<SaveOptions>
-  > => {
-    const db = await openDB(saveName, dbVersion);
-    const saveOptions = await db.get("SaveOptions", saveName);
+export const baseGetSaveOptionsForSave = async (
+  saveNumber: string,
+  dbVersion: number,
+): Promise<SaveOptions> => {
+  const db = await openDB(saveNumber, dbVersion);
+  const saveOptions = await db.get("SaveOptions", saveNumber);
+  db.close();
+  return saveOptions;
+};
 
-    return fromNullable(saveOptions);
-  },
-);
+export const getSaveOptionsForSave = asyncTryCatchK(baseGetSaveOptionsForSave);
 
 export const getSaveOptionsOfAllSaves = async (): Promise<
-  Array<Option<[string, SaveOptions]>>
+  Option<Array<[string, SaveOptions]>>
 > => {
   const saves = await indexedDB.databases();
   const saveGetter = async ({
@@ -131,6 +246,20 @@ export const getSaveOptionsOfAllSaves = async (): Promise<
       saveOptions,
     ])(saveOptions);
   };
-
-  return await Promise.all(map(saveGetter)(saves));
+  const result = await Promise.all(map(saveGetter)(saves));
+  return pipe([compact, fromPredicate(isNonEmpty)])(result);
 };
+
+export const getUserClubNumberFromSaveOptions = pipe([
+  over([
+    property("CountryIndex"),
+    property("DomesticLeagueIndex"),
+    property("ClubIndex"),
+  ]),
+  convertClubRelativeIndexIntoAbsoluteNumber,
+]);
+
+export const getUserLeagueFromSaveOptions = pipe([
+  over([property("CountryIndex"), property("DomesticLeagueIndex")]),
+  convertDomesticLeagueRelativeIndexIntoAbsoluteNumber,
+]);

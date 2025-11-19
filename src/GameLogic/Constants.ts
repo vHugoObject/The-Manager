@@ -1,6 +1,7 @@
 import { multiply, subtract } from "lodash/fp";
-import { BaseCountries } from "./Types";
+import { BaseCountries, ClubMatchResult } from "./Types";
 import { ENGLAND } from "./England";
+
 
 export const NONSPACESCHARACTERRANGE: [number, number] = [96, 10000];
 export const JANUARY: number = 0;
@@ -76,14 +77,6 @@ export const THETA: number = 0.562;
 export const SHAPE: number = 1.864;
 export const POSSIBLEGOALS: Array<number> = [0, 1, 2, 3, 4, 5];
 
-export const DBVERSION: number = 1;
-export const OBJECTSTORENAMES: Array<string> = [
-  "SaveArguments",
-  "Clubs",
-  "Players",
-  "Matches",
-];
-
 export const COMPETITIONSDEPTH: number = 1;
 export const CLUBSDEPTH: number = 2;
 export const PLAYERSDEPTH: number = 3;
@@ -138,31 +131,35 @@ export const BASECOUNTRIES: BaseCountries = [ENGLAND];
 
 export const CLUBKEYS: Array<string> = [
   "ClubNumber",
-  "Country",
-  "DomesticLeagueLevel",
-  "DomesticLeagueNumber",
-  "ScheduleNumber",
-  "Attendance",
-  "FaciltiesCosts",
-  "SponsorPayment",
-  "TicketPrice",
-  "ManagerPay",
-  "ScoutingCosts",
-  "HealthCosts",
-  "PlayerDevelopmentCosts",
-  "Players",
+  "ClubCountry",
+  "ClubDomesticLeagueLevel",
+  "ClubDomesticLeagueNumber",
+  "ClubScheduleNumber",
+  "ClubAttendance",
+  "ClubFaciltiesCosts",
+  "ClubSponsorPayment",
+  "ClubTicketPrice",
+  "ClubManagerPay",
+  "ClubScoutingCosts",
+  "ClubHealthCosts",
+  "ClubPlayerDevelopmentCosts",
+  "ClubPlayers",
 ];
 
 export const LEAGUEKEYS: Array<string> = [
   "LeagueNumber",
-  "Country",
-  "Level",
-  "Clubs",
+  "LeagueCountry",
+  "LeagueLevel",
+  "LeagueClubs",
 ];
 
-export const LEAGUETABLEHEADERS: Array<string> = [
-  "",
-  "Country",
-  "Level",
-  "Clubs",
+export const MATCHLOGKEYS: Array<string> = [
+  "MatchID",
+  "MatchLeagueNumber",
+  "MatchSeason",
+  "MatchWeek",
+  "MatchResult",
+  "ClubMatchLogs",
 ];
+
+export const EMPTYMATCHRESULT: ClubMatchResult = {Home: 0, Wins: 0, Losses: 0, Draws: 0, "Goals For": 0, "Goals Against": 0, Points: 0}

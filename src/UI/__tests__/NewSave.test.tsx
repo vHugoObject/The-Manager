@@ -5,14 +5,17 @@ import { renderWithRouter, getElementValue } from "../UITestingUtilities";
 import { screen, cleanup } from "@testing-library/react";
 import { describe } from "vitest";
 import { BASECOUNTRIES } from "../../GameLogic/Constants";
-import { fastCheckTestCompletelyRandomBaseClub } from "../../GameLogic/TestDataGenerators";
+import {
+  fastCheckTestCompletelyRandomBaseClub,
+  fastCheckRandomStringGenerator,
+} from "../../GameLogic/TestDataGenerators";
 import { NewSave } from "../NewSave";
 
 describe("NewSave", async () => {
   test("Test", async () => {
     await fc.assert(
       fc
-        .asyncProperty(fc.string(), fc.gen(), async (testName, fcGen) => {
+        .asyncProperty(fc.gen(), async (fcGen) => {
           const [
             ,
             [
@@ -22,11 +25,10 @@ describe("NewSave", async () => {
             ],
           ] = fastCheckTestCompletelyRandomBaseClub(fcGen, BASECOUNTRIES);
 
+          const testName = fastCheckRandomStringGenerator(fcGen);
           const { user } = renderWithRouter(<NewSave />);
 
-          const actualNameTextArea = screen.getByRole("textbox", {
-            name: "Choose a name:",
-          });
+          const actualNameTextArea = screen.getByLabelText("Save Name");
 
           await user.type(actualNameTextArea, testName);
           expect(getElementValue(actualNameTextArea)).toBe(testName);

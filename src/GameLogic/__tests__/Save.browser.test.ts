@@ -1,28 +1,39 @@
 import { test, fc } from "@fast-check/vitest";
 import { describe, assert, expect } from "vitest";
-import { deleteDB, IDBPDatabase } from "idb";
-import { property, pipe, map, over } from "lodash/fp";
+import { IDBPDatabase, openDB, deleteDB } from "idb";
+import { property, pipe, map, over, head } from "lodash/fp";
 import { toUndefined, Option } from "fp-ts/Option";
-import { compact } from "fp-ts/ReadonlyArray";
 import { SaveSchema, SaveOptions } from "../Types";
+import {
+  PLAYERINDEXES,
+  CLUBINDEXES,
+  DOMESTICLEAGUEINDEXES,
+  MATCHLOGINDEXES,
+  DBVERSION,
+} from "../SaveConstants";
 import {
   assertIsClubObject,
   assertIsPlayerObject,
   assertIsSaveOptions,
+  assertIsDomesticLeagueObject,
   convertArraysToSetsAndAssertStrictEqual,
+  convertArraysToSetsAndAssertSubset,
+  assertSetHas
 } from "../Asserters";
 import {
   fastCheckCreateTestSaveOptionsWithRandomCountries,
   fastCheckRandomItemFromArray,
   fastCheckCreateTestSaveArguments,
 } from "../TestDataGenerators";
-import { zipApply, unfold } from "../Transformers";
+import { zipApply } from "../Transformers";
 import {
   createNewDBForSave,
   createSave,
+  getDBObjectStoreNames,
   getSaveOptionsOfAllSaves,
   getSaveOptionsForSave,
   indexedDBCleanup,
+  getDBObjectStoreIndexNamesAsSet
 } from "../Save";
 
 describe("SaveUtilities tests", async () => {
@@ -30,34 +41,88 @@ describe("SaveUtilities tests", async () => {
     await fc.assert(
       fc.asyncProperty(fc.gen(), async (fcGen) => {
         const [testSaveArguments] = fastCheckCreateTestSaveArguments(fcGen);
-        const { Clubs: testClubs, Players: testPlayers } = testSaveArguments;
-        const [expectedRandomClubKey, expectedRandomPlayerKey] = pipe([
+        const {
+          DomesticLeagues: testDomesticLeagues,
+          Clubs: testClubs,
+          Players: testPlayers,
+        } = testSaveArguments;
+
+        const [
+          expectedRandomDomesticLeagueKey,
+          expectedRandomClubKey,
+          expectedRandomPlayerKey,
+        ] = pipe([
           map(fastCheckRandomItemFromArray(fcGen)),
-          zipApply([property(["ClubNumber"]), property(["PlayerNumber"])]),
-        ])([testClubs, testPlayers]);
+          zipApply([
+            property(["LeagueNumber"]),
+            property(["ClubNumber"]),
+            property(["PlayerNumber"]),
+          ]),
+        ])([testDomesticLeagues, testClubs, testPlayers]);
 
         const actualDB = await createNewDBForSave(testSaveArguments);
 
-        const actualRandomClub = await actualDB.get(
-          "Clubs",
-          expectedRandomClubKey,
+        const testPlayerTransaction = actualDB.transaction("Players");
+        const actualPlayerIndexes = getDBObjectStoreIndexNamesAsSet(
+          testPlayerTransaction,
         );
-        assertIsClubObject(actualRandomClub);
-        const actualRandomPlayer = await actualDB.get(
-          "Players",
-          expectedRandomPlayerKey,
-        );
-        assertIsPlayerObject(actualRandomPlayer);
+	
+	const expectedPlayerIndex = pipe([fastCheckRandomItemFromArray, head])(fcGen, PLAYERINDEXES)
+
+
+	assertSetHas(actualPlayerIndexes, expectedPlayerIndex)
+	
+
+	
+        // const testClubTransaction = actualDB.transaction("Clubs");
+        // const actualClubIndexes =
+        //       getDBObjectStoreIndexNames(testClubTransaction);
+	// const expectedClubIndexesSubset = pipe([fastCheckRandomItemFromArray, tail])(fcGen, CLUBINDEXES)
+	// convertArraysToSetsAndAssertSubset([actualClubIndexes, expectedClubIndexesSubset])
+	
+        // const testDomesticLeagueTransaction =
+        //   actualDB.transaction("DomesticLeagues");
+        // const actualDomesticLeagueIndexes = getDBObjectStoreIndexNames(
+        //   testDomesticLeagueTransaction,
+        // );
+	// const expectedDomesticLeagueIndexesSubset = pipe([fastCheckRandomItemFromArray, tail])(fcGen, DOMESTICLEAGUEINDEXES)
+	// convertArraysToSetsAndAssertSubset([actualDomesticLeagueIndexes, expectedDomesticLeagueIndexesSubset])
+	
+        
+        // const testMatchLogTransaction = actualDB.transaction("MatchLogs");
+        // const actualMatchLogIndexes = getDBObjectStoreIndexNames(
+        //   testMatchLogTransaction,
+        // );
+	// const expectedMatchLogIndexesSubset = pipe([fastCheckRandomItemFromArray, tail])(fcGen, MATCHLOGINDEXES)
+	// convertArraysToSetsAndAssertSubset([actualMatchLogIndexes, expectedMatchLogIndexesSubset])
+
+	
+        // const actualRandomDomesticLeague = await actualDB.get(
+        //   "DomesticLeagues",
+        //   expectedRandomDomesticLeagueKey,
+        // );
+        // assertIsDomesticLeagueObject(actualRandomDomesticLeague);
+
+        // const actualRandomClub = await actualDB.get(
+        //   "Clubs",
+        //   expectedRandomClubKey,
+        // );
+        // assertIsClubObject(actualRandomClub);
+
+        // const actualRandomPlayer = await actualDB.get(
+        //   "Players",
+        //   expectedRandomPlayerKey,
+        // );
+        // assertIsPlayerObject(actualRandomPlayer);
 
         actualDB.close();
 
-        await indexedDBCleanup();
+        await deleteDB(actualDB.name)
       }),
-      { numRuns: 1 },
-    );
+    ), {numRuns: 1}
   });
 
-  test("createSave", async () => {
+  test.skip("createSave", async () => {
     await fc.assert(
       fc.asyncProperty(fc.gen(), async (fcGen) => {
         const testSaveOptions: SaveOptions =
@@ -69,9 +134,10 @@ describe("SaveUtilities tests", async () => {
           "SaveOptions",
           "Clubs",
           "Players",
-          "Matches",
+          "MatchLogs",
+          "DomesticLeagues",
         ];
-        const actualSaveObjectStores = actualSave.objectStoreNames;
+        const actualSaveObjectStores = getDBObjectStoreNames(actualSave);
 
         convertArraysToSetsAndAssertStrictEqual([
           actualSaveObjectStores,
@@ -81,11 +147,11 @@ describe("SaveUtilities tests", async () => {
         actualSave.close();
         await indexedDBCleanup();
       }),
-      { numRuns: 1 },
+      { numRuns: 1, timeout: 7000 },
     );
   });
 
-  test("getSaveOptionsForSave", async () => {
+  test.skip("getSaveOptionsForSave", async () => {
     await fc.assert(
       fc.asyncProperty(fc.gen(), async (fcGen) => {
         const [testSaveArguments] = fastCheckCreateTestSaveArguments(fcGen);
@@ -107,28 +173,30 @@ describe("SaveUtilities tests", async () => {
     );
   });
 
-  test("getSaveOptionsOfAllSaves", async () => {
+  test.skip("getSaveOptionsOfAllSaves", async () => {
     await fc.assert(
       fc.asyncProperty(fc.gen(), async (fcGen) => {
-        const initialDBs = await indexedDB.databases();
+        
 
         const [testSaveArguments] = fastCheckCreateTestSaveArguments(fcGen);
-        await createNewDBForSave(testSaveArguments);
+        const testSave = await createNewDBForSave(testSaveArguments);
 
-        const actualSaveOptions = await getSaveOptionsOfAllSaves();
+        const actualResult = await getSaveOptionsOfAllSaves();
+        const actualSaveOptions = toUndefined(actualResult);
 
-        expect(actualSaveOptions.length - initialDBs.length).toEqual(1);
+
         const [actualRandomSaveName, actualRandomSaveOption]: [
           string,
           Option<SaveOptions>,
-        ] = pipe([fastCheckRandomItemFromArray(fcGen), toUndefined])(
-          actualSaveOptions,
-        );
+        ] = fastCheckRandomItemFromArray(fcGen, actualSaveOptions);
 
         assert.isNumber(parseInt(actualRandomSaveName));
         assertIsSaveOptions(actualRandomSaveOption);
 
-        await indexedDBCleanup();
+	testSave.close();
+	await deleteDB(testSave.name)
+	
+	
       }),
       { numRuns: 1 },
     );

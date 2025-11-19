@@ -18,9 +18,11 @@ import {
   convertArrayToSetThenGetSize,
 } from "./Transformers";
 
-export const assertIntegerPairsAreEqual = forEach(([actual, expected]: [number, number]): void => {
-  expect(actual).toEqual(expected);
-})
+export const assertIntegerPairsAreEqual = forEach(
+  ([actual, expected]: [number, number]): void => {
+    expect(actual).toEqual(expected);
+  },
+);
 export const pairIntegersAndAssertEqual = pipe([
   chunk(2),
   forEach(([actual, expected]: [number, number]) => {
@@ -47,6 +49,12 @@ export const convertArraysToSetsAndAssertStrictEqual = pipe([
   pairSetsAndAssertStrictEqual,
 ]);
 
+export const assertSetDoesNotHave = <T>(
+  expectedSet: Set<T>,
+  actualValue: any,
+) => {
+  expect(expectedSet.has(actualValue)).not.toBeTruthy();
+};
 
 export const assertSetHas = <T>(expectedSet: Set<T>, actualValue: any) => {
   expect(expectedSet.has(actualValue)).toBeTruthy();
@@ -239,8 +247,8 @@ export const assertIsArrayOfClubMatchLogs = map(assertIsClubMatchLog);
 export const assertIsMatchLog = (received: any): void => {
   expect(received).toStrictEqual({
     MatchID: expect.any(String),
-    LeagueNumber: expect.any(Number),
-    Season: expect.any(Number),
+    MatchLeagueNumber: expect.any(Number),
+    MatchSeason: expect.any(Number),
     MatchWeek: expect.any(Number),
     MatchResult: expect.any(Array),
     ClubMatchLogs: expect.any(Object),
@@ -260,49 +268,49 @@ export const assertIsMatchLog = (received: any): void => {
   ])(received);
 };
 
-export const assertIsLeagueObject = (received: any): void => {
+export const assertIsDomesticLeagueObject = (received: any): void => {
   expect(received).toStrictEqual({
     LeagueNumber: expect.any(Number),
-    Country: expect.any(Number),
-    Level: expect.any(Number),
-    Clubs: expect.any(Array),
+    LeagueCountry: expect.any(Number),
+    LeagueLevel: expect.any(Number),
+    LeagueClubs: expect.any(Array),
   });
-  assert.lengthOf(received.Clubs, DEFAULTCLUBSPERDOMESTICLEAGUE);
+  assert.lengthOf(received.LeagueClubs, DEFAULTCLUBSPERDOMESTICLEAGUE);
 };
 
 export const assertIsClubObject = (received: any): void => {
   expect(received).toStrictEqual({
     ClubNumber: expect.any(Number),
-    Country: expect.any(Number),
-    DomesticLeagueLevel: expect.any(Number),
-    DomesticLeagueNumber: expect.any(Number),
-    ScheduleNumber: expect.any(Number),
-    Attendance: expect.any(Number),
-    FaciltiesCosts: expect.any(Number),
-    SponsorPayment: expect.any(Number),
-    TicketPrice: expect.any(Number),
-    ManagerPay: expect.any(Number),
-    ScoutingCosts: expect.any(Number),
-    HealthCosts: expect.any(Number),
-    PlayerDevelopmentCosts: expect.any(Number),
-    Players: expect.any(Array),
+    ClubCountry: expect.any(Number),
+    ClubDomesticLeagueLevel: expect.any(Number),
+    ClubDomesticLeagueNumber: expect.any(Number),
+    ClubScheduleNumber: expect.any(Number),
+    ClubAttendance: expect.any(Number),
+    ClubFaciltiesCosts: expect.any(Number),
+    ClubSponsorPayment: expect.any(Number),
+    ClubTicketPrice: expect.any(Number),
+    ClubManagerPay: expect.any(Number),
+    ClubScoutingCosts: expect.any(Number),
+    ClubHealthCosts: expect.any(Number),
+    ClubPlayerDevelopmentCosts: expect.any(Number),
+    ClubPlayers: expect.any(Array),
   });
-  assert.lengthOf(received.Players, DEFAULTSQUADSIZE);
+  assert.lengthOf(received.ClubPlayers, DEFAULTSQUADSIZE);
 };
 
 export const assertIsPlayerObject = (received: any): void => {
   expect(received).toStrictEqual({
     PlayerNumber: expect.any(Number),
-    FirstName: expect.any(Number),
-    LastName: expect.any(Number),
+    PlayerFirstName: expect.any(Number),
+    PlayerLastName: expect.any(Number),
     PlayerCountry: expect.any(Number),
-    Age: expect.any(Number),
-    Wage: expect.any(Number),
+    PlayerAge: expect.any(Number),
+    PlayerWage: expect.any(Number),
     PositionGroup: expect.any(Number),
     PlayerLeagueCountry: expect.any(Number),
-    DomesticLeagueLevel: expect.any(Number),
-    DomesticLeagueNumber: expect.any(Number),
-    ClubNumber: expect.any(Number),
+    PlayerDomesticLeagueLevel: expect.any(Number),
+    PlayerDomesticLeagueNumber: expect.any(Number),
+    PlayerClubNumber: expect.any(Number),
   });
 };
 

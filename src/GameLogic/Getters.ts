@@ -324,8 +324,8 @@ export const [
   getPlayerCountryName,
   getPlayerPositionGroupName,
 ] = map<[string, Array<string>], (player: Player) => string>(playerNameGetter)([
-  ["FirstName", FIRSTNAMES],
-  ["LastName", LASTNAMES],
+  ["PlayerFirstName", FIRSTNAMES],
+  ["PlayerLastName", LASTNAMES],
   ["PlayerCountry", COUNTRYNAMES],
   ["PositionGroup", Object.keys(PositionGroup)],
 ]);
