@@ -13,7 +13,7 @@ import { createNewDBForSave, createSave } from "../../../GameLogic/Save";
 import {
   assertIsSaveOptions,
   assertIsPlayerObject,
-  assertIsLeagueTableRow,  
+  assertIsLeagueTableRow,
 } from "../../../GameLogic/Asserters";
 import {
   getSaveEntitiesForMainScreen,
@@ -35,7 +35,7 @@ describe("SaveHooks", async () => {
           rerender();
 
           const { current: actualResult } = result;
-          console.log(actualResult);
+          
           expect(actualResult.length).toBe(1);
 
           testSave.close();
@@ -69,25 +69,28 @@ describe("SaveHooks", async () => {
 
           await waitFor(() => expect(result.current).toBeTruthy());
 
-          const [actualDB, actualSaveOptions, actualClubPlayers, actualLeagueTableRows] =
-		result.current;
+          const [
+            actualDB,
+            actualSaveOptions,
+            actualClubPlayers,
+            actualLeagueTableRows,
+          ] = result.current;
 
-	  expect(actualDB.name).toBe(testSave.name)	  
+          expect(actualDB.name).toBe(testSave.name);
           assertIsSaveOptions(actualSaveOptions);
-	  
+
           const actualRandomPlayer = fastCheckRandomItemFromArray(
             fcGen,
             actualClubPlayers,
           );
 
-	  const actualRandomLeagueTableRow = fastCheckRandomItemFromArray(
+          const actualRandomLeagueTableRow = fastCheckRandomItemFromArray(
             fcGen,
             actualLeagueTableRows,
           );
 
-	  
           assertIsPlayerObject(actualRandomPlayer);
-	  assertIsLeagueTableRow(actualRandomLeagueTableRow)
+          assertIsLeagueTableRow(actualRandomLeagueTableRow);
 
           testSave.close();
           await deleteDB(testSave.name);
@@ -98,6 +101,4 @@ describe("SaveHooks", async () => {
       { numRuns: 1 },
     );
   });
-
-
 });

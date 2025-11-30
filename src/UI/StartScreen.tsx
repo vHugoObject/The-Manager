@@ -21,7 +21,10 @@ export const StartScreen = () => {
           </Card>
         </Col>
         <Col>
-	  {matchW<ReactNode, Array<[string, SaveOptions]>, ReactNode>(() => <div></div>, (saveOptions) => <OldSavesCards saveOptionTuples={saveOptions}/>)(options)}
+          {matchW<ReactNode, Array<[string, SaveOptions]>, ReactNode>(
+            () => <div></div>,
+            (saveOptions) => <OldSavesCards saveOptionTuples={saveOptions} />,
+          )(options)}
         </Col>
       </Row>
     </Container>

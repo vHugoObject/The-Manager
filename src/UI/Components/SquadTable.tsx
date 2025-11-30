@@ -1,7 +1,5 @@
-import React from "react";
-import Table from "react-bootstrap/Table";
-import { property, curry } from "lodash/fp";
-import { mapIndexed } from "futil-js";
+import React, {useState} from "react";
+import { property, curry, map } from "lodash/fp";
 import { Player } from "../../GameLogic/Types";
 import {
   getPlayerFirstName,
@@ -9,6 +7,8 @@ import {
   getPlayerCountryName,
   getPlayerPositionGroupName,
 } from "../../GameLogic/Getters";
+import TableWithDraggableRows from "./TableWithDraggableRows";
+import "./stylesheet.css"
 
 export const SQUADTABLEHEADERSGETTERSMAPPING: Record<
   string,
@@ -22,44 +22,31 @@ export const SQUADTABLEHEADERSGETTERSMAPPING: Record<
   "Position Group": getPlayerPositionGroupName,
 };
 
-const getPlayerCellValue = curry(
-  (player: Player, columnHeader: string): string =>
-    property(columnHeader, SQUADTABLEHEADERSGETTERSMAPPING)(player),
-);
+const getPlayerCellValue = (player: Player, columnHeader: string): string =>
+  property(columnHeader, SQUADTABLEHEADERSGETTERSMAPPING)(player);
 
 export const SQUADTABLEHEADERS: Array<string> = Object.keys(
   SQUADTABLEHEADERSGETTERSMAPPING,
 );
 
-export const PlayerRow = ({ player }: { player: Player }) => {
-  return (
-    <tr>
-      {mapIndexed((columnHeader: string, index: number) => {
-        return (
-          <td key={index} data-testid={`player_${index}`}>
-            {getPlayerCellValue(player, columnHeader)}
-          </td>
-        );
-      })(SQUADTABLEHEADERS)}
-    </tr>
-  );
-};
 
-export const SquadTable = ({ players }: { players: Array<Player> }) => {
+export const SquadTable = ({ players }: { players: Record<string, Player> }) => {
+
+  const [itemIDs, setItemIDs] = useState(Object.keys(players))
+  
   return (
-    <Table striped bordered hover>
-      <thead>
-        <tr>
-          {mapIndexed((header: string, index: number) => {
-            return <th key={index}>{header}</th>;
-          })(SQUADTABLEHEADERS)}
-        </tr>
-      </thead>
-      <tbody>
-        {mapIndexed((player: Player, index: number) => {
-          return <PlayerRow player={player} key={index} />;
-        })(players)}
-      </tbody>
-    </Table>
+    <div>
+      <div aria-describedby="squad-table" id="squad">	
+      <TableWithDraggableRows
+	cellValueGetter={getPlayerCellValue}
+	columnHeaders={SQUADTABLEHEADERS}
+	rowsObject={players}
+	itemIDs={itemIDs}
+	setItemIDs={setItemIDs}/>
+      </div>      
+      <div role="tooltip" id="squad-table">
+	<p>The first 11 players in this table will play in your next match</p>	
+      </div>
+    </div>
   );
 };

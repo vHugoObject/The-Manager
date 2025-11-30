@@ -17,19 +17,17 @@ describe("MainScreen test suite", async () => {
   test("test Squad Table", async () => {
     await fc.assert(
       fc.asyncProperty(fc.gen(), async (fcGen) => {
-
-	const testSaveOptions: SaveOptions =
+        const testSaveOptions: SaveOptions =
           fastCheckCreateTestSaveOptionsWithRandomCountries(fcGen);
 
-	const testSave: IDBPDatabase<SaveSchema> =
+        const testSave: IDBPDatabase<SaveSchema> =
           await createSave(testSaveOptions);
-        const testSaveName = testSave.name;	
-	const testDBRoute = `saves/${testSaveName}`;
-	
+        const testSaveName = testSave.name;
+        const testDBRoute = `saves/${testSaveName}`;
+
         renderWithRouter(<MainScreen />, {
           route: testDBRoute,
         });
-        
 
         forEach((header: string): void => {
           expect(screen.getByText(header)).toBeTruthy();
@@ -42,10 +40,10 @@ describe("MainScreen test suite", async () => {
         const players = screen.getAllByTestId((id: string, _) =>
           id.startsWith("player"),
         );
-	
+
         assert.lengthOf(players, DEFAULTSQUADSIZE);
-	
-        testSave.close();	
+
+        testSave.close();
         await deleteDB(testSave.name);
       }),
       { numRuns: 1 },

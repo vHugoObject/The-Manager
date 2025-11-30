@@ -1,1 +1,56 @@
-export const CLUBINDEXES = [["ClubCountry.ClubDomesticLeagueLevel.ClubDomesticLeagueNumber.ClubScheduleNumber",["ClubCountry","ClubDomesticLeagueLevel","ClubDomesticLeagueNumber","ClubScheduleNumber"]],["ClubCountry.ClubDomesticLeagueLevel.ClubDomesticLeagueNumber",["ClubCountry","ClubDomesticLeagueLevel","ClubDomesticLeagueNumber"]],["ClubCountry.ClubDomesticLeagueLevel.ClubScheduleNumber",["ClubCountry","ClubDomesticLeagueLevel","ClubScheduleNumber"]],["ClubCountry.ClubDomesticLeagueLevel",["ClubCountry","ClubDomesticLeagueLevel"]],["ClubCountry.ClubDomesticLeagueNumber.ClubScheduleNumber",["ClubCountry","ClubDomesticLeagueNumber","ClubScheduleNumber"]],["ClubCountry.ClubDomesticLeagueNumber",["ClubCountry","ClubDomesticLeagueNumber"]],["ClubCountry.ClubScheduleNumber",["ClubCountry","ClubScheduleNumber"]],["ClubCountry","ClubCountry"],["ClubDomesticLeagueLevel.ClubDomesticLeagueNumber.ClubScheduleNumber",["ClubDomesticLeagueLevel","ClubDomesticLeagueNumber","ClubScheduleNumber"]],["ClubDomesticLeagueLevel.ClubDomesticLeagueNumber",["ClubDomesticLeagueLevel","ClubDomesticLeagueNumber"]],["ClubDomesticLeagueLevel.ClubScheduleNumber",["ClubDomesticLeagueLevel","ClubScheduleNumber"]],["ClubDomesticLeagueLevel","ClubDomesticLeagueLevel"],["ClubDomesticLeagueNumber.ClubScheduleNumber",["ClubDomesticLeagueNumber","ClubScheduleNumber"]],["ClubDomesticLeagueNumber","ClubDomesticLeagueNumber"],["ClubScheduleNumber","ClubScheduleNumber"]]
+export const CLUBINDEXES = [
+  [
+    "ClubCountry.ClubDomesticLeagueLevel.ClubDomesticLeagueNumber.ClubScheduleNumber",
+    [
+      "ClubCountry",
+      "ClubDomesticLeagueLevel",
+      "ClubDomesticLeagueNumber",
+      "ClubScheduleNumber",
+    ],
+  ],
+  [
+    "ClubCountry.ClubDomesticLeagueLevel.ClubDomesticLeagueNumber",
+    ["ClubCountry", "ClubDomesticLeagueLevel", "ClubDomesticLeagueNumber"],
+  ],
+  [
+    "ClubCountry.ClubDomesticLeagueLevel.ClubScheduleNumber",
+    ["ClubCountry", "ClubDomesticLeagueLevel", "ClubScheduleNumber"],
+  ],
+  [
+    "ClubCountry.ClubDomesticLeagueLevel",
+    ["ClubCountry", "ClubDomesticLeagueLevel"],
+  ],
+  [
+    "ClubCountry.ClubDomesticLeagueNumber.ClubScheduleNumber",
+    ["ClubCountry", "ClubDomesticLeagueNumber", "ClubScheduleNumber"],
+  ],
+  [
+    "ClubCountry.ClubDomesticLeagueNumber",
+    ["ClubCountry", "ClubDomesticLeagueNumber"],
+  ],
+  ["ClubCountry.ClubScheduleNumber", ["ClubCountry", "ClubScheduleNumber"]],
+  ["ClubCountry", "ClubCountry"],
+  [
+    "ClubDomesticLeagueLevel.ClubDomesticLeagueNumber.ClubScheduleNumber",
+    [
+      "ClubDomesticLeagueLevel",
+      "ClubDomesticLeagueNumber",
+      "ClubScheduleNumber",
+    ],
+  ],
+  [
+    "ClubDomesticLeagueLevel.ClubDomesticLeagueNumber",
+    ["ClubDomesticLeagueLevel", "ClubDomesticLeagueNumber"],
+  ],
+  [
+    "ClubDomesticLeagueLevel.ClubScheduleNumber",
+    ["ClubDomesticLeagueLevel", "ClubScheduleNumber"],
+  ],
+  ["ClubDomesticLeagueLevel", "ClubDomesticLeagueLevel"],
+  [
+    "ClubDomesticLeagueNumber.ClubScheduleNumber",
+    ["ClubDomesticLeagueNumber", "ClubScheduleNumber"],
+  ],
+  ["ClubDomesticLeagueNumber", "ClubDomesticLeagueNumber"],
+  ["ClubScheduleNumber", "ClubScheduleNumber"],
+];

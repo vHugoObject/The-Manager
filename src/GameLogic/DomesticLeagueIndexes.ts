@@ -1,1 +1,12 @@
-export const DOMESTICLEAGUEINDEXES = [["LeagueCountry.LeagueLevel.LeagueClubs",["LeagueCountry","LeagueLevel","LeagueClubs"]],["LeagueCountry.LeagueLevel",["LeagueCountry","LeagueLevel"]],["LeagueCountry.LeagueClubs",["LeagueCountry","LeagueClubs"]],["LeagueCountry","LeagueCountry"],["LeagueLevel.LeagueClubs",["LeagueLevel","LeagueClubs"]],["LeagueLevel","LeagueLevel"],["LeagueClubs","LeagueClubs"]]
+export const DOMESTICLEAGUEINDEXES = [
+  [
+    "LeagueCountry.LeagueLevel.LeagueClubs",
+    ["LeagueCountry", "LeagueLevel", "LeagueClubs"],
+  ],
+  ["LeagueCountry.LeagueLevel", ["LeagueCountry", "LeagueLevel"]],
+  ["LeagueCountry.LeagueClubs", ["LeagueCountry", "LeagueClubs"]],
+  ["LeagueCountry", "LeagueCountry"],
+  ["LeagueLevel.LeagueClubs", ["LeagueLevel", "LeagueClubs"]],
+  ["LeagueLevel", "LeagueLevel"],
+  ["LeagueClubs", "LeagueClubs"],
+];

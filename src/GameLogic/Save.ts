@@ -26,7 +26,7 @@ import {
   CLUBINDEXES,
   DOMESTICLEAGUEINDEXES,
   MATCHLOGINDEXES,
-  DBVERSION
+  DBVERSION,
 } from "./SaveConstants";
 import {
   SaveOptions,
@@ -77,14 +77,13 @@ export const validDB = (db: IDBPDatabase): boolean => {
 
 export const getDBObjectStoreIndexNames = pipe([
   property(["store", "indexNames"]),
-  Object.values
+  Object.values,
 ]);
 
 export const getDBObjectStoreIndexNamesAsSet = pipe([
   getDBObjectStoreIndexNames,
   convertToSet,
 ]);
-
 
 export const defaultOpenDB = async (
   saveNumber: string,
@@ -120,12 +119,19 @@ export const getNextSaveNumber = async (): Promise<string> => {
   ])(saveNames);
 };
 
-const indexCreator = curry((objectStore: IDBObjectStore, [indexName, keyPath]: [string, string|Array<string>]) => {
-  objectStore.createIndex(indexName, keyPath);
-});
-const createIndexes = curry(<T>(indexes: Array<string>, objectStore: IDBObjectStore): void => {
-  forEach(indexCreator(objectStore), indexes);
-});
+const indexCreator = curry(
+  (
+    objectStore: IDBObjectStore,
+    [indexName, keyPath]: [string, string | Array<string>],
+  ) => {
+    objectStore.createIndex(indexName, keyPath);
+  },
+);
+const createIndexes = curry(
+  <T>(indexes: Array<string>, objectStore: IDBObjectStore): void => {
+    forEach(indexCreator(objectStore), indexes);
+  },
+);
 
 const createPlayerIndexes = createIndexes(PLAYERINDEXES);
 const createClubIndexes = createIndexes(CLUBINDEXES);

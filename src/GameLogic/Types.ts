@@ -112,8 +112,6 @@ export interface SaveArguments {
   Players: Array<Player>;
 }
 
-
-
 export interface SaveSchema extends DBSchema {
   SaveOptions: {
     key: string;

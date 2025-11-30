@@ -2,7 +2,6 @@ import { multiply, subtract } from "lodash/fp";
 import { BaseCountries, ClubMatchResult } from "./Types";
 import { ENGLAND } from "./England";
 
-
 export const NONSPACESCHARACTERRANGE: [number, number] = [96, 10000];
 export const JANUARY: number = 0;
 export const FEBRUARY: number = 1;
@@ -162,4 +161,12 @@ export const MATCHLOGKEYS: Array<string> = [
   "ClubMatchLogs",
 ];
 
-export const EMPTYMATCHRESULT: ClubMatchResult = {Home: 0, Wins: 0, Losses: 0, Draws: 0, "Goals For": 0, "Goals Against": 0, Points: 0}
+export const EMPTYMATCHRESULT: ClubMatchResult = {
+  Home: 0,
+  Wins: 0,
+  Losses: 0,
+  Draws: 0,
+  "Goals For": 0,
+  "Goals Against": 0,
+  Points: 0,
+};

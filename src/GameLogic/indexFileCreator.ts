@@ -6,10 +6,15 @@ const indexFileCreator = ([baseIndices, name]: [
   Array<string>,
   string,
 ]): void => {
-  // [name, keyPath] 
+  // [name, keyPath]
 
-  const mapper = (index: string|Array<string>) => map(index, (x: string|Array<string>): [string, string|Array<string>] => isString(x) ? [x,x] : [x.join("."), x])
-  const indexes: string = flow([indexesCreator, mapper, JSON.stringify])(baseIndices);
+  const mapper = (index: string | Array<string>) =>
+    map(index, (x: string | Array<string>): [string, string | Array<string>] =>
+      isString(x) ? [x, x] : [x.join("."), x],
+    );
+  const indexes: string = flow([indexesCreator, mapper, JSON.stringify])(
+    baseIndices,
+  );
   const variableName = name.toUpperCase();
   const fileString: string = `export const ${variableName} = ${indexes}`;
   const fullFileName: string = `src/GameLogic/${name}.ts`;

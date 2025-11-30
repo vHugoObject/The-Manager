@@ -44,7 +44,10 @@ export const SaveCard = ({
   return (
     <Col key={colKey}>
       <Card style={{ width: "18rem" }}>
-        <Card.Header onClick={() => navigate(saveAddress)}> Continue {saveName}</Card.Header>
+        <Card.Header onClick={() => navigate(saveAddress)}>
+          {" "}
+          Continue {saveName}
+        </Card.Header>
         <ListGroup variant="flush">
           <ListGroup.Item>Country: {saveCountryName}</ListGroup.Item>
           <ListGroup.Item>Club: {saveClubName}</ListGroup.Item>

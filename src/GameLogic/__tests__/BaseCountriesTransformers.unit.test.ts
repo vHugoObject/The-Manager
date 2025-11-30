@@ -8,7 +8,9 @@ import {
   convertClubAbsoluteNumberIntoCountryIndex,
   convertClubAbsoluteNumberIntoDomesticLeagueIndex,
   convertClubAbsoluteNumberIntoRelativeIndex,
-  convertClubNumberIntoClubName,
+  convertClubAbsoluteNumberIntoClubName,
+  convertDomesticLeagueAbsoluteNumberIntoName,
+  convertDomesticLeagueAbsoluteNumberIntoRelativeIndex,
   flattenToDomesticLeaguesDepth,
   flattenToClubsDepth,
 } from "../Transformers";
@@ -17,8 +19,7 @@ import {
   fastCheckTestCompletelyRandomBaseClub,
   fastCheckGenerateRandomBaseCountries,
   fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithPath,
-  fastCheckTestRandomBaseCountryWithIndex,
-  fastCheckRandomSeason,
+  fastCheckTestCompletelyRandomBaseDomesticLeaguePath,
 } from "../TestDataGenerators";
 
 describe("BaseCountriesGetters test suite", () => {
@@ -143,7 +144,63 @@ describe("BaseCountriesGetters test suite", () => {
     });
   });
 
-  test("convertClubNumberIntoClubName", () => {
+  test("convertDomesticLeagueAbsoluteNumberIntoRelativeIndex", () => {
+    fc.assert(
+      fc.property(fc.gen(), (fcGen) => {
+        const testBaseCountries: BaseCountries =
+          fastCheckGenerateRandomBaseCountries(fcGen);
+
+        const expectedDomesticLeagueRelativeIndex =
+          fastCheckTestCompletelyRandomBaseDomesticLeaguePath(
+            fcGen,
+            testBaseCountries,
+          );
+
+        const testDomesticLeagueNumber: number =
+          convertDomesticLeagueRelativeIndexIntoAbsoluteNumber(
+            expectedDomesticLeagueRelativeIndex,
+          );
+
+        const actualRelativeIndex =
+          convertDomesticLeagueAbsoluteNumberIntoRelativeIndex(
+            testDomesticLeagueNumber,
+          );
+        expect(actualRelativeIndex).toStrictEqual(
+          expectedDomesticLeagueRelativeIndex,
+        );
+      }),
+    );
+  });
+
+  test("convertDomesticLeagueAbsoluteNumberIntoName", () => {
+    fc.assert(
+      fc.property(fc.gen(), (fcGen) => {
+        const testBaseCountries: BaseCountries =
+          fastCheckGenerateRandomBaseCountries(fcGen);
+
+        const [[, expectedDomesticLeagueName], testDomesticLeaguePath] =
+          fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithPath(
+            fcGen,
+            testBaseCountries,
+          );
+
+        const testDomesticLeagueNumber: number =
+          convertDomesticLeagueRelativeIndexIntoAbsoluteNumber(
+            testDomesticLeaguePath,
+          );
+
+        const actualDomesticLeagueName: string =
+          convertDomesticLeagueAbsoluteNumberIntoName(
+            testBaseCountries,
+            testDomesticLeagueNumber,
+          );
+
+        expect(actualDomesticLeagueName).toBe(expectedDomesticLeagueName);
+      }),
+    );
+  });
+
+  test("convertClubAbsoluteNumberIntoClubName", () => {
     fc.assert(
       fc.property(fc.gen(), (fcGen) => {
         const testBaseCountries: BaseCountries =
@@ -155,7 +212,7 @@ describe("BaseCountriesGetters test suite", () => {
         const testClubNumber: number =
           convertClubRelativeIndexIntoAbsoluteNumber(testRelativeClubIndex);
 
-        const actualClubName: string = convertClubNumberIntoClubName(
+        const actualClubName: string = convertClubAbsoluteNumberIntoClubName(
           testBaseCountries,
           testClubNumber,
         );

@@ -106,7 +106,7 @@ import {
   createClub,
   createDomesticLeague,
   unfoldAndTransformRangeChunkN,
-  convertDomesticLeaguePathIntoDomesticLeague
+  convertDomesticLeaguePathIntoDomesticLeague,
 } from "./Transformers";
 
 export const fastCheckNRandomItemsFromArray = curry(
@@ -494,6 +494,13 @@ export const fastCheckCreateNTestPlayers = unfoldListOfTestEntities([
   fastCheckPlayerNumberGenerator,
   createPlayer,
 ]);
+
+export const fastCheckCreateObjectWithNTestPlayers = pipe([
+  fastCheckCreateNTestPlayers,
+  map((player: Player): [number, Player] => [property("PlayerNumber", player),player]),
+  Object.fromEntries
+])
+
 export const fastCheckCreateNTestClubs = unfoldListOfTestEntities([
   fastCheckRandomClubNumberGenerator,
   createClub,
@@ -1497,14 +1504,21 @@ export const fastCheckCreateTestListOfRandomMatchLogs = curry(
   (
     testBaseCountries: BaseCountries,
     fcGen: fc.GeneratorValue,
-  ): [ReadonlyNonEmptyArray<MatchLog>, number, [number, number], DomesticLeague] => {
+  ): [
+    ReadonlyNonEmptyArray<MatchLog>,
+    number,
+    [number, number],
+    DomesticLeague,
+  ] => {
     const testDomesticLeaguePath =
       fastCheckTestCompletelyRandomBaseDomesticLeaguePath(
         fcGen,
         testBaseCountries,
       );
 
-    const testDomesticLeague = convertDomesticLeaguePathIntoDomesticLeague(testDomesticLeaguePath)
+    const testDomesticLeague = convertDomesticLeaguePathIntoDomesticLeague(
+      testDomesticLeaguePath,
+    );
     const testSeason = fastCheckRandomSeason(fcGen);
     const testMatchWeeksCount = fastCheckRandomIntegerInRange(fcGen, [2, 3]);
     return [
@@ -1514,7 +1528,7 @@ export const fastCheckCreateTestListOfRandomMatchLogs = curry(
       ),
       testMatchWeeksCount,
       testDomesticLeaguePath,
-      testDomesticLeague
+      testDomesticLeague,
     ];
   },
 );

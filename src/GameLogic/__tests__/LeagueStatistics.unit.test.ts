@@ -5,6 +5,7 @@ import { LeagueTableRow } from "../Types";
 import {
   assertIsLeagueTableRow,
   pairIntegersAndAssertEqual,
+  pairStringsAndAssertEqual,
   assertSetHas,
 } from "../Asserters";
 import {
@@ -13,11 +14,11 @@ import {
   fastCheckRandomClubMatchResultForLeagueTable,
   fastCheckGenerateRandomBaseCountries,
   fastCheckTestCompletelyRandomBaseClub,
-  fastCheckTestCompletelyRandomBaseDomesticLeaguePath
+  fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithPath,
+  fastCheckTestCompletelyRandomBaseDomesticLeaguePath,
 } from "../TestDataGenerators";
 import { getClubsOfDomesticLeagueFromBaseCountries } from "../Getters";
 import {
-  convertDomesticLeagueRelativeIndexIntoAbsoluteNumber,
   convertDomesticLeaguePathIntoDomesticLeague,
   convertClubRelativeIndexIntoAbsoluteNumber,
   createArrayOfLeagueTableRows,
@@ -70,71 +71,88 @@ describe("LeagueStatistics test suite", async () => {
 
     describe("createLeagueTableRow", async () => {
       test("without MatchLogs", async () => {
-      await fc.assert(
-        fc.asyncProperty(fc.gen(), async (fcGen) => {
-          const testBaseCountries = fastCheckGenerateRandomBaseCountries(fcGen);
+        await fc.assert(
+          fc.asyncProperty(fc.gen(), async (fcGen) => {
+            const testBaseCountries =
+              fastCheckGenerateRandomBaseCountries(fcGen);
 
-          const testDomesticLeaguePath =
-		fastCheckTestCompletelyRandomBaseDomesticLeaguePath(fcGen, testBaseCountries);
-	  const testDomesticLeague = convertDomesticLeaguePathIntoDomesticLeague(testDomesticLeaguePath)	  
-          const expectedClubNames = pipe([
-            getClubsOfDomesticLeagueFromBaseCountries,
-            convertToSet,
-          ])(testDomesticLeaguePath, testBaseCountries);
-	  
-          const actualLeagueTable: Array<LeagueTableRow> = createArrayOfLeagueTableRows(
-            testBaseCountries,
-	    testDomesticLeague,
-            [],
-          );
+            const [[, expectedDomesticLeagueName], testDomesticLeaguePath] =
+              fastCheckTestCompletelyRandomBaseDomesticLeagueNameWithPath(
+                fcGen,
+                testBaseCountries,
+              );
+            const testDomesticLeague =
+              convertDomesticLeaguePathIntoDomesticLeague(
+                testDomesticLeaguePath,
+              );
+            const expectedClubNames = pipe([
+              getClubsOfDomesticLeagueFromBaseCountries,
+              convertToSet,
+            ])(testDomesticLeaguePath, testBaseCountries);
 
-          const [actualClubName, actualMatchesPlayed] = pipe([
-            fastCheckRandomItemFromArray(fcGen),
-            over([property("Club Name"), property("Matches Played")]),
-          ])(actualLeagueTable);
+            const [actualLeagueTable, actualDomesticLeagueName] =
+              createArrayOfLeagueTableRows(
+                testBaseCountries,
+                testDomesticLeague,
+                [],
+              );
 
-          assertSetHas(expectedClubNames, actualClubName);
-          expect(actualMatchesPlayed).toEqual(0);
+            expect(actualDomesticLeagueName).toBe(expectedDomesticLeagueName);
+            const [actualClubName, actualMatchesPlayed] = pipe([
+              fastCheckRandomItemFromArray(fcGen),
+              over([property("Club Name"), property("Matches Played")]),
+            ])(actualLeagueTable);
 
-        })
-      );
-    });
+            assertSetHas(expectedClubNames, actualClubName);
+            expect(actualMatchesPlayed).toEqual(0);
+          }),
+        );
+      });
       test("with MatchLogs", async () => {
-      await fc.assert(
-        fc.asyncProperty(fc.gen(), async (fcGen) => {
-          const testBaseCountries = fastCheckGenerateRandomBaseCountries(fcGen);
+        await fc.assert(
+          fc.asyncProperty(fc.gen(), async (fcGen) => {
+            const testBaseCountries =
+              fastCheckGenerateRandomBaseCountries(fcGen);
 
-          const [testMatchLogs, testMatchWeeksCount, testDomesticLeaguePath, testDomesticLeague] =
-            fastCheckCreateTestListOfRandomMatchLogs(testBaseCountries, fcGen);
+            const [
+              testMatchLogs,
+              testMatchWeeksCount,
+              testDomesticLeaguePath,
+              testDomesticLeague,
+            ] = fastCheckCreateTestListOfRandomMatchLogs(
+              testBaseCountries,
+              fcGen,
+            );
 
-          const expectedClubNames = pipe([
-            getClubsOfDomesticLeagueFromBaseCountries,
-            convertToSet,
-          ])(testDomesticLeaguePath, testBaseCountries);
-          const actualLeagueTable: Array<LeagueTableRow> = createArrayOfLeagueTableRows(
-            testBaseCountries,
-	    testDomesticLeague,
-            testMatchLogs,
-          );
+            const expectedClubNames = pipe([
+              getClubsOfDomesticLeagueFromBaseCountries,
+              convertToSet,
+            ])(testDomesticLeaguePath, testBaseCountries);
 
-          const [actualClubName, actualMatchesPlayed] = pipe([
-            fastCheckRandomItemFromArray(fcGen),
-            over([property("Club Name"), property("Matches Played")]),
-          ])(actualLeagueTable);
+            const [actualLeagueTable] = createArrayOfLeagueTableRows(
+              testBaseCountries,
+              testDomesticLeague,
+              testMatchLogs,
+            );
 
-          assertSetHas(expectedClubNames, actualClubName);
-          expect(actualMatchesPlayed).toEqual(testMatchWeeksCount);
+            const [actualClubName, actualMatchesPlayed] = pipe([
+              fastCheckRandomItemFromArray(fcGen),
+              over([property("Club Name"), property("Matches Played")]),
+            ])(actualLeagueTable);
 
-          const [actualBestTeamPoints, actualWorstTeamPoints] = pipe([
-            over([first, last]),
-            map(property("Points")),
-          ])(actualLeagueTable);
+            assertSetHas(expectedClubNames, actualClubName);
+            expect(actualMatchesPlayed).toEqual(testMatchWeeksCount);
 
-          expect(actualBestTeamPoints).toBeGreaterThan(actualWorstTeamPoints);
-        }),
-        { timeout: 7000 },
-      );
+            const [actualBestTeamPoints, actualWorstTeamPoints] = pipe([
+              over([first, last]),
+              map(property("Points")),
+            ])(actualLeagueTable);
+
+            expect(actualBestTeamPoints).toBeGreaterThan(actualWorstTeamPoints);
+          }),
+          { timeout: 7000 },
+        );
+      });
     });
-  });
   });
 });

@@ -62,14 +62,14 @@ import {
   Applicative as readonlyArrayApplicative,
   map as arrayMap,
   reduceRight,
+  flap,
 } from "fp-ts/ReadonlyArray";
+
 import { ReadonlyNonEmptyArray } from "fp-ts/ReadonlyNonEmptyArray";
 import {
   traverseArray as stateTraverseArray,
   execute as executeState,
 } from "fp-ts/State";
-import { identity as id } from "fp-ts/function";
-import { ApT } from "fp-ts/Option";
 import {
   addDays,
   subDays,
@@ -133,7 +133,7 @@ import {
   LEAGUEKEYS,
   DEFAULTTOTALPLAYERS,
   DEFAULTTOTALDOMESTICLEAGUES,
-  EMPTYMATCHRESULT
+  EMPTYMATCHRESULT,
 } from "./Constants";
 import {
   getFirstTwoArrayValues,
@@ -144,6 +144,7 @@ import {
   getClubNameFromBaseCountries,
   getClubsCountFromBaseCountries,
   getPlayersCountForBaseCountries,
+  getDomesticLeagueNameFromBaseCountries,
 } from "./Getters";
 
 export const mapSum = map(sum);
@@ -1147,31 +1148,77 @@ export const calculatePreviousSeasonWageBillForClubNumber = pipe([
   round,
 ]);
 
-export const convertDomesticLeagueRelativeIndexIntoAbsoluteNumber = memoize(
-  ([countryIndex, domesticLeagueIndex]: [number, number]): number => {
+export const baseConvertDomesticLeagueRelativeIndexIntoAbsoluteNumber = (
+  domesticLeaguesPerCountry: number,
+) =>
+  memoize(([countryIndex, domesticLeagueIndex]: [number, number]): number => {
     return pipe([
-      multiply(DEFAULTDOMESTICLEAGUESPERCOUNTRY),
+      multiply(domesticLeaguesPerCountry),
       add(domesticLeagueIndex),
     ])(countryIndex);
-  },
-);
+  });
 
-export const convertClubRelativeIndexIntoAbsoluteNumber = memoize(
-  ([countryIndex, domesticLeagueIndex, clubIndex]: [
-    number,
-    number,
-    number,
-  ]): number => {
-    return pipe([
-      zipWith(multiply, [
-        DEFAULTCLUBSPERCOUNTRY,
-        DEFAULTCLUBSPERDOMESTICLEAGUE,
-      ]),
-      sum,
-      add(clubIndex),
-    ])([countryIndex, domesticLeagueIndex]);
-  },
-);
+export const convertDomesticLeagueRelativeIndexIntoAbsoluteNumber =
+  baseConvertDomesticLeagueRelativeIndexIntoAbsoluteNumber(
+    DEFAULTDOMESTICLEAGUESPERCOUNTRY,
+  );
+
+export const baseConvertDomesticLeagueAbsoluteNumberIntoRelativeIndex = (
+  domesticLeaguesPerCountry: number,
+) =>
+  memoize((domesticLeagueNumber: number): ReadonlyArray<number> => {
+    return flap(domesticLeagueNumber)([
+      floorDivision(domesticLeaguesPerCountry),
+      mod(domesticLeaguesPerCountry),
+    ]);
+  });
+
+export const convertDomesticLeagueAbsoluteNumberIntoRelativeIndex =
+  baseConvertDomesticLeagueAbsoluteNumberIntoRelativeIndex(
+    DEFAULTDOMESTICLEAGUESPERCOUNTRY,
+  );
+
+export const baseConvertDomesticLeagueAbsoluteNumberIntoName = (
+  domesticLeaguesPerCountry: number,
+) =>
+  curry(
+    (baseCountries: BaseCountries, domesticLeagueNumber: number): string => {
+      return pipe([
+        baseConvertDomesticLeagueAbsoluteNumberIntoRelativeIndex(
+          domesticLeaguesPerCountry,
+        ),
+        partialRight(getDomesticLeagueNameFromBaseCountries, [baseCountries]),
+      ])(domesticLeagueNumber);
+    },
+  );
+
+export const convertDomesticLeagueAbsoluteNumberIntoName =
+  baseConvertDomesticLeagueAbsoluteNumberIntoName(
+    DEFAULTDOMESTICLEAGUESPERCOUNTRY,
+  );
+
+export const baseConvertClubRelativeIndexIntoAbsoluteNumber = (
+  clubsAndDomesticLeaguePerCountry: [number, number],
+) =>
+  memoize(
+    ([countryIndex, domesticLeagueIndex, clubIndex]: [
+      number,
+      number,
+      number,
+    ]): number => {
+      return pipe([
+        zipWith(multiply, clubsAndDomesticLeaguePerCountry),
+        sum,
+        add(clubIndex),
+      ])([countryIndex, domesticLeagueIndex]);
+    },
+  );
+
+export const convertClubRelativeIndexIntoAbsoluteNumber =
+  baseConvertClubRelativeIndexIntoAbsoluteNumber([
+    DEFAULTCLUBSPERCOUNTRY,
+    DEFAULTCLUBSPERDOMESTICLEAGUE,
+  ]);
 
 export const baseConvertClubAbsoluteNumberIntoCountryIndex = (
   clubsPerCountry: number,
@@ -1229,7 +1276,7 @@ export const convertClubAbsoluteNumberIntoRelativeIndex =
     DEFAULTCLUBSPERDOMESTICLEAGUE,
   ]);
 
-export const baseConvertClubNumberIntoClubName = ([
+export const baseConvertClubAbsoluteNumberIntoClubName = ([
   clubsPerCountry,
   clubsPerDomesticLeague,
 ]: [number, number]) =>
@@ -1243,10 +1290,11 @@ export const baseConvertClubNumberIntoClubName = ([
     ])(clubNumber);
   });
 
-export const convertClubNumberIntoClubName = baseConvertClubNumberIntoClubName([
-  DEFAULTCLUBSPERCOUNTRY,
-  DEFAULTCLUBSPERDOMESTICLEAGUE,
-]);
+export const convertClubAbsoluteNumberIntoClubName =
+  baseConvertClubAbsoluteNumberIntoClubName([
+    DEFAULTCLUBSPERCOUNTRY,
+    DEFAULTCLUBSPERDOMESTICLEAGUE,
+  ]);
 
 export const positionGroupRankRepeaterForPlayerNumber = pipe([
   mod(DEFAULTSQUADSIZE),
@@ -1339,6 +1387,11 @@ export const createSavePlayers = pipe([
   getPlayersCountForBaseCountries,
   unfold(createPlayer),
 ]);
+
+export const createPlayersObject = pipe([
+  map((player: Player): [number, Player] => [property("PlayerNumber", player), player]),
+  Object.fromEntries
+])
 
 export const generateClubFirstSeasonPlayersWithTransform = curry(
   <T>(transformer: (playerNumber: number) => T, clubNumber: number): T => {
@@ -1434,7 +1487,10 @@ export const createSaveDomesticLeagues = pipe([
   unfold(createDomesticLeague),
 ]);
 
-export const convertDomesticLeaguePathIntoDomesticLeague = pipe([convertDomesticLeagueRelativeIndexIntoAbsoluteNumber, createDomesticLeague])
+export const convertDomesticLeaguePathIntoDomesticLeague = pipe([
+  convertDomesticLeagueRelativeIndexIntoAbsoluteNumber,
+  createDomesticLeague,
+]);
 
 export const leagueTableSorter = orderBy(
   [pipe([property("Points")]), pipe([property("Goal Difference")])],
@@ -1460,7 +1516,7 @@ export const createLeagueTableRow = curry(
   ): LeagueTableRow => {
     return updateAllPaths({
       "Club Name": () =>
-        convertClubNumberIntoClubName(baseCountries, clubNumber),
+        convertClubAbsoluteNumberIntoClubName(baseCountries, clubNumber),
       "Goal Difference": () => calculateGoalDifference(clubMatchResult),
       "Matches Played": () => calculateMatchesPlayed(clubMatchResult),
     })(clubMatchResult);
@@ -1470,9 +1526,9 @@ export const createLeagueTableRow = curry(
 export const createArrayOfLeagueTableRows = curry(
   (
     baseCountries: BaseCountries,
-    {LeagueClubs}: DomesticLeague,
+    { LeagueNumber, LeagueClubs }: DomesticLeague,
     matchLogs: ReadonlyNonEmptyArray<MatchLog>,
-  ): Array<LeagueTableRow> => {
+  ): [Array<LeagueTableRow>, string] => {
     const traversalFunc =
       (matchLog: MatchLog) =>
       (
@@ -1489,17 +1545,23 @@ export const createArrayOfLeagueTableRows = curry(
       };
 
     const baseState = pipe([
-      map((leagueClubNumber: number): [number, ClubMatchResult] => [leagueClubNumber, EMPTYMATCHRESULT]),
-      Object.fromEntries
-    ])(LeagueClubs)
+      map((leagueClubNumber: number): [number, ClubMatchResult] => [
+        leagueClubNumber,
+        EMPTYMATCHRESULT,
+      ]),
+      Object.fromEntries,
+    ])(LeagueClubs);
 
-    
     const traversal = stateTraverseArray(traversalFunc)(matchLogs);
-    return pipe([
+    const rows = pipe([
       executeState(baseState),
       mapValuesIndexed(createLeagueTableRow(baseCountries)),
       leagueTableSorter,
     ])(traversal);
+    return [
+      rows,
+      convertDomesticLeagueAbsoluteNumberIntoName(baseCountries, LeagueNumber),
+    ];
   },
 );
 
