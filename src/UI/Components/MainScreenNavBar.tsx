@@ -15,7 +15,7 @@ const MainScreenNavBar = ({ saveNumber }: { saveNumber: string }) => {
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="me-auto">
-            <NavDropdown title="Dropdown" id="collapsible-nav-dropdown">
+            <NavDropdown title="Sim" id="collapsible-nav-dropdown">
               <NavDropdown.Item href="#action/3.1">
                 Sim One Week
               </NavDropdown.Item>

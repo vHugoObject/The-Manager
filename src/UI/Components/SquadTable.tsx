@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import { property, curry, map } from "lodash/fp";
+import { property } from "lodash/fp";
 import { Player } from "../../GameLogic/Types";
 import {
   getPlayerFirstName,
@@ -36,7 +36,8 @@ export const SquadTable = ({ players }: { players: Record<string, Player> }) => 
   
   return (
     <div>
-      <div aria-describedby="squad-table" id="squad">	
+      <div aria-describedby="squad-table" id="squad">
+	<h2>Squad</h2>
       <TableWithDraggableRows
 	cellValueGetter={getPlayerCellValue}
 	columnHeaders={SQUADTABLEHEADERS}
